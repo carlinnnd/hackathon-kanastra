@@ -1,1 +1,7 @@
--r Codex/antecipe/requirements.txt
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+sqlalchemy==2.0.36
+python-multipart==0.0.20
+python-dotenv==1.0.1
