@@ -1,15 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { ShieldAlert, AlertTriangle, RefreshCw } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { ShieldAlert, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { SummaryCards } from './components/SummaryCards';
 import { ReceivablesTable } from './components/ReceivablesTable';
 import { api } from './services/api';
 import { SimulationEnvelope, HealthResponse, PortfolioSummary } from './types';
+import {
+  aplicarFiltroPaginacaoLocal,
+  verificarSnapshotCompleto,
+} from './services/publicDemoResults';
 
 export const App: React.FC = () => {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [simulation, setSimulation] = useState<SimulationEnvelope | null>(null);
+
+  // Snapshot original completo em memória (usado para modo público efêmero)
+  const snapshotOriginalRef = useRef<SimulationEnvelope | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -47,16 +54,21 @@ export const App: React.FC = () => {
     checkBackendState();
   }, []);
 
+  const isModoPublico = Boolean(health?.aviso_demo_publica);
+
   const handleFileSelected = async (file: File) => {
     setIsLoading(true);
     setErrorMessage(null);
     try {
       const res = await api.uploadSimulation(file);
+      // Salva snapshot original em memória
+      snapshotOriginalRef.current = res;
       setSimulation(res);
       setCurrentStatus('todos');
       setCurrentReason('todos');
     } catch (err: unknown) {
       // Limpa resultado anterior em caso de erro para não exibir dados obsoletos como novos
+      snapshotOriginalRef.current = null;
       setSimulation(null);
       if (err instanceof Error) {
         setErrorMessage(err.message);
@@ -70,6 +82,22 @@ export const App: React.FC = () => {
 
   const handlePageChange = async (newPage: number) => {
     if (!simulation) return;
+
+    // Se estiver em modo público e tivermos o snapshot completo original,
+    // paginamos estritamente em memória sem disparar GET que retornaria 404
+    if (isModoPublico && snapshotOriginalRef.current && verificarSnapshotCompleto(snapshotOriginalRef.current)) {
+      const visualizacao = aplicarFiltroPaginacaoLocal(
+        snapshotOriginalRef.current,
+        currentStatus,
+        currentReason,
+        newPage,
+        50
+      );
+      setSimulation(visualizacao);
+      return;
+    }
+
+    // Modo local / persistente: consulta normal via backend
     setIsLoading(true);
     try {
       const res = await api.getSimulation(
@@ -91,9 +119,25 @@ export const App: React.FC = () => {
 
   const handleFilterChange = async (status: string, reason: string) => {
     if (!simulation) return;
-    setIsLoading(true);
     setCurrentStatus(status);
     setCurrentReason(reason);
+
+    // Se estiver em modo público e tivermos o snapshot completo original,
+    // aplicamos filtro estritamente em memória sem disparar GET que retornaria 404
+    if (isModoPublico && snapshotOriginalRef.current && verificarSnapshotCompleto(snapshotOriginalRef.current)) {
+      const visualizacao = aplicarFiltroPaginacaoLocal(
+        snapshotOriginalRef.current,
+        status,
+        reason,
+        1,
+        50
+      );
+      setSimulation(visualizacao);
+      return;
+    }
+
+    // Modo local / persistente: consulta normal via backend
+    setIsLoading(true);
     try {
       const res = await api.getSimulation(
         simulation.simulation_id,
@@ -138,6 +182,10 @@ export const App: React.FC = () => {
       ? 'NÃO CARREGADO'
       : 'OFFLINE';
 
+  // Guarda para snapshot parcial em modo público (> 50 itens)
+  const isSnapshotPublicoParcial =
+    Boolean(isModoPublico && simulation && !verificarSnapshotCompleto(simulation));
+
   return (
     <div className="app-container">
       {/* Cabeçalho Institucional */}
@@ -181,6 +229,23 @@ export const App: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* Aviso de Modo Demonstração Pública Efêmera (se aplicável) */}
+      {health?.aviso_demo_publica && (
+        <div
+          className="alert-banner"
+          style={{ borderLeftColor: 'var(--status-info-border)', marginBottom: '24px' }}
+          role="region"
+          aria-label="Aviso de ambiente de demonstração pública"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Info size={20} color="var(--status-info-text)" aria-hidden="true" />
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', margin: 0 }}>
+              {health.aviso_demo_publica}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Faixa de Contexto de Risco e Simulação Cadastral */}
       <section className="alert-banner" aria-labelledby="banner-context-title">
@@ -322,12 +387,30 @@ export const App: React.FC = () => {
           <>
             <SummaryCards simulation={simulation} />
 
+            {/* Aviso de Snapshot Parcial em Modo Público */}
+            {isSnapshotPublicoParcial && (
+              <div
+                className="alert-banner"
+                style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '16px' }}
+                role="region"
+                aria-label="Aviso de snapshot parcial"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
+                    Exibindo apenas a primeira página retornada ({simulation.resultados.length} de {simulation.total_itens} títulos). Filtros e paginação subsequente em lote extenso requerem instância persistente com banco de dados dedicado.
+                  </span>
+                </div>
+              </div>
+            )}
+
             <ReceivablesTable
               simulation={simulation}
               onPageChange={handlePageChange}
               onFilterChange={handleFilterChange}
               currentStatus={currentStatus}
               currentReason={currentReason}
+              filtrosDesabilitados={isSnapshotPublicoParcial}
             />
 
             {/* Metadados de Auditoria e Rastreabilidade */}

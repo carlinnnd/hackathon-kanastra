@@ -4,6 +4,11 @@
 > **Acesso rápido à aplicação:** Consulte o guia de execução e arquitetura completo em **[Codex/antecipe/README.md](Codex/antecipe/README.md)**.  
 > **Documentação de Requisitos e Evidências:** Especificação oficial em `docs/ESPECIFICACAO.md`, evidências reais em `docs/EVIDENCIAS.md`, decisões em `docs/DECISOES_TECNICAS.md`, matriz de recusas em `docs/MATRIZ_RECUSAS.md` e histórico de prompts em `docs/REGISTRO_PROMPTS_CARLOS.md`.
 
+**Demonstração pública:** [hackathon-kanastra.vercel.app](https://hackathon-kanastra.vercel.app/)  
+**GitHub:** [carlinnnd/hackathon-kanastra](https://github.com/carlinnnd/hackathon-kanastra)
+
+A versão pública usa somente uma carteira de **5 títulos sintéticos**, com resultados temporários por instância serverless. **Não envie dados reais.** O estoque privado, o gabarito externo e os bancos locais não fazem parte do deploy. A execução local completa e as limitações de instalação estão documentadas no guia abaixo.
+
 ---
 
 ## 1. Resumo da Solução Implementada

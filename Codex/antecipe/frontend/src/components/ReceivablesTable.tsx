@@ -10,6 +10,7 @@ interface ReceivablesTableProps {
   onFilterChange: (status: string, reason: string) => void;
   currentStatus: string;
   currentReason: string;
+  filtrosDesabilitados?: boolean;
 }
 
 export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
@@ -18,6 +19,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
   onFilterChange,
   currentStatus,
   currentReason,
+  filtrosDesabilitados = false,
 }) => {
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
@@ -46,7 +48,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
         <div className="table-title-group">
           <h2 id="receivables-table-title">Detalhamento dos Recebíveis</h2>
           <p>
-            Resultados auditados da simulação com paginação via servidor (itens {startItem} a{' '}
+            Resultados auditados da simulação (itens {startItem} a{' '}
             {endItem} de {total.toLocaleString('pt-BR')})
           </p>
         </div>
@@ -61,6 +63,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             className="select-control"
             value={currentStatus}
             onChange={handleStatusSelect}
+            disabled={filtrosDesabilitados}
             aria-label="Filtrar por status de aprovação"
           >
             <option value="todos">Todos os status</option>
@@ -76,6 +79,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             className="select-control"
             value={currentReason}
             onChange={handleReasonSelect}
+            disabled={filtrosDesabilitados}
             aria-label="Filtrar por motivo de recusa"
           >
             <option value="todos">Todos os motivos</option>
@@ -91,6 +95,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             <option value="DUPLICIDADE_LOTE">Duplicidade no Lote [DUPLICIDADE_LOTE]</option>
             <option value="PRAZO_MINIMO">Prazo Abaixo do Mínimo [PRAZO_MINIMO]</option>
             <option value="CONCENTRACAO_MAXIMA_CEDENTE">Concentração Cedente Excedida [CONCENTRACAO_MAXIMA_CEDENTE]</option>
+            <option value="VALOR_EXCEDE_CAPACIDADE">Valor Excede Capacidade Técnica [VALOR_EXCEDE_CAPACIDADE]</option>
           </select>
         </div>
       </div>
@@ -260,7 +265,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
           <button
             type="button"
             className="btn-page"
-            disabled={page <= 1}
+            disabled={filtrosDesabilitados || page <= 1}
             onClick={() => onPageChange(page - 1)}
             aria-label="Ir para a página anterior"
           >
@@ -269,7 +274,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
           <button
             type="button"
             className="btn-page"
-            disabled={page >= total_pages}
+            disabled={filtrosDesabilitados || page >= total_pages}
             onClick={() => onPageChange(page + 1)}
             aria-label="Ir para a próxima página"
           >

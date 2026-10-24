@@ -20,3 +20,4 @@ estoque_antecipe_100k/
 .hackathon/datasets/
 resultado_esperado_100k.json
 .vercel/
+*.csv

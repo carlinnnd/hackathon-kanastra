@@ -56,6 +56,7 @@ export interface HealthResponse {
   total_registros_estoque: number;
   rule_version?: number;
   cadastro_fonte?: string;
+  aviso_demo_publica?: string;
 }
 
 export interface PortfolioSummary {

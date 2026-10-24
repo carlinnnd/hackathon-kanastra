@@ -10,6 +10,8 @@ O projeto `hackathon-kanastra` usa a entrada ASGI `app.py`, Python 3.12 e as dep
 
 O SQLite da demonstração fica em diretório temporário por instância serverless. **Resultados podem desaparecer ou não estar disponíveis em outra instância. Não envie dados reais.** Não há aquisição, cadastro oficial, persistência financeira de produção ou garantia de suporte aos volumes dos benchmarks locais. O limite configurado de requisição da demo é 4.000.000 bytes.
 
+Para lotes completos já recebidos pelo navegador (até 50 títulos na resposta atual), a interface pública filtra os resultados em memória durante a sessão, preservando decisões e totais do backend. Isso evita depender de consultas a outra instância, mas não cria persistência. Se a resposta contiver apenas a primeira página de um lote maior, filtros e navegação adicional ficam desabilitados com aviso explícito. O modo local continua consultando o servidor normalmente.
+
 O diretório raiz `public/` contém somente o bundle estático previamente validado, com Vite 8.1.5, React 19.2.8 e TypeScript 6.0.3. Esse artefato versionado permite publicar a base sem alegar instalação npm limpa do manifesto final. Após uma alteração de frontend, validar `lint` e `build` e regenerar `public/` a partir de `Codex/antecipe/frontend/dist`; não editar o JavaScript compilado manualmente.
 
 Na raiz do repositório, com o projeto Vercel correto vinculado:

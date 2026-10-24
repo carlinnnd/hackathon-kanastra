@@ -160,3 +160,16 @@ O usuário priorizou liberar a base e continuar melhorias e testes manuais depoi
 - **Escala:** medições anteriores permanecem históricas e vinculadas aos hashes das fontes daquela execução. Não houve nova medição de 100k/500k após o ajuste monetário.
 - **Git:** fontes permitidas integradas sem commit em cópia separada que já recebeu pull até `e0c5349`. Registros remotos de Elias/Pina e índice original preservados; dados privados e dependências não exportados. Nenhum push ou deploy externo realizado.
 - **Auditorias mínimas finais:** `python tests/test_kit.py` aprovou 8 testes em 1,048 s; `python scripts/check_submission.py` retornou `Auditoria do kit: OK`; `python scripts/prompt_ledger.py audit` retornou 11 prompts, 0 pendências e 0 eventos órfãos.
+
+## 6. Publicação autorizada no GitHub e na Vercel
+
+- **Autorização:** pedido literal do usuário “pode subir no github e atualizar no vercel”, registrado como `P0012`.
+- **GitHub:** `https://github.com/carlinnnd/hackathon-kanastra`, visibilidade pública já existente preservada. Pull antes do envio; commits `c30d8be` (base e adaptação de deploy) e `5502066` (manifesto Python plano) enviados à `main`, sem força ou reescrita de histórico.
+- **Segurança do pacote:** dry-run Vercel identificou 36 arquivos e framework FastAPI. Verificada ausência de `.env`, banco SQLite, estoque real, gabarito externo, `.data` e dependências locais. Verificação HTTP após publicação: `/.env.local` e `/Codex/antecipe/antecipe.db` retornaram 404.
+- **Teste dirigido:** `clean-venv/Scripts/python.exe -m pytest backend/tests/test_vercel_demo.py -q --tb=short`: 1 aprovado em 2,26 s. Verifica cinco títulos sintéticos, aviso público, upload de nove notas e totais nominais/líquidos exatos. O guard da entrada raiz também recusou banco fora do diretório temporário sem criar o arquivo.
+- **Verificações mínimas do kit:** 8 testes aprovados em 1,207 s e `check_submission.py` aprovado na cópia de integração.
+- **Falha de build investigada:** a primeira publicação não resolveu `-r Codex/antecipe/requirements.txt`. Substituído por manifesto plano contendo apenas sete dependências de runtime já existentes, com as mesmas versões. Sem introduzir dependências novas.
+- **Deploy confirmado:** `dpl_9vPG9b9ZocUdJigTZ8q1WJMfuGV2`, estado `READY`, Python 3.12, promovido a `https://hackathon-kanastra.vercel.app`.
+- **Smoke público inicial:** `/`, saúde e carteira responderam. Navegador exibiu 5 títulos sintéticos e aviso de resultados temporários; upload de nove notas confirmou 1 aprovada, 8 recusadas, nominal `30050.00` e líquido `4700.00`.
+- **Limitação reproduzida no smoke:** a consulta do filtro caiu em outra instância e retornou “Simulação não encontrada”. O SQLite temporário não oferece persistência entre instâncias. A navegação da demo para resultados completos já recebidos pelo navegador está sendo adaptada sem alterar o motor; não afirmar persistência de produção.
+- **Preservação:** índice original e registros remotos de Elias/Pina conferidos por SHA-256 após os pushes. Nenhum dado privado publicado e nenhum serviço de banco pago criado.
