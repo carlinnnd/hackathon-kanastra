@@ -1,0 +1,27 @@
+{
+  "description": "Registro local de prompts e da última resposta, sem dados externos",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$(git rev-parse --show-toplevel)/scripts/prompt_ledger.py\" hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$(git rev-parse --show-toplevel)/scripts/prompt_ledger.py\" hook",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

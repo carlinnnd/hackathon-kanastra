@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.hackathon/
+data/private/
+*.pem
+*.p12
+*.key
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+.DS_Store
