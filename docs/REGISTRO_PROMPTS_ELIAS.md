@@ -316,3 +316,47 @@ tentei fazer isso e deu erro
 - **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** Leitura visual da captura de tela anexada e atualização do registro cronológico.
 
+---
+
+## ELIAS-0013 — 2026-10-24T15:23:13-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+o repositorio quem criou foi o Carlos, como eu faço para ele aparecer nas opções da imagem
+```
+
+- **Resumo da resposta e análise técnica:**
+  Diagnóstico da tela *"Installing Vercel"* do GitHub mostrada na imagem anexada:
+  1. **Por que `carlinnnd/hackathon-kanastra` não aparece na lista do GitHub App:** O repositório remoto (`https://github.com/carlinnnd/hackathon-kanastra.git`) pertence à conta pessoal do Carlos (`carlinnnd`), na qual o usuário (`leandro-elias-fontes`) é colaborador. O GitHub só lista na janela *"Select repositories"* de instalação de Apps os repositórios cujo **dono (owner)** é a própria conta `leandro-elias-fontes`.
+  2. **Como destravar imediatamente em 10 segundos (sem depender da conta do Carlos):**
+     - **Na janela atual do print:** Basta marcar **"All repositories"** (ou selecionar o repositório listado `leandro-elias-fontes/Competitive-Programming`) e rolar até o final para clicar no botão verde **"Install"**, apenas para concluir o vínculo inicial da conta na Vercel.
+     - **Para ter o projeto na sua Vercel (ou instalar o Auth0):** Como o objetivo na sua conta da Vercel é instalar a integração **`https://vercel.com/marketplace/auth0`** e gerar as chaves `AUTH0_DOMAIN` e `AUTH0_CLIENT_ID` para testar o login, você pode:
+       - **Opção A (Mais rápida — 1 clique na Vercel):** Na tela da Vercel, usar qualquer template de 1 clique (*Clone Template*) ou selecionar *"All Projects"* ao clicar em **"Install"** em `https://vercel.com/marketplace/auth0`.
+       - **Opção B (Se quiser o `hackathon-kanastra` na sua lista do GitHub):** Abrir `https://github.com/carlinnnd/hackathon-kanastra` no navegador e clicar no botão **"Fork"** (canto superior direito). Isso cria `leandro-elias-fontes/hackathon-kanastra` na sua conta, fazendo ele aparecer imediatamente na lista da Vercel!
+
+- **O que foi feito com a resposta:** Explicação da regra de propriedade de repositórios do GitHub Apps e fornecimento do passo a passo imediato para prosseguir na janela do print e instalar o Auth0 na Vercel. Registrado o prompt `ELIAS-0013` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Verificação de `git remote -v` (`origin https://github.com/carlinnnd/hackathon-kanastra.git`) e atualização do registro cronológico de prompts.
+---
+
+## ELIAS-0014 — 2026-10-24T15:27:38-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+fiz o fork e não tem a minha branch (ou é impressão minha). como eu faço para trabalhar em cima dela? estou mexendo com isso pela primeira vez e preciso de ajuda para não cometer erros. Me ajude desde arrumar esse detalhe para aparecer na vercel, também com a parte de arrumar minha branch e com a continuação para poder subir já com as modificações que o Carlos fez na main e usando a minha branch login
+```
+
+- **Resumo da resposta e análise técnica:**
+  Explicação e configuração segura do fluxo Git entre o repositório principal do Carlos (`origin`: `https://github.com/carlinnnd/hackathon-kanastra.git`) e o Fork pessoal do Elias (`meu-fork`: `https://github.com/leandro-elias-fontes/hackathon-kanastra.git`):
+  1. **Por que a branch `login` não apareceu no Fork recém-criado:** Ao clicar em *"Create Fork"* no GitHub, a opção *"Copy the `main` branch only"* vem marcada por padrão, copiando apenas a branch `main` (enquanto a branch `login` já está salva localmente e no repositório `origin` do Carlos no commit `941d1a9`).
+  2. **Configuração automática do remote `meu-fork` e commit local:** Adicionado o remote `meu-fork` apontando para `https://github.com/leandro-elias-fontes/hackathon-kanastra.git` e commitada a atualização de `docs/REGISTRO_PROMPTS_ELIAS.md` na branch `login`.
+  3. **Comandos seguros para sincronizar com a `main` do Carlos e enviar a branch `login` para ambos (repositório do Carlos + seu Fork):**
+     - `git pull origin main --no-edit` (traz as últimas alterações que o Carlos subiu na `main` para dentro da sua branch `login`, sem conflito porque tudo do login está isolado na pasta `login/`).
+     - `git push origin login` (atualiza a sua branch `login` no repositório oficial do Carlos).
+     - `git push meu-fork login` (envia a sua branch `login` também para o seu Fork `leandro-elias-fontes/hackathon-kanastra` para aparecer no seu GitHub e na sua Vercel).
+
+- **O que foi feito com a resposta:** Adicionado o remote `meu-fork` (`https://github.com/leandro-elias-fontes/hackathon-kanastra.git`), commitado o registro `ELIAS-0014` na branch `login` e fornecido o passo a passo guiado para atualizar com a `main` do Carlos, enviar para os dois repositórios e importar na Vercel.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Inspeção de `git remote -v`, `git branch -a` e `git status -sb`.
