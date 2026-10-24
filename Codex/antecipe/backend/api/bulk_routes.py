@@ -179,6 +179,14 @@ def criar_sessao_isolada_para_conexao():
 
 @bulk_router.websocket("/api/simulations/stream")
 async def websocket_simulation_stream(websocket: WebSocket):
+    from .auth_routes import verify_access
+    from fastapi import HTTPException
+    from starlette.concurrency import run_in_threadpool
+    try:
+        await run_in_threadpool(verify_access, websocket)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
     await websocket.accept()
 
     try:

@@ -32,7 +32,7 @@ def preparar(stage):
         shutil.copy2(source, target)
     dist = root / "Codex/antecipe/frontend/dist"
     html = (dist / "index.html").read_text(encoding="utf-8")
-    for name in ["index.html"] + [m.lstrip("/") for m in re.findall(r'(?:src|href)="(/assets/[^\"]+)"', html)]:
+    for name in ["index.html", "auth/callback/index.html"] + [m.lstrip("/") for m in re.findall(r'(?:src|href)="(/assets/[^\"]+)"', html)]:
         target = stage / "public" / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(dist / name, target)

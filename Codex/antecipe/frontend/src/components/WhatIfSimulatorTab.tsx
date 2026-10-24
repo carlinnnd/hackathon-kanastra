@@ -17,6 +17,8 @@ interface WhatIfSimulatorTabProps {
   onRulesUpdated?: () => void;
 }
 
+const tipoDaApi = (tipo: string) => tipo === 'Duplicata Mercantil' ? 'Duplicata' : tipo === 'Duplicata de Servico' ? 'Duplicata de Serviço' : tipo;
+
 const TIPOS_RECEBIVEIS_OPCOES = [
   'Duplicata Mercantil',
   'Duplicata de Servico',
@@ -113,7 +115,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
       } else if (v.codigo === 'CONCENTRACAO_MAXIMA_CEDENTE') {
         v.parametros.percentual_maximo = Number(concCedenteMax);
       } else if (v.codigo === 'TIPO_RECEBIVEL') {
-        v.parametros.tipos_aceitos = tiposAceitos.length > 0 ? tiposAceitos : ['Duplicata Mercantil'];
+        v.parametros.tipos_aceitos = tiposAceitos.map(tipoDaApi);
       }
     }
     return cloned;
@@ -127,6 +129,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
   };
 
   const handleToggleTipoRecebivel = (tipo: string) => {
+    tipo = tipoDaApi(tipo);
     setTiposAceitos((prev) => {
       if (prev.includes(tipo)) {
         if (prev.length === 1) return prev; // mantém ao menos 1 tipo
@@ -535,7 +538,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {TIPOS_RECEBIVEIS_OPCOES.map((tipo) => {
-                const checked = tiposAceitos.includes(tipo);
+                const checked = tiposAceitos.includes(tipoDaApi(tipo));
                 return (
                   <button
                     key={tipo}

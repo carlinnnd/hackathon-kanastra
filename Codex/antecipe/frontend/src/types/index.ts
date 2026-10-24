@@ -217,8 +217,8 @@ export interface AuthUser {
   email: string;
   cargo: string;
   organizacao: string;
-  token: string;
-  modo_autenticacao: 'backend_jwt' | 'sessao_local_kanastra';
+  token?: string;
+  modo_autenticacao: 'backend_jwt' | 'sessao_local_kanastra' | 'auth0';
 }
 
 export interface LoginPayload {

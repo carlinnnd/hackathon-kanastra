@@ -21,13 +21,9 @@ from .application.importer import inicializar_fundos_e_regras, importar_estoque_
 from .config import settings
 from .logger import logger
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-try:
-    from login.vercel_auth_helper import auth_router
-except ImportError:
-    auth_router = None
+from .api.auth_routes import router as auth_router
+from .api.auth_routes import verify_access
+from starlette.concurrency import run_in_threadpool
 
 
 def init_db():
@@ -161,6 +157,11 @@ async def safe_logging_middleware(request: Request, call_next):
     """
     start_time = time.time()
     try:
+        if request.url.path.startswith('/api/') and not request.url.path.startswith('/api/auth/') and request.url.path != '/api/health':
+            try:
+                await run_in_threadpool(verify_access, request)
+            except HTTPException as exc:
+                return JSONResponse(status_code=exc.status_code, content={'detail': exc.detail})
         response = await call_next(request)
         duration_ms = int((time.time() - start_time) * 1000)
 

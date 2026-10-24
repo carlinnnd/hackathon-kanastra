@@ -310,10 +310,10 @@ class SimulationService:
             raise ValueError("Nenhuma regra ativa configurada.")
 
         raw_ativa = json.loads(versao_ativa.configuration_json, parse_float=Decimal)
-        dt_base = parse_data_br(settings.DATA_BASE) or date(2026, 10, 22)
+        dt_base = calendar.data_atual()
 
-        cfg_baseline = carregar_configuracao(raw_ativa, dt_base)
-        cfg_what_if = carregar_configuracao(custom_config, dt_base)
+        cfg_baseline = replace(carregar_configuracao(raw_ativa, dt_base), data_base=dt_base)
+        cfg_what_if = replace(carregar_configuracao(custom_config, dt_base), data_base=dt_base)
 
         snapshot_base = self.receivables_repo.carregar_snapshot_carteira(fundo.id, chaves_candidatas=None)
 

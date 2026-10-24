@@ -26,21 +26,10 @@ from ..application.simulation_service import SimulationService, TotalExcedeCapac
 from ..application.cadastral_service import carregar_cadastro
 from ..application.result_reporting import obter_analytics, serializar_pagina
 from ..application.exports import exportar
-import sys as _sys
-_ANTECIPE_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _gerador_sintetico():
-    """Import tardio do gerador de lotes sintéticos (opcional no deploy serverless)."""
-    if str(_ANTECIPE_ROOT) not in _sys.path:
-        _sys.path.insert(0, str(_ANTECIPE_ROOT))
-    try:
-        from scripts.generate_simulation_batches import iterar_linhas_lote_sintetico, salvar_lote_csv
-    except ImportError:
-        raise HTTPException(
-            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"codigo": "GERADOR_INDISPONIVEL", "mensagem": "Gerador de lotes sintéticos indisponível neste ambiente."}
-        )
+    from ..application.sample_batches import iterar_linhas_lote_sintetico, salvar_lote_csv
     return iterar_linhas_lote_sintetico, salvar_lote_csv
 
 
@@ -496,20 +485,23 @@ def get_portfolio_summary(db: Session = Depends(get_db)):
 @router.put("/rules/active")
 def put_update_active_rules_from_ui(
     payload: RuleVersionCreateSchema,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    x_admin_token: Optional[str] = Header(None)
 ):
     """
     Permite ao cliente configurar e ativar os parâmetros de regras diretamente pelo Frontend,
     sem precisar editar o arquivo JSON manualmente no servidor.
     Valida estritamente todos os parâmetros, registra nova versão auditável e a ativa.
     """
+    if not settings.PUBLIC_DEMO_MODE:
+        verificar_admin_token(x_admin_token)
     cfg = payload.configuration
     fundo = db.query(FundModel).filter(FundModel.nome.ilike("%ANTECIPE%")).first()
     if not fundo:
         raise HTTPException(status_code=404, detail="Fundo principal não encontrado.")
 
     try:
-        carregar_configuracao(cfg, date(2026, 10, 22))
+        carregar_configuracao(cfg, calendar.data_atual())
     except (ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -549,11 +541,13 @@ def put_update_active_rules_from_ui(
 
 
 @router.post("/rules/reset-default")
-def post_reset_default_rules_from_ui(db: Session = Depends(get_db)):
+def post_reset_default_rules_from_ui(db: Session = Depends(get_db), x_admin_token: Optional[str] = Header(None)):
     """
     Restaura os parâmetros originais do regulamento ANTECIPE FIDC (validadores_antecipe.json)
     como a versão ativa no banco de dados.
     """
+    if not settings.PUBLIC_DEMO_MODE:
+        verificar_admin_token(x_admin_token)
     fundo = db.query(FundModel).filter(FundModel.nome.ilike("%ANTECIPE%")).first()
     if not fundo:
         raise HTTPException(status_code=404, detail="Fundo principal não encontrado.")
@@ -608,15 +602,9 @@ def get_sample_batch_csv(rows: int):
             status_code=http_status.HTTP_400_BAD_REQUEST,
             detail={"codigo": "TAMANHO_LOTE_INVALIDO", "mensagem": "Tamanho de lote suportado: 100, 1000, 10000 ou 100000."}
         )
-    lote_path = Path(__file__).resolve().parent.parent.parent / "samples" / "lotes" / f"lote_simulacao_{rows}.csv"
-    if not lote_path.is_file():
-        _, salvar_lote_csv = _gerador_sintetico()
-        salvar_lote_csv(lote_path, rows, seed_tag=f"L{rows}")
-    return FileResponse(
-        path=str(lote_path),
-        filename=f"lote_simulacao_{rows}.csv",
-        media_type="text/csv"
-    )
+    iterar, _ = _gerador_sintetico()
+    return StreamingResponse(iterar(rows, seed_tag=f"L{rows}"), media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="lote_simulacao_{rows}.csv"'})
 
 
 @router.post("/simulations/sample/{rows}", response_model=SimulationResponseSchema)

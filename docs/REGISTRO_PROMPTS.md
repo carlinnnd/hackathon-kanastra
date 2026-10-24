@@ -1400,3 +1400,83 @@ Confirmada a referencia cadastral: copia identica ao CSV da raiz, com 2999 ATIVA
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0025 — 2026-10-24T20:11:52+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `e0b4fa8730cf339139630c395af86328c2226aa72ce0117ceb2e8c81f5bb22c8`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Pedido de validacao_historica cancelado pelo usuario antes da entrega. Trabalho experimental reproduziu o gabarito100554/100554 mas foi retirado do runtime e arquivado em .data/cancelled-historical-20261024. Nenhum commit, push ou deploy deste pedido. Mantida versao publicada com data atual.
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0026 — 2026-10-24T20:12:39+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `1d14afdded3464cbfce244867bf245de270b15b4d40729058536587fa0457c3e`
+- Texto do prompt (sanitizado):
+
+```text
+﻿A organizacao confirmou que as validacoes devem considerar a data atual da simulacao, nao a data historica de aquisicao nem obrigatoriamente22/10/2026. Ignore o ultimo prompt.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Confirmado: ultimo pedido desconsiderado. Alteracoes historicas retiradas; permanece a data atual da simulacao em Brasilia.4testes de data atual passaram. Nenhum deploy realizado.
+```
+
+- **O que foi feito com a resposta:** Atendida a correcao de escopo: cancelado trabalho historico e preservado contrato operacional de data atual. Nenhuma alteracao na publicacao.
+- Arquivos/artefatos: docs/REGISTRO_PROMPTS.md, docs/prompts-events.jsonl
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0027 — 2026-10-24T20:51:21+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `2d254895bef2c5b0f10fc6ac03eca913af0ad20b71bff874f5454cefd1ad9a40`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Integrar o frontend final e sistema de login existentes ao backend Antecipe. Configuracao Auth0 fornecida pelo usuario; segredo omitido deste registro por seguranca. Fazer a juncao dos componentes existentes.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0028 — 2026-10-24T20:51:22+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `bdd48a6088615915f0af096d219884a31a83a92b3fd7b8bd436967eb71bad22f`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Nao mudar o conteudo visual do frontend. Considerar o aplicativo na versao pronta para o cliente final; alterar somente integracao.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Integracao corrigida na branchlocalfix/integracao-auth-20261024, preservando JSXvisual do login e CSS.82testespassaram;frontendvalidado e fluxolocalcomAuth0simulado funcionando. Sem deploy. SSOrealrequersegredorotacionadoeconfiguracaodotenant.
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+

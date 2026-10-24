@@ -1,3 +1,4 @@
+import { beginGoogleLogin, restoreAuthSession, endAuthSession } from './auth';
 /**
  * Serviço de Integração API Antecipe
  * Configurado com endpoints canônicos sem expor PII ou segredos.
@@ -67,84 +68,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-const AUTH_STORAGE_KEY = 'kanastra_antecipe_auth_session_v1';
-
 export const api = {
-  getAuthSession(): AuthUser | null {
-    try {
-      const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw) as AuthUser;
-    } catch {
-      return null;
-    }
-  },
-
-  clearAuthSession(): void {
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch {
-      // ignora em modo privado restrito
-    }
-  },
-
+  getAuthSession(): AuthUser | null { return null; },
+  restoreAuthSession,
+  beginGoogleLogin,
+  async logout(): Promise<void> { await endAuthSession(); },
   async login(payload: LoginPayload): Promise<AuthUser> {
-    const cleanEmail = payload.email.trim().toLowerCase();
-    const cargo = payload.cargo || 'Analista de Risco FIDC';
-
-    try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: cleanEmail,
-          password: payload.password,
-          cargo,
-          name: payload.name,
-          mode: payload.mode || 'login',
-        }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as Partial<AuthUser> & { access_token?: string; name?: string };
-        const user: AuthUser = {
-          id: data.id || `usr-${Date.now()}`,
-          nome: data.nome || data.name || cleanEmail.split('@')[0].replace(/[._-]/g, ' '),
-          email: data.email || cleanEmail,
-          cargo: data.cargo || cargo,
-          organizacao: data.organizacao || 'Kanastra • ANTECIPE FIDC',
-          token: data.token || data.access_token || 'jwt-session-active',
-          modo_autenticacao: 'backend_jwt',
-        };
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-        return user;
-      }
-      if (res.status === 422 || res.status === 401) {
-        await handleResponse<AuthUser>(res);
-      }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        throw err;
-      }
-    }
-
-    const nameParts = cleanEmail
-      .split('@')[0]
-      .split(/[._-]/)
-      .filter(Boolean)
-      .map((p) => p.charAt(0).toUpperCase() + p.slice(1));
-    const displayName = payload.name?.trim() || (nameParts.length > 0 ? nameParts.join(' ') : 'Operador Kanastra');
-
-    const fallbackUser: AuthUser = {
-      id: `kanastra-op-${Date.now().toString(36)}`,
-      nome: displayName,
-      email: cleanEmail,
-      cargo,
-      organizacao: 'Kanastra • ANTECIPE FIDC',
-      token: `kanastra-sess-${btoa(cleanEmail).slice(0, 16)}`,
-      modo_autenticacao: 'sessao_local_kanastra',
-    };
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(fallbackUser));
-    return fallbackUser;
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<AuthUser>(response);
   },
 
   async getHealth(): Promise<HealthResponse> {
@@ -260,14 +194,14 @@ export const api = {
 
   async evaluateSingleReceivable(
     item: SingleReceivableInput,
-    dataBase: string = '2026-10-22'
+    dataBase?: string
   ): Promise<SimulationEnvelope> {
     const res = await fetch(`${API_BASE}/receivables/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         recebiveis: [item],
-        data_base: dataBase,
+        ...(dataBase ? { data_base: dataBase } : {}),
       }),
     });
     return handleResponse<SimulationEnvelope>(res);

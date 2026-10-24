@@ -134,7 +134,7 @@ export const App: React.FC = () => {
       api.getHealth().then(setHealth).catch(() => setHealth(null));
     }, 60_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [authUser]);
 
   const isModoPublico = Boolean(health?.aviso_demo_publica);
   const uploadCaps = health?.upload_capabilities;
@@ -271,12 +271,9 @@ export const App: React.FC = () => {
     setStreamProgress(null);
 
     try {
-      const res = await api.simulateSampleBatch(rows);
-      setLoadingProgressPct(100);
-      snapshotOriginalRef.current = res;
-      setSimulation(res);
-      setCurrentStatus('todos');
-      setCurrentReason('todos');
+      const response = await fetch(api.getSampleCsvUrl(rows));
+      if (!response.ok) throw new Error('Não foi possível carregar o lote de demonstração.');
+      await handleFileSelected(new File([await response.blob()], `lote-${rows}.csv`, { type: 'text/csv' }));
     } catch (err: unknown) {
       snapshotOriginalRef.current = null;
       setSimulation(null);
@@ -285,7 +282,6 @@ export const App: React.FC = () => {
       } else {
         setErrorMessage('Erro ao simular lote sintético.');
       }
-    } finally {
       setIsLoading(false);
     }
   };
@@ -459,9 +455,17 @@ export const App: React.FC = () => {
       ? 'Não carregado'
       : 'Offline';
 
-  const handleLogout = () => {
-    api.clearAuthSession();
-    setAuthUser(null);
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+      bulkSessionRef.current?.close();
+      bulkSessionRef.current = null;
+      snapshotOriginalRef.current = null;
+      setSimulation(null);
+      setAuthUser(null);
+    } catch {
+      setErrorMessage('Não foi possível encerrar a sessão. Tente novamente.');
+    }
   };
 
   if (!authUser) {
@@ -632,7 +636,7 @@ export const App: React.FC = () => {
             <span className="kanastra-meta-sep">•</span>
             <span>CNPJ 92.234.400/0001-80</span>
             <span className="kanastra-meta-sep">•</span>
-            <span>Data-base: {(simulation?.data_base || health?.data_base_atual)?.split('-').reverse().join('/') || '22/10/2026'}</span>
+            <span>Data-base: {(simulation?.data_base || health?.data_base_atual)?.split('-').reverse().join('/') || new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date())}</span>
             <span className="kanastra-meta-sep">•</span>
             <span>Regra {versaoRegraReal}</span>
             <span className="kanastra-meta-sep">•</span>

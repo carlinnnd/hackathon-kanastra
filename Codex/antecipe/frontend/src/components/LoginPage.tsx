@@ -35,6 +35,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   useEffect(() => {
     let active = true;
+    api.restoreAuthSession().then(user => { if (active && user) onLoginSuccess(user); }).catch(error => { if (active) setErrorMsg(error.message); });
     fetch('/api/auth/config')
       .then((res) => (res.ok ? res.json() : null))
       .then((cfg) => {
@@ -83,19 +84,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleGoogleAuth0Redirect = () => {
-    if (!auth0Config.configured || !auth0Config.domain || !auth0Config.clientId) {
-      setErrorMsg('Autenticação externa OAuth2 não configurada neste ambiente; utilize seu e-mail e senha abaixo.');
-      return;
-    }
-    const redirectUri = `${window.location.origin}${window.location.pathname}`;
-    const url = new URL(`https://${auth0Config.domain}/authorize`);
-    url.searchParams.set('response_type', 'code');
-    url.searchParams.set('client_id', auth0Config.clientId);
-    url.searchParams.set('redirect_uri', redirectUri);
-    url.searchParams.set('scope', 'openid profile email');
-    url.searchParams.set('connection', 'google-oauth2');
-    window.location.assign(url.toString());
+  const handleGoogleAuth0Redirect = async () => {
+    try { await api.beginGoogleLogin(); }
+    catch (error) { setErrorMsg(error instanceof Error ? error.message : 'Não foi possível iniciar o login.'); }
   };
 
   return (
