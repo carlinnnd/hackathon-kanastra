@@ -110,12 +110,11 @@ class ValidadorSituacaoCadastralSacado(ValidadorStrategy):
             situacao = str(situacao_informada).upper()
 
         if situacao == SituacaoCadastral.NAO_VERIFICADA.value:
-            if SituacaoCadastral.NAO_VERIFICADA.value not in situacoes_aceitas:
-                return MotivoRecusa(
-                    codigo=self.codigo,
-                    mensagem="Situação cadastral do sacado não foi verificada na base de dados oficial.",
-                    dados={"situacao_encontrada": situacao, "situacoes_aceitas": situacoes_aceitas}
-                )
+            return MotivoRecusa(
+                codigo="PENDENTE_VERIFICACAO",
+                mensagem="Situação cadastral não confirmada. Consulte uma fonte cadastral antes de aprovar este título.",
+                dados={"situacao_encontrada": situacao, "validador": self.codigo}
+            )
         elif situacao not in situacoes_aceitas:
             return MotivoRecusa(
                 codigo=self.codigo,

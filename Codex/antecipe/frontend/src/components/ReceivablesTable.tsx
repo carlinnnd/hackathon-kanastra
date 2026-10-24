@@ -67,8 +67,11 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             aria-label="Filtrar por status de aprovação"
           >
             <option value="todos">Todos os status</option>
-            <option value="aprovado">Apenas Aprovados</option>
-            <option value="recusado">Apenas Recusados</option>
+            <option value="APROVADA">Aprovadas</option>
+            <option value="RECUSADA">Recusadas</option>
+            <option value="PENDENTE_VERIFICACAO">Pendentes de verificação</option>
+            <option value="ERRO_DADOS">Erros de dados</option>
+            <option value="CARTEIRA_HISTORICA">Carteira histórica</option>
           </select>
 
           <label htmlFor="filter-reason" className="sr-only">
@@ -88,6 +91,7 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             <option value="PRAZO_MAXIMO">Prazo Acima do Limite [PRAZO_MAXIMO]</option>
             <option value="NAO_VENCIDA">Título Já Vencido [NAO_VENCIDA]</option>
             <option value="SITUACAO_CADASTRAL_SACADO">Situação Cadastral Incompatível [SITUACAO_CADASTRAL_SACADO]</option>
+            <option value="PENDENTE_VERIFICACAO">Cadastro não confirmado [PENDENTE_VERIFICACAO]</option>
             <option value="TIPO_RECEBIVEL">Tipo Não Aceito [TIPO_RECEBIVEL]</option>
             <option value="CNPJ_SACADO_VALIDO">CNPJ do Sacado Inválido [CNPJ_SACADO_VALIDO]</option>
             <option value="CONCENTRACAO_MAXIMA_SACADO">Concentração Raiz Excedida [CONCENTRACAO_MAXIMA_SACADO]</option>
@@ -164,7 +168,9 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
                         {item.aprovado ? (
                           <span className="badge approved">APROVADO</span>
                         ) : (
-                          <span className="badge rejected">RECUSADO</span>
+                          <span className={`badge ${item.status === 'RECUSADA' || !item.status ? 'rejected' : 'pending'}`}>
+                            {item.status === 'PENDENTE_VERIFICACAO' ? 'PENDENTE' : item.status === 'ERRO_DADOS' ? 'ERRO DE DADOS' : item.status === 'CARTEIRA_HISTORICA' ? 'HISTÓRICO' : 'RECUSADA'}
+                          </span>
                         )}
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
@@ -184,6 +190,8 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
                           <span style={{ color: 'var(--status-success-text)', fontSize: '0.8125rem' }}>
                             Conforme política do fundo
                           </span>
+                        ) : item.status === 'CARTEIRA_HISTORICA' ? (
+                          <span style={{color: 'var(--text-secondary)', fontSize: '0.8125rem'}}>Estoque histórico; sem decisão de antecipação</span>
                         ) : explicacaoPrimeiro && primeiroMotivo ? (
                           <span
                             style={{

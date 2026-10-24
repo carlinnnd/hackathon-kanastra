@@ -175,8 +175,9 @@ class TestDomainEngineCompleto(unittest.TestCase):
             snapshot_historico=SnapshotCarteira(total_nominal=Decimal("100000.00"))
         )
         self.assertFalse(res.aprovado)
-        self.assertEqual(res.motivos[0].codigo, "SITUACAO_CADASTRAL_SACADO")
-        self.assertIn("não foi verificada", res.motivos[0].mensagem)
+        self.assertEqual(res.motivos[0].codigo, "PENDENTE_VERIFICACAO")
+        self.assertEqual(res.status, "PENDENTE_VERIFICACAO")
+        self.assertIn("não confirmada", res.motivos[0].mensagem)
 
     # 7. Situação cadastral inativa
     def test_07_situacao_cadastral_inativa(self):

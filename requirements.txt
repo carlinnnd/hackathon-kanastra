@@ -1,7 +1,9 @@
 fastapi==0.115.6
+reportlab==4.4.3
 uvicorn==0.34.0
 pydantic==2.10.4
 pydantic-settings==2.7.1
 sqlalchemy==2.0.36
 python-multipart==0.0.20
 python-dotenv==1.0.1
+websockets==17.3

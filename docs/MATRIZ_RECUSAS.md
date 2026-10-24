@@ -41,3 +41,13 @@
 | **`FORMATO_INVALIDO_VALOR`** | - | Valor nominal com caracteres inválidos ou frações além de centavos | Formato do Valor Nominal Inválido | Informe valores com separador decimal correto e precisão máxima de 2 casas decimais (ex: 1500,00). Frações adicionais são rejeitadas (ADR-008). |
 | **`CAMPOS_OBRIGATORIOS_VAZIOS`** | - | Linha com campos essenciais em branco | Campos Obrigatórios em Branco | Preencha todas as colunas obrigatórias da planilha antes do envio. |
 | **`LINHA_MALFORMADA_COLUNAS`** | - | Quantidade de colunas da linha difere de 11 | Linha com Número Divergente de Colunas | Verifique se não há delimitadores de ponto e vírgula extras ou aspas não fechadas na linha. |
+# Revisão cadastral — 24/10/2026
+
+| Código / situação | Condição | Mensagem e próximo passo | Evidência |
+| --- | --- | --- | --- |
+| PENDENTE_VERIFICACAO | Validador cadastral ativo, CNPJ sem confirmação; nenhuma outra violação confirmada | Situação cadastral não confirmada. Consulte uma fonte cadastral antes de aprovar este título. | `backend/tests/test_result_reporting.py`; filtro e contador conferidos no navegador. |
+| RECUSADA com pendência cadastral entre motivos | Outra regra tem violação confirmada | Exibir todos os motivos; corrigir a violação e confirmar cadastro antes de nova avaliação. | Teste de cheque/prazo com cadastro ausente e teste HTTP de CNPJ inválido. |
+| ERRO_DADOS | Campo ausente, parsing inválido ou capacidade excedida | Indicar o campo e corrigir o arquivo; não precificar como zero. | Regressão de valor malformado e CSV com valores financeiros vazios. |
+| CARTEIRA_HISTORICA | Usuário escolheu análise de estoque | Estoque histórico; sem decisão de antecipação. | Navegador: nove títulos históricos, zero novas aprovações/recusas, líquido não aplicável. |
+
+Esta revisão substitui qualquer tratamento anterior de cadastro indisponível como recusa definitiva por si só. Fontes divergentes e limites estão documentados em `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.

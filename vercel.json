@@ -3,7 +3,7 @@
   "framework": "fastapi",
   "functions": {
     "app.py": {
-      "maxDuration": 60,
+      "maxDuration": 300,
       "excludeFiles": "{.agents/**,.claude/**,.codex/**,agents/**,docs/**,research/**,tests/**,scripts/**,Codex/antecipe/backend/tests/**,Codex/antecipe/qa/**,Codex/antecipe/benchmarks/**,Codex/antecipe/frontend/**,**/__pycache__/**}"
     }
   },

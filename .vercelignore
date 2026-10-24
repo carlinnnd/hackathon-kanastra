@@ -13,6 +13,8 @@
 !Codex/antecipe/backend/**
 !Codex/antecipe/samples
 !Codex/antecipe/samples/demo.csv
+!Codex/antecipe/data
+!Codex/antecipe/data/cnpj_situacao_mock.csv
 **/__pycache__/**
 **/tests/**
 **/.data/**
@@ -21,3 +23,8 @@
 **/.env*
 **/*.db
 **/*.db-*
+**/__pycache__
+**/tests
+**/.data
+**/.venv
+**/node_modules

@@ -1160,3 +1160,83 @@ Base publicada em https://github.com/carlinnnd/hackathon-kanastra e https://hack
 - Arquivos/artefatos: app.py requirements.txt .python-version vercel.json .vercelignore .gitignore public Codex/antecipe/backend/vercel_app.py Codex/antecipe/backend/config.py Codex/antecipe/backend/api/routes.py Codex/antecipe/backend/tests/test_vercel_demo.py Codex/antecipe/frontend Codex/antecipe/README.md README.md docs/EVIDENCIAS.md docs/prompts-events.jsonl
 - Verificação: Wrapper smoke dirigido aprovado em 2.26s. Guard recusou banco fora de TMP sem cria-lo. Kit 8 testes aprovado em 1.207s. Frontend test lint build aprovado com build 2.42s apos corrigir carregamento de helper no runner. Deploy dpl_Cj1UA5ksJt3pAgFLGT3uM8CasH27 READY. HTTP publico health e carteira OK. Arquivos privados .env.local e antecipe.db retornaram404. Navegador bundle index-CnKj22BH.js exibiu9notas1aprovado8recusados nominal30050.00 liquido4700.00. Filtro8restauracao9 semalertas e semGETporID. Instalacao limpa npm e persistencia entre instancias continuam limitacoes documentadas.
 
+## P0013 — 2026-10-24T16:40:22+00:00 — traycer-coordenador
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `33ed00a432e2c70f3ee41bf45725e6cabf962796db3bcc4cd16b95479642bfc9`
+- Texto do prompt (sanitizado):
+
+```text
+ao tentar o registro de 100 mil linhas ele retorna Arquivo excede o limite máximo permitido para envio. e status 413 em api/simulations {"detail":{"codigo":"HTTP_405","mensagem":"Method Not Allowed"}} sendo que o programa deveria aguentar csv de até 1mm registros
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Implementado e publicado transporte WebSocket para arquivos grandes e preservacao do Allow no 405; acompanhamento encerrado nesta interacao com pendencia explicita de volume, pois P0014 priorizou deploy e adiou benchmarks. Nao afirmar capacidade comprovada de 1M.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0014 — 2026-10-24T17:36:44+00:00 — traycer-coordenador
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `dacf2740e394d712540b40db9ac49b1e4b7941fa38063b6751afbc9520dc3596`
+- Texto do prompt (sanitizado):
+
+```text
+ignore testes especificos e acelere o processo para deploy.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Publicada versao atual diretamente na Vercel a pedido do usuario, adiando novas baterias especificas e benchmarks; sem commit ou push nesta interacao.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0015 — 2026-10-24T17:53:53+00:00 — traycer-coordenador-resumo-manual
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `fc183944ceee3a7fca24cd4715260726babdcca0ffee2b3c6ea33629fb1b9b84`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0016 — 2026-10-24T18:02:37+00:00 — traycer-coordenador
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `9befeca8267205ddb5d64d904e3ce9434055c1ae5394cfc4283e3d2f14898b95`
+- Texto do prompt (sanitizado):
+
+```text
+`resultado_esperado_100k.json` lembre que temos o gabarito dos 100k
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Conferido gabarito integral linha/documento e decis?es/motivos com cadastro mock e motor atual. Criados relat?rio agregado e diverg?ncias privadas; conflitos expl?citos sem inferir cadastro de r?tulos e sem for?ar correspond?ncia.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+

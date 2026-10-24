@@ -148,6 +148,22 @@ class SimulationItemModel(Base):
     )
 
 
+class SimulationItemDetailModel(Base):
+    """Expansão aditiva: preserva tabelas e resultados anteriores sem ALTER ou backfill."""
+    __tablename__ = "simulation_item_details"
+    simulation_id = Column(String(36), ForeignKey("simulations.id", ondelete="CASCADE"), primary_key=True)
+    linha = Column(Integer, primary_key=True)
+    status = Column(String(40), nullable=False, index=True)
+    payload_json = Column(Text, nullable=False)
+
+
+class SimulationReportModel(Base):
+    __tablename__ = "simulation_reports"
+    simulation_id = Column(String(36), ForeignKey("simulations.id", ondelete="CASCADE"), primary_key=True)
+    tipo_analise = Column(String(30), nullable=False)
+    analytics_json = Column(Text, nullable=False)
+
+
 class AuditEventModel(Base):
     """Auditoria de eventos do sistema (ex: ativação de regras)."""
     __tablename__ = "audit_events"

@@ -79,8 +79,9 @@ O arquivo oficial contém 9 validadores (7 ativos e 2 inativos), com seus códig
 ### 3.2. Verificação Cadastral (Premissa Documentada)
 - Validação matemática de CNPJ não atesta situação cadastral na Receita Federal.
 - O motor classifica a situação em: `ATIVA`, `INATIVA` e `NAO_VERIFICADA`.
-- Na ausência de consulta oficial externa, a política padrão do fundo classifica como `NAO_VERIFICADA` e recusa a operação.
+- Revisão de 24/10/2026: ausência de confirmação cadastral gera `NAO_VERIFICADA`; o título fica `PENDENTE_VERIFICACAO` quando não há outra violação confirmada. Uma violação confirmada mantém `RECUSADA`, preservando todos os motivos. Dados malformados ficam `ERRO_DADOS`.
 - Para testes e demonstrações, é utilizada uma tabela sintética explicitamente identificada como **SIMULADA** (ativada via `ENABLE_DEMO_CADASTRO=true`).
+- O arquivo fornecido `cnpj_situacao_mock.csv` é a fonte simulada configurada. Análise de carteira histórica é descritiva, separada de novas operações. Contrato atualizado, limites e divergências com o gabarito: `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.
 
 ### 3.3. Concentração por Sacado e Regra de Limite
 - Agrupamento pela **raiz do CNPJ** (8 primeiros dígitos normalizados).
@@ -133,3 +134,11 @@ O arquivo oficial contém 9 validadores (7 ativos e 2 inativos), com seus códig
 2. **Correção:** 100% de conformidade com os testes automatizados cobrindo os 20 casos de negócio e suíte R3 de segurança.
 3. **Escalabilidade:** Throughput comprovado acima de 10.000 linhas/s com pico de memória Win32 de ~36,8 MB em 100k e ~92,5 MB em 500k.
 4. **Governança:** Trilha de auditoria integral e sanitizada registrada em `docs/REGISTRO_PROMPTS_CARLOS.md`.
+
+## 7. Requisito posterior de capacidade — P0013
+
+O usuário exige processamento de CSV com até **1.000.000 de registros** e reportou 413 no envio de 100 mil. O estoque conhecido tem 100.554 registros e 20.276.472 bytes. A publicação anterior de demonstração aceitava apenas 4.000.000 bytes por POST; esse limite não demonstrava a capacidade de volume pedida.
+
+Na Vercel, o corpo de uma requisição HTTP tem limite próprio de 4,5 MB. A correção em homologação separa limite do transporte HTTP de capacidade do processamento: arquivos grandes são enviados em frames por uma única conexão WebSocket FastAPI, reutilizando o motor e a transação. O teto técnico configurado é 1.000.000 de registros e 512 MiB, sem alterar regras financeiras. Na demonstração pública, o banco da sessão é isolado e efêmero; não há promessa de persistência entre conexões.
+
+O caminho HTTP `POST /api/simulations` permanece para lotes menores. Abrir esse caminho por GET deve responder 405 com `Allow: POST`, não ser interpretado como falha de avaliação de um CSV. O suporte efetivo de 100 mil, 500 mil e 1 milhão exige medição real no mesmo ambiente, verificação das decisões persistidas, contagens e totais; não deve ser declarado concluído apenas pela configuração desses limites.

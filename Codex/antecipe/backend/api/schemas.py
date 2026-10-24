@@ -8,7 +8,7 @@ Garante:
 from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class MotivoRecusaSchema(BaseModel):
@@ -18,6 +18,7 @@ class MotivoRecusaSchema(BaseModel):
 
 
 class ItemResultadoSchema(BaseModel):
+    model_config = ConfigDict(extra="allow")
     linha: int
     documento: str
     sacado: str
@@ -41,6 +42,7 @@ class AuditoriaSchema(BaseModel):
 
 
 class SimulationResponseSchema(BaseModel):
+    model_config = ConfigDict(extra="allow")
     simulation_id: str
     rule_version: int
     rule_version_id: int
