@@ -95,6 +95,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="kanastra-login-wrapper">
+      {/* 1. Vídeo de fundo em tela cheia (z-0) */}
+      <video
+        className="kanastra-login-video"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        src="/video_fundo_login.mp4"
+      />
+
+      {/* 2. Camada intermediária de contraste suave (z-10) */}
+      <div className="kanastra-login-video-overlay" aria-hidden="true" />
+
+      {/* 3. Card de login transparente com blur (z-20) */}
       <div className="kanastra-login-grid">
         {/* Painel Institucional (Esquerda) */}
         <section
@@ -141,7 +156,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
 
           <div className="kanastra-hero-footer">
-            <span>ANTECIPE FIDC • CNPJ 92.234.400/0001-80</span>
+            <span>ANTECIPE FIDC</span>
             <span>Antecipe Backoffice</span>
           </div>
         </section>

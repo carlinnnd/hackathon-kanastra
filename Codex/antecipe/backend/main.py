@@ -212,3 +212,20 @@ if auth_router is not None:
     app.include_router(auth_router)
 
 app.include_router(policy_router)
+
+
+@app.get("/video_fundo_login.mp4")
+def serve_login_background_video():
+    from fastapi.responses import FileResponse
+    repo_root = Path(__file__).resolve().parents[3]
+    codex_root = Path(__file__).resolve().parents[1]
+    candidates = [
+        repo_root / "public" / "video_fundo_login.mp4",
+        repo_root / "video_fundo_login.mp4",
+        codex_root / "public" / "video_fundo_login.mp4",
+        codex_root / "frontend" / "public" / "video_fundo_login.mp4",
+    ]
+    for cand in candidates:
+        if cand.is_file():
+            return FileResponse(str(cand), media_type="video/mp4")
+    raise HTTPException(status_code=404, detail="Vídeo não encontrado")
