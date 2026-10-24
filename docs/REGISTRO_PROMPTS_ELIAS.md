@@ -477,3 +477,24 @@ eu puxei as coisas novas que o Carlos fez então? só confirmando antes de testa
 - **O que foi feito com a resposta:** Verificado o estado de `origin/main` (`14133ca`), fornecida a linha exata com `git merge origin/main --no-edit` para efetivar a junção das mudanças do Carlos na branch `login` e registrado o prompt `ELIAS-0019` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
 - **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** Inspeção de `git log --oneline -n 8`, `git log origin/main --oneline -n 5` e `git show 14133ca:.vercelignore`.
+---
+
+## ELIAS-0020 — 2026-10-24T15:55:33-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+cadê todas coisas implementadas? login, cadê tudo? eu não estou entendendo, me dá um help ai, porque me deixaram responsável com essa parte e o site não ta tendo o login e nem nada das funcionalidades, tem que fazer a minha main ficar com tudo atualizado? tanto o login quanto a minha main e a do carlos, coloque tudo na minha main (na minha main)
+```
+
+- **Resumo da resposta e análise técnica:**
+  Integração direta e completa do **Portal do Empresário (Login Gate + Crachá de Sessão no Cabeçalho)** na página principal do site (`public/index.html` e `app.py`) junto com todas as funcionalidades mais recentes da `main` do Carlos (`14133ca`):
+  1. **Por que o link anterior da Vercel abriu sem o Login:** Até então, como havíamos mantido os arquivos preexistentes intocados, o `public/index.html` abria direto o painel sem passar pelo Login Gate, e a URL aberta no print (`hackathon-kanastra-lzc6542c1-elias-4953.vercel.app`) era o snapshot do 1º deploy (antes do `git merge origin/main`).
+  2. **Integração Completa Aplicada na Aplicação Principal (`public/index.html`, `public/assets/antecipe-auth-gate.js`, `app.py` e `.vercelignore`):**
+     - Criado `public/assets/antecipe-auth-gate.js` e injetado em `public/index.html`: ao abrir a página principal (`/`), enquanto o usuário não estiver autenticado em `sessionStorage["antecipe_entrepreneur_session_v1"]`, é exibido o **Portal do Empresário — FIDC** (com botão **Continuar com Google / Gmail** via Auth0 da Vercel, abas **Entrar na Conta** e **Criar Conta** com hash `SHA-256`, e **Acesso Rápido — Empresário Demo**).
+     - Assim que o empresário faz login, o Login Gate libera automaticamente o painel principal do Antecipe (com todas as novidades do Carlos: seletor *"O que este CSV representa?"*, simulação de novas notas e carteira histórica de 100k, gráficos `ResultAnalytics` e exportação CSV/PDF/Violações) e insere no cabeçalho superior (`.header-meta`) o **Crachá do Empresário Logado** com botão **"Sair"**.
+     - Conectado `login/vercel_auth_helper.py` diretamente em `app.py` e liberado `!login/**` no `.vercelignore`, permitindo que o backend na Vercel leia automaticamente `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` e `AUTH0_CLIENT_SECRET` da integração `client-antecipe`.
+
+- **O que foi feito com a resposta:** Criado `public/assets/antecipe-auth-gate.js`, atualizados `public/index.html`, `public/auth/callback/index.html`, `app.py` e `.vercelignore`, validado `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e registrado o prompt `ELIAS-0020` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `public/assets/antecipe-auth-gate.js`, `public/index.html`, `public/auth/callback/index.html`, `app.py`, `.vercelignore`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Execução de `python3 -m py_compile app.py login/vercel_auth_helper.py` (exit 0) e `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).

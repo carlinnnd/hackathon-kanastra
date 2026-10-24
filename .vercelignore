@@ -6,6 +6,8 @@
 !validadores_antecipe.json
 !public
 !public/**
+!login
+!login/**
 !Codex
 !Codex/antecipe
 !Codex/antecipe/requirements.txt
