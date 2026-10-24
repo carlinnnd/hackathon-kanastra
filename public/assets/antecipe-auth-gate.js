@@ -13,6 +13,8 @@
   let currentTab = 'login';
   let serverAuth0Config = null;
   let showManualConfig = false;
+  const DEFAULT_AUTH0_DOMAIN = 'icfg-tgbfbuggaka0zx3pums3rxyf.us.auth0.com';
+  const DEFAULT_AUTH0_CLIENT_ID = 'a5iUGdRoPDtnxF2a1pH5rpwabTsPSWvF';
 
   function getAuth0Config() {
     try {
@@ -28,6 +30,18 @@
     } catch (e) {}
     if (serverAuth0Config && serverAuth0Config.domain && serverAuth0Config.clientId) {
       return serverAuth0Config;
+    }
+    if (
+      DEFAULT_AUTH0_DOMAIN &&
+      !DEFAULT_AUTH0_DOMAIN.startsWith('__') &&
+      DEFAULT_AUTH0_CLIENT_ID &&
+      !DEFAULT_AUTH0_CLIENT_ID.startsWith('__')
+    ) {
+      return {
+        domain: DEFAULT_AUTH0_DOMAIN,
+        clientId: DEFAULT_AUTH0_CLIENT_ID,
+        useServerExchange: false,
+      };
     }
     return null;
   }
