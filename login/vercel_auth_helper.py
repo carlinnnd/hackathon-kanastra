@@ -2,23 +2,15 @@
 Adaptador FastAPI para a integração oficial Vercel Marketplace Auth0
 (https://vercel.com/marketplace/auth0).
 
-Por que este arquivo existe na pasta `login/`:
-1. Quando você instala o Auth0 pelo Marketplace da Vercel, a Vercel cria automaticamente
-   as variáveis de ambiente:
-   - AUTH0_DOMAIN ou AUTH0_ISSUER_BASE_URL
-   - AUTH0_CLIENT_ID
-   - AUTH0_CLIENT_SECRET (quando provisionado como Regular Web Application pela Vercel)
-2. Este router lê essas variáveis diretamente do ambiente da Vercel (sem precisar renomear para VITE_*)
-   e faz a troca segura do código OAuth2 (code -> userinfo) no servidor usando apenas a biblioteca
-   padrão do Python (urllib), sem expor o AUTH0_CLIENT_SECRET no navegador e sem registrar PII em logs.
-
-Como plugar no FastAPI (`Codex/antecipe/backend/main.py`):
-    from login.vercel_auth_helper import auth_router
-    app.include_router(auth_router)
+Lê as variáveis de ambiente da Vercel (ou do arquivo local `login/.env` / `.env` ignorado pelo Git):
+- AUTH0_DOMAIN ou AUTH0_ISSUER_BASE_URL
+- AUTH0_CLIENT_ID
+- AUTH0_CLIENT_SECRET
 """
 import hashlib
 import json
 import os
+from pathlib import Path
 import re
 import urllib.error
 import urllib.parse
@@ -28,14 +20,47 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 auth_router = APIRouter(prefix="/api/auth", tags=["Auth0 Vercel Login"])
+router = auth_router
 
 EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
 
 
 class AuthCodeExchangeRequest(BaseModel):
     code: str
-    redirect_uri: str
+    redirect_uri: Optional[str] = None
+    redirectUri: Optional[str] = None
     code_verifier: Optional[str] = None
+    codeVerifier: Optional[str] = None
+
+
+def _load_local_env_file() -> dict:
+    """Lê variáveis de `login/.env` ou `.env` local caso não estejam no os.environ."""
+    values = {}
+    root_dir = Path(__file__).resolve().parent.parent
+    candidates = [
+        Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parent / ".env.local",
+        root_dir / ".env",
+        root_dir / ".env.local",
+    ]
+    for env_path in candidates:
+        if env_path.is_file():
+            try:
+                for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+                    line = raw_line.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, val = line.split("=", 1)
+                    clean_val = val.strip().strip('"').strip("'")
+                    if clean_val and not clean_val.startswith("*"):
+                        values.setdefault(key.strip(), clean_val)
+            except Exception:
+                pass
+    return values
+
+
+def _get_env_var(name: str, local_env: dict) -> str:
+    return (os.environ.get(name) or local_env.get(name) or "").strip().strip('"').strip("'")
 
 
 class CredentialsLoginRequest(BaseModel):
@@ -90,24 +115,25 @@ def login_with_credentials(payload: CredentialsLoginRequest):
 
 
 def _get_vercel_auth0_settings() -> dict:
+    local_env = _load_local_env_file()
     raw_domain = (
-        os.environ.get("AUTH0_DOMAIN")
-        or os.environ.get("AUTH0_ISSUER_BASE_URL")
-        or os.environ.get("NEXT_PUBLIC_AUTH0_DOMAIN")
-        or os.environ.get("VITE_AUTH0_DOMAIN")
-        or ""
+        _get_env_var("AUTH0_DOMAIN", local_env)
+        or _get_env_var("AUTH0_ISSUER_BASE_URL", local_env)
+        or _get_env_var("NEXT_PUBLIC_AUTH0_DOMAIN", local_env)
+        or _get_env_var("VITE_AUTH0_DOMAIN", local_env)
     )
-    domain = raw_domain.strip().replace("https://", "").replace("http://", "").rstrip("/")
+    domain = raw_domain.replace("https://", "").replace("http://", "").rstrip("/")
     client_id = (
-        os.environ.get("AUTH0_CLIENT_ID")
-        or os.environ.get("NEXT_PUBLIC_AUTH0_CLIENT_ID")
-        or os.environ.get("VITE_AUTH0_CLIENT_ID")
-        or ""
-    ).strip()
-    client_secret = (os.environ.get("AUTH0_CLIENT_SECRET") or "").strip()
+        _get_env_var("AUTH0_CLIENT_ID", local_env)
+        or _get_env_var("NEXT_PUBLIC_AUTH0_CLIENT_ID", local_env)
+        or _get_env_var("VITE_AUTH0_CLIENT_ID", local_env)
+    )
+    client_secret = _get_env_var("AUTH0_CLIENT_SECRET", local_env)
 
+    configured = bool(domain and client_id)
     return {
-        "configured": bool(domain and client_id),
+        "configured": configured,
+        "enabled": configured,
         "domain": domain,
         "client_id": client_id,
         "has_client_secret": bool(client_secret),
@@ -119,23 +145,22 @@ def _get_vercel_auth0_settings() -> dict:
 def get_public_auth0_config():
     """
     Retorna apenas os parâmetros públicos (domain e clientId) injetados pela
-    integração Vercel Marketplace Auth0, permitindo que o Frontend funcione
-    automaticamente sem precisar duplicar variáveis com prefixo VITE_.
+    integração Vercel Marketplace Auth0 ou pelo arquivo local `login/.env`.
     """
     cfg = _get_vercel_auth0_settings()
     return {
         "configured": cfg["configured"],
+        "enabled": cfg["enabled"],
         "domain": cfg["domain"] if cfg["configured"] else None,
         "clientId": cfg["client_id"] if cfg["configured"] else None,
+        "useServerExchange": cfg["has_client_secret"],
     }
 
 
 @auth_router.post("/exchange")
 def exchange_auth0_code(payload: AuthCodeExchangeRequest):
     """
-    Troca o authorization_code pelo perfil do usuário no Auth0.
-    Suporta tanto aplicações 'Regular Web App' criadas automaticamente pelo Marketplace
-    da Vercel (que exigem AUTH0_CLIENT_SECRET) quanto 'Single Page Applications' (PKCE).
+    Troca o authorization_code pelo perfil do usuário no Auth0 no backend.
     """
     cfg = _get_vercel_auth0_settings()
     if not cfg["configured"]:
@@ -143,20 +168,23 @@ def exchange_auth0_code(payload: AuthCodeExchangeRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "codigo": "AUTH0_NAO_CONFIGURADO",
-                "mensagem": "Integração Auth0 ainda não configurada nas variáveis de ambiente da Vercel.",
+                "mensagem": "Integração Auth0 ainda não configurada nas variáveis de ambiente.",
             },
         )
+
+    redirect_uri = payload.redirect_uri or payload.redirectUri or ""
+    code_verifier = payload.code_verifier or payload.codeVerifier
 
     token_body = {
         "grant_type": "authorization_code",
         "client_id": cfg["client_id"],
         "code": payload.code,
-        "redirect_uri": payload.redirect_uri,
+        "redirect_uri": redirect_uri,
     }
     if cfg["client_secret"]:
         token_body["client_secret"] = cfg["client_secret"]
-    if payload.code_verifier:
-        token_body["code_verifier"] = payload.code_verifier
+    if code_verifier:
+        token_body["code_verifier"] = code_verifier
 
     token_req = urllib.request.Request(
         url=f"https://{cfg['domain']}/oauth/token",
@@ -214,11 +242,15 @@ def exchange_auth0_code(payload: AuthCodeExchangeRequest):
         )
 
     sub = str(profile.get("sub") or "")
-    return {
+    user_payload = {
         "id": sub or "auth0-user",
         "name": profile.get("name") or profile.get("email") or "Empresário Cedente",
         "email": profile.get("email") or "cedente@empresa.com.br",
         "pictureUrl": profile.get("picture"),
         "provider": "google" if "google" in sub.lower() else "auth0",
     }
-
+    return {
+        "ok": True,
+        "user": user_payload,
+        **user_payload,
+    }
