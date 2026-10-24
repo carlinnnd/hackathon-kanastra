@@ -106,7 +106,23 @@
   }
 
   async function startAuth0Redirect(screenHint, connection) {
-    const cfg = getAuth0Config();
+    let cfg = getAuth0Config();
+    if (!cfg) {
+      try {
+        const cfgRes = await fetch('/api/auth/config');
+        if (cfgRes.ok) {
+          const data = await cfgRes.json();
+          if (data && (data.enabled || data.configured) && data.domain && data.clientId) {
+            serverAuth0Config = {
+              domain: data.domain,
+              clientId: data.clientId,
+              useServerExchange: Boolean(data.useServerExchange),
+            };
+            cfg = serverAuth0Config;
+          }
+        }
+      } catch (e) {}
+    }
     if (!cfg) {
       showManualConfig = true;
       const box = document.getElementById('ag-manual-auth0-box');

@@ -498,3 +498,114 @@ cadê todas coisas implementadas? login, cadê tudo? eu não estou entendendo, m
 - **O que foi feito com a resposta:** Criado `public/assets/antecipe-auth-gate.js`, atualizados `public/index.html`, `public/auth/callback/index.html`, `app.py` e `.vercelignore`, validado `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e registrado o prompt `ELIAS-0020` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
 - **Arquivos/artefatos:** `public/assets/antecipe-auth-gate.js`, `public/index.html`, `public/auth/callback/index.html`, `app.py`, `.vercelignore`, `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** Execução de `python3 -m py_compile app.py login/vercel_auth_helper.py` (exit 0) e `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).
+---
+
+## ELIAS-0021 — 2026-10-24T16:10:27-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+quando eu testo o login ou criar conta, ainda aparece esse erro
+```
+
+- **Resumo da resposta e análise técnica:**
+  Análise da captura de tela de `https://hackathon-kanastra-r3fwx3fk8-elias-4953.vercel.app` mostrando a tela do Portal do Empresário no ar e o aviso: *"Para entrar com Google, conecte o projeto no painel Auth0 da Vercel ("Connect to Project") ou cole abaixo o AUTH0_DOMAIN e AUTH0_CLIENT_ID do seu client-antecipe."*:
+  1. **Por que o aviso apareceu ao clicar em "Continuar com Google (Gmail)":** Porque naquele 1º print do `client-antecipe` na Vercel as chaves `AUTH0_DOMAIN` e `AUTH0_CLIENT_ID` ainda não foram coladas nos 2 campos ali embaixo (onde está o cursor azul no print) nem vinculadas via *"Connect to Project"*.
+  2. **Como ativar o botão do Google em 10 segundos (ali mesmo onde está o cursor azul do seu print):**
+     - Na aba da Vercel onde está o `client-antecipe` (do seu print anterior), clique em **`Show secret 👁️`** na caixa `.env.local`.
+     - Copie o valor de **`AUTH0_DOMAIN`** (sem as aspas) e cole na 1ª caixinha onde está o cursor azul no seu print (`AUTH0_DOMAIN`).
+     - Copie o valor de **`AUTH0_CLIENT_ID`** (sem as aspas) e cole na 2ª caixinha logo abaixo (`AUTH0_CLIENT_ID`).
+     - Clique no botão verde **"Salvar Chaves Auth0"**! (Ou me mande os dois valores `AUTH0_DOMAIN` e `AUTH0_CLIENT_ID` aqui no chat que eu já coloco direto no código para nunca mais precisar colar!).
+  3. **Como testar o "Criar Conta" (E-mail e Senha):**
+     - No topo direito do card, clique na aba **"Criar Conta"** (ao lado do botão azul *Entrar na Conta*).
+     - Preencha **Seu Nome Completo**, **E-mail Corporativo** e **Senha (mín. 6 caracteres)** e clique no botão azul **"Criar Conta e Acessar Plataforma"**.
+
+- **O que foi feito com a resposta:** Orientação passo a passo baseada na tela enviada para colar o `AUTH0_DOMAIN` e `AUTH0_CLIENT_ID` nos dois campos abertos na parte inferior do card (ou usar a aba *Criar Conta*) e registro do prompt `ELIAS-0021` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Inspeção visual da captura de tela enviada pelo usuário.
+---
+
+## ELIAS-0022 — 2026-10-24T16:12:59-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+me dê o passo a passo, eu não lembro do que se trata
+
+1. Para o botão "Continuar com Google (Gmail)" funcionar:
+
+Repare que lá embaixo no seu print (onde está a borda azul selecionada) abriu uma caixinha com dois campos e o botão verde "Salvar Chaves Auth0". Ela abriu porque falta você colar ali as duas chaves do seu client-antecipe!
+
+Faça isto em 10 segundos:
+
+Volte naquela aba da Vercel onde estava escrito client-antecipe (aquele seu print anterior que tinha a caixa preta .env.local).
+Clique em "Show secret 👁️" no canto direito daquela caixa preta.
+Copie o valor de AUTH0_DOMAIN (sem as aspas, ex.: dev-xxxx.us.auth0.com) e cole no 1º campo aí embaixo na tela do seu print.
+Copie o valor de AUTH0_CLIENT_ID (sem as aspas) e cole no 2º campo (AUTH0_CLIENT_ID).
+Clique no botão verde "Salvar Chaves Auth0"!
+
+(💡 Dica melhor ainda: se você quiser me mandar aqui no chat apenas o valor do seu AUTH0_DOMAIN e do seu AUTH0_CLIENT_ID — não mande o SECRET! — eu já deixo os dois gravados como padrão no código para você e o pessoal nunca mais precisarem colar nada!)
+```
+
+- **Resumo da resposta e análise técnica:**
+  Fornecimento do link direto exato da página `client-antecipe` na conta Vercel do usuário (extraído da barra de endereços da captura de tela anterior: `https://vercel.com/elias-4953/~/integrations/auth0/icfg_tGBfBUGgaka0zx3PUmS3rxyF/resources/authentication/ir_j4uEh6cKj2IBhQGi/guides`) e passo a passo visual de onde clicar:
+  1. Clicar no link direto para abrir a tela do `client-antecipe` na Vercel.
+  2. Clicar no botão **`Connect to Project`** (no topo direito) e selecionar `hackathon-kanastra`.
+  3. Na caixa preta no meio da página, clicar em **`Show secret 👁️`** (canto superior direito da caixa preta) para revelar a Linha 1 (`AUTH0_CLIENT_ID`) e a Linha 3 (`AUTH0_DOMAIN`), copiando apenas essas duas linhas.
+
+- **O que foi feito com a resposta:** Fornecido o link clicável direto da integração `client-antecipe` do usuário na Vercel e passo a passo detalhado, e registrado o prompt `ELIAS-0022` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Extração da URL exata a partir da captura de tela anterior do usuário e atualização do registro cronológico.
+---
+
+## ELIAS-0022 — 2026-10-24T16:12:59-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+me dê o passo a passo, eu não lembro do que se trata
+
+1. Para o botão "Continuar com Google (Gmail)" funcionar:
+
+Repare que lá embaixo no seu print (onde está a borda azul selecionada) abriu uma caixinha com dois campos e o botão verde "Salvar Chaves Auth0". Ela abriu porque falta você colar ali as duas chaves do seu client-antecipe!
+
+Faça isto em 10 segundos:
+
+Volte naquela aba da Vercel onde estava escrito client-antecipe (aquele seu print anterior que tinha a caixa preta .env.local).
+Clique em "Show secret 👁️" no canto direito daquela caixa preta.
+Copie o valor de AUTH0_DOMAIN (sem as aspas, ex.: dev-xxxx.us.auth0.com) e cole no 1º campo aí embaixo na tela do seu print.
+Copie o valor de AUTH0_CLIENT_ID (sem as aspas) e cole no 2º campo (AUTH0_CLIENT_ID).
+Clique no botão verde "Salvar Chaves Auth0"!
+
+(💡 Dica melhor ainda: se você quiser me mandar aqui no chat apenas o valor do seu AUTH0_DOMAIN e do seu AUTH0_CLIENT_ID — não mande o SECRET! — eu já deixo os dois gravados como padrão no código para você e o pessoal nunca mais precisarem colar nada!)
+```
+
+- **Resumo da resposta e análise técnica:**
+  Fornecimento do link direto exato da página `client-antecipe` na conta Vercel do usuário (extraído da barra de endereços da captura de tela anterior: `https://vercel.com/elias-4953/~/integrations/auth0/icfg_tGBfBUGgaka0zx3PUmS3rxyF/resources/authentication/ir_j4uEh6cKj2IBhQGi/guides`) e passo a passo visual de onde clicar:
+  1. Clicar no link direto para abrir a tela do `client-antecipe` na Vercel.
+  2. Clicar no botão **`Connect to Project`** (no topo direito) e selecionar `hackathon-kanastra`.
+  3. Na caixa preta no meio da página, clicar em **`Show secret 👁️`** (canto superior direito da caixa preta) para revelar a Linha 1 (`AUTH0_CLIENT_ID`) e a Linha 3 (`AUTH0_DOMAIN`), copiando apenas essas duas linhas.
+
+- **O que foi feito com a resposta:** Fornecido o link clicável direto da integração `client-antecipe` do usuário na Vercel e passo a passo detalhado, e registrado o prompt `ELIAS-0022` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Extração da URL exata a partir da captura de tela anterior do usuário e atualização do registro cronológico.
+
+---
+
+## ELIAS-0023 — 2026-10-24T16:17:15-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+melhor colocar em uma pasta .env ou algo assim, não é seguro eu mandar aqui, crie a pasta que eu mesmo coloco lá
+```
+
+- **Resumo da resposta e análise técnica:**
+  Criação do arquivo local `login/.env` (protegido pelo `.gitignore` para jamais subir ao GitHub, atendendo estritamente ao critério 5.2.4 de segurança e credenciais) e correção do export `router = auth_router` e leitura de `.env` em `login/vercel_auth_helper.py`:
+  1. **Arquivo local seguro `login/.env`:** Criado em `login/.env` (ignorado pelo Git conforme validado por `git status -s` e `python3 scripts/check_submission.py`) para que o usuário cole localmente `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` e `AUTH0_DOMAIN` sem expor credenciais no chat ou no Git.
+  2. **Leitura automática no Backend (`login/vercel_auth_helper.py`):** Atualizado para ler tanto as Environment Variables injetadas pela Vercel (`os.environ`) quanto o arquivo local `login/.env` (ou `.env`), além de exportar `router = auth_router` compatível com o `app.py`.
+  3. **Como funciona na nuvem da Vercel:** Como arquivos `.env` não sobem para o GitHub por segurança, na nuvem da Vercel as variáveis vêm automaticamente do botão **`Connect to Project`** na página `client-antecipe` da Vercel (ou de **Settings $\rightarrow$ Environment Variables** no painel da Vercel).
+
+- **O que foi feito com a resposta:** Criado `login/.env` (ignorado pelo `.gitignore`), atualizados `login/vercel_auth_helper.py` e `public/assets/antecipe-auth-gate.js`, validado `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e registrado o prompt `ELIAS-0023` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `login/.env` (gitignored), `login/vercel_auth_helper.py`, `public/assets/antecipe-auth-gate.js`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `git status -s` comprovando que `login/.env` não é rastreado pelo Git e `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).
