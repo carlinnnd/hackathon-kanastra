@@ -1240,3 +1240,23 @@ ignore testes especificos e acelere o processo para deploy.
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0017 — 2026-10-24T18:20:06+00:00 — traycer-coordenador
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `da9e48872d2c99691a67d681c383b968aa1d2a19cddad5c94d6cbd9ca9705071`
+- Texto do prompt (sanitizado):
+
+```text
+suba no git
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+

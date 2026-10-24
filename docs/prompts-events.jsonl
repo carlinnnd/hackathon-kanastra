@@ -51,3 +51,6 @@
 {"kind": "close", "id": "P0016", "at": "2026-10-24T18:13:28+00:00", "action": "Conferido gabarito integral linha/documento e decis?es/motivos com cadastro mock e motor atual. Criados relat?rio agregado e diverg?ncias privadas; conflitos expl?citos sem inferir cadastro de r?tulos e sem for?ar correspond?ncia.", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}
 {"kind": "stop", "id": "P0015", "at": "2026-10-24T18:13:28+00:00", "response": "[LINHA_TABULAR_OMITIDA]"}
 {"kind": "close", "id": "P0015", "at": "2026-10-24T18:13:28+00:00", "action": "[LINHA_TABULAR_OMITIDA]", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "prompt", "id": "P0017", "at": "2026-10-24T18:20:06+00:00", "source": "traycer-coordenador", "session": "manual", "turn": "", "digest": "da9e48872d2c99691a67d681c383b968aa1d2a19cddad5c94d6cbd9ca9705071", "prompt": "suba no git"}
+{"kind": "stop", "id": "P0017", "at": "2026-10-24T18:22:22+00:00", "response": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "close", "id": "P0017", "at": "2026-10-24T18:22:22+00:00", "action": "[LINHA_TABULAR_OMITIDA]", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}
