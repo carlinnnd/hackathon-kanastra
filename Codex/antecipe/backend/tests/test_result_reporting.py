@@ -68,21 +68,23 @@ def test_mock_normaliza_e_falha_fechado(isolated, monkeypatch):
     assert carregar_cadastro()[0] == {}
 
 
-def test_quatro_status_precificacao_e_multiplas_violacoes(isolated):
+def test_decisao_binaria_precificacao_e_multiplas_violacoes(isolated):
     _, client, _ = isolated
     data = upload(client, lote([
         {}, {"DOC_SACADO": "11444777000161"}, {"DOC_SACADO": "33000167000101"},
         {"VALOR_NOMINAL": "abc"},
         {"DOC_SACADO": "11444777000161", "TIPO_RECEBIVEL": "Cheque", "DATA_VENCIMENTO_ORIGINAL": "01/06/2027"},
     ]))
-    assert [r["status"] for r in data["resultados"]] == ["APROVADA", "PENDENTE_VERIFICACAO", "RECUSADA", "ERRO_DADOS", "RECUSADA"]
+    assert [r["status"] for r in data["resultados"]] == ["APROVADA", "RECUSADA", "RECUSADA", "RECUSADA", "RECUSADA"]
+    assert data["aprovados"] + data["recusados"] == data["total_itens"]
+    assert data["analytics"]["status_counts"] == {"APROVADA": 1, "RECUSADA": 4}
     assert data["total_liquido"] == "4700.00"
     assert data["analytics"]["valor_desconto"] == "300.00"
-    assert {m["codigo"] for m in data["resultados"][-1]["motivos"]} >= {"PENDENTE_VERIFICACAO", "TIPO_RECEBIVEL", "PRAZO_MAXIMO"}
+    assert {m["codigo"] for m in data["resultados"][-1]["motivos"]} >= {"SITUACAO_CADASTRAL_SACADO", "TIPO_RECEBIVEL", "PRAZO_MAXIMO"}
     assert all(r["valor_liquido"] is None for r in data["resultados"][1:])
-    pending = client.get(f"/api/simulations/{data['simulation_id']}/items?status=PENDENTE_VERIFICACAO").json()
-    assert pending["pagination"]["total"] == 1
-    assert pending["resultados"][0]["status"] == "PENDENTE_VERIFICACAO"
+    rejected = client.get(f"/api/simulations/{data['simulation_id']}/items?status=RECUSADA").json()
+    assert rejected["pagination"]["total"] == 4
+    assert all(r["status"] == "RECUSADA" for r in rejected["resultados"])
 
 
 def test_estoque_nao_vira_nova_operacao(isolated):
@@ -180,5 +182,5 @@ def test_websocket_exporta_mesma_sessao_sem_aceitar_id_externo(isolated):
             chunks.append(base64.b64decode(event['data']))
         rows=list(csv.DictReader(io.StringIO(b''.join(chunks).decode('utf-8-sig')),delimiter=';'))
         assert len(rows) == 2
-        assert {r['status'] for r in rows} == {'APROVADA', 'PENDENTE_VERIFICACAO'}
+        assert {r['status'] for r in rows} == {'APROVADA', 'RECUSADA'}
         ws.send_json({'type':'close'})

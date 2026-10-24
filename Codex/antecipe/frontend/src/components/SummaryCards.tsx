@@ -15,12 +15,12 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ simulation }) => {
       ['Títulos no arquivo', simulation.total_itens.toLocaleString('pt-BR'), 'Análise descritiva do estoque'],
       ['Valor nominal histórico', formatarMoedaBRL(simulation.total_nominal), 'Sem nova aprovação ou precificação'],
       ['Registros históricos válidos', (counts.CARTEIRA_HISTORICA || 0).toLocaleString('pt-BR'), 'Não representam novas aquisições'],
-      ['Erros de dados', (counts.ERRO_DADOS || 0).toLocaleString('pt-BR'), 'Revisar os campos indicados'],
+      ['Linhas não processadas', (counts.RECUSADA || 0).toLocaleString('pt-BR'), 'Revisar os campos indicados'],
     ] : [
-      ['Aprovadas', (counts.APROVADA || 0).toLocaleString('pt-BR'), `Líquido: ${formatarMoedaBRL(simulation.total_liquido)}`],
-      ['Recusadas', (counts.RECUSADA || 0).toLocaleString('pt-BR'), 'Violações confirmadas'],
-      ['Pendentes de verificação', (counts.PENDENTE_VERIFICACAO || 0).toLocaleString('pt-BR'), 'Cadastro obrigatório não confirmado'],
-      ['Erros de dados', (counts.ERRO_DADOS || 0).toLocaleString('pt-BR'), 'Campos insuficientes ou malformados'],
+      ['Notas analisadas', simulation.total_itens.toLocaleString('pt-BR'), `Nominal: ${formatarMoedaBRL(simulation.total_nominal)}`],
+      ['Aprovadas', (counts.APROVADA || 0).toLocaleString('pt-BR'), 'Atendem às regras ativas'],
+      ['Recusadas', (counts.RECUSADA || 0).toLocaleString('pt-BR'), 'Consulte os motivos de cada nota'],
+      ['Total a receber', formatarMoedaBRL(simulation.total_liquido), 'Soma do valor líquido das aprovadas'],
     ];
     return <section aria-label="Resumo do processamento"><div className="summary-grid">{cards.map(([title, value, sub]) =>
       <div className="metric-card" key={title}><div className="metric-title">{title}</div><div className="metric-value">{value}</div><div className="metric-sub">{sub}</div></div>

@@ -10,7 +10,7 @@ export interface MotivoRecusa {
 }
 
 export interface ResultadoItem {
-  status?: string;
+  status?: 'APROVADA' | 'RECUSADA' | 'CARTEIRA_HISTORICA';
   linha: number;
   documento: string;
   sacado: string;

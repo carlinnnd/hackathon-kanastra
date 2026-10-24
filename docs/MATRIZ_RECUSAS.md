@@ -51,3 +51,6 @@
 | CARTEIRA_HISTORICA | Usuário escolheu análise de estoque | Estoque histórico; sem decisão de antecipação. | Navegador: nove títulos históricos, zero novas aprovações/recusas, líquido não aplicável. |
 
 Esta revisão substitui qualquer tratamento anterior de cadastro indisponível como recusa definitiva por si só. Fontes divergentes e limites estão documentados em `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.
+# Correção vigente — somente aprovada ou recusada
+
+A instrução posterior do usuário substitui a proposta de estados separados: para novas notas, ausência de confirmação cadastral recusa por `SITUACAO_CADASTRAL_SACADO`; parsing ou dados insuficientes também recusam com o motivo específico. A mensagem cadastral explica que não foi possível confirmar que o sacado está ativo e orienta confirmar/atualizar o cadastro e reenviar. Não há estado ou filtro de pendência. As seções anteriores documentam versões históricas, não o contrato vigente.

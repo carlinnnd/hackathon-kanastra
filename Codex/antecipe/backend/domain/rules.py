@@ -111,8 +111,8 @@ class ValidadorSituacaoCadastralSacado(ValidadorStrategy):
 
         if situacao == SituacaoCadastral.NAO_VERIFICADA.value:
             return MotivoRecusa(
-                codigo="PENDENTE_VERIFICACAO",
-                mensagem="Situação cadastral não confirmada. Consulte uma fonte cadastral antes de aprovar este título.",
+                codigo=self.codigo,
+                mensagem="Não foi possível confirmar que o sacado está ativo na fonte cadastral utilizada. Por isso, esta nota foi recusada. Confirme ou atualize o cadastro e envie novamente.",
                 dados={"situacao_encontrada": situacao, "validador": self.codigo}
             )
         elif situacao not in situacoes_aceitas:

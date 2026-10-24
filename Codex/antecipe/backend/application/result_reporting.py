@@ -94,12 +94,48 @@ class AgregadorResultados:
 
 def obter_analytics(db, simulation_id):
     report = db.get(SimulationReportModel, simulation_id)
-    return json.loads(report.analytics_json) if report else None
+    if not report:
+        return None
+    analytics = json.loads(report.analytics_json)
+    # Compatibilidade de leitura: registros históricos permanecem intactos no banco.
+    for field in ("status_counts", "nominal_por_status"):
+        values = analytics.get(field, {})
+        legacy = [key for key in ("PENDENTE_VERIFICACAO", "ERRO_DADOS") if key in values]
+        if legacy:
+            if field == "status_counts":
+                values["RECUSADA"] = values.get("RECUSADA", 0) + sum(values.pop(key) for key in legacy)
+            else:
+                total = Decimal(values.get("RECUSADA", "0")) + sum((Decimal(values.pop(key)) for key in legacy), Decimal("0"))
+                values["RECUSADA"] = f"{total:.2f}"
+    merged = {}
+    for reason in analytics.get("motivos", []):
+        code = "SITUACAO_CADASTRAL_SACADO" if reason["codigo"] == "PENDENTE_VERIFICACAO" else reason["codigo"]
+        current = merged.setdefault(code, {"codigo": code, "quantidade": 0, "valor_nominal": "0.00"})
+        current["quantidade"] += reason["quantidade"]
+        current["valor_nominal"] = f"{Decimal(current['valor_nominal']) + Decimal(reason['valor_nominal']):.2f}"
+    analytics["motivos"] = sorted(merged.values(), key=lambda x: x["quantidade"], reverse=True)
+    return analytics
+
+
+def normalizar_resultado(row):
+    """Resultado de novas notas sempre binário, inclusive ao consultar versões anteriores."""
+    row = dict(row)
+    row["status"] = "CARTEIRA_HISTORICA" if row.get("status") == "CARTEIRA_HISTORICA" else "APROVADA" if row["aprovado"] else "RECUSADA"
+    row["motivos"] = [dict(m) for m in row.get("motivos", [])]
+    for reason in row["motivos"]:
+        if reason["codigo"] == "PENDENTE_VERIFICACAO":
+            reason["codigo"] = "SITUACAO_CADASTRAL_SACADO"
+            reason["mensagem"] = "Não foi possível confirmar que o sacado está ativo. Nota recusada; confirme ou atualize o cadastro e envie novamente."
+    row["codigos_recusa"] = [m["codigo"] for m in row["motivos"]]
+    if not row["aprovado"]:
+        row["valor_liquido"] = None
+        row["valor_desconto"] = None
+    return row
 
 
 def serializar_item_db(item, detail=None):
     if detail:
-        return json.loads(detail.payload_json)
+        return normalizar_resultado(json.loads(detail.payload_json))
     return {"linha": item.linha, "documento": item.documento, "sacado": item.sacado,
             "aprovado": item.aprovado, "elegivel": item.aprovado,
             "status": "APROVADA" if item.aprovado else "RECUSADA",

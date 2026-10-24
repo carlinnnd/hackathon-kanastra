@@ -489,6 +489,10 @@ async def websocket_simulation_stream(websocket: WebSocket):
                     status_filtro = msg.get("status")
                     if status_filtro == "todos":
                         status_filtro = None
+                    if status_filtro not in {None, "aprovado", "recusado", "APROVADA", "RECUSADA", "CARTEIRA_HISTORICA"}:
+                        await websocket.send_json({"type": "error", "request_id": req_id,
+                            "codigo": "FILTRO_STATUS_INVALIDO", "mensagem": "Filtre novas notas por APROVADA ou RECUSADA."})
+                        continue
                     reason_filtro = msg.get("reason")
                     if reason_filtro == "todos":
                         reason_filtro = None

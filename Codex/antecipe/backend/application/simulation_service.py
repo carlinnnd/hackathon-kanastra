@@ -245,10 +245,8 @@ class SimulationService:
         envelope = {
             "tipo_analise": tipo_analise,
             "analytics": analytics,
-            "nao_aprovados": total_itens - aprovados_count if tipo_analise == "novas_operacoes" else agregador.status["ERRO_DADOS"],
+            "nao_aprovados": total_itens - aprovados_count if tipo_analise == "novas_operacoes" else agregador.status["RECUSADA"],
             "recusas_confirmadas": agregador.status["RECUSADA"],
-            "pendentes_verificacao": agregador.status["PENDENTE_VERIFICACAO"],
-            "erros_dados": agregador.status["ERRO_DADOS"],
             "simulation_id": sim_id,
             "rule_version": versao_ativa.version_number,
             "rule_version_id": versao_ativa.id,

@@ -8,7 +8,7 @@ from xml.sax.saxutils import escape
 from sqlalchemy import select
 from ..domain.ingestion import CABECALHOS_OBRIGATORIOS
 from ..infrastructure.database.models import SimulationItemDetailModel
-from .result_reporting import obter_analytics
+from .result_reporting import obter_analytics, normalizar_resultado
 
 EXPORT_FIELDS = [
     "id_recebivel", "linha_original", "status", "elegivel", "codigos_recusa", "motivos_recusa", "quantidade_violacoes",
@@ -34,7 +34,7 @@ def iter_resultados(db, simulation_id):
         SimulationItemDetailModel.simulation_id == simulation_id
     ).order_by(SimulationItemDetailModel.linha).execution_options(yield_per=256, stream_results=True)
     for payload in db.execute(stmt).scalars():
-        yield json.loads(payload)
+        yield normalizar_resultado(json.loads(payload))
 
 
 def gerar_csv(db, sim, violacoes=False):
@@ -152,7 +152,7 @@ def gerar_pdf(sim, analytics):
     p(f"Processado em (UTC): {sim.created_at.isoformat()}")
     for aviso in json.loads(sim.avisos_json):
         p(aviso)
-    p("Próximos passos: revisar recusas e erros de dados; confirmar pendências em fonte cadastral apropriada. O cadastro mock não constitui comprovação cadastral oficial.")
+    p("Próximos passos: revisar os motivos das recusas, corrigir os dados ou confirmar a situação cadastral e enviar novamente. O cadastro mock não constitui comprovação cadastral oficial.")
     def footer(canvas, doc):
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#52635d"))

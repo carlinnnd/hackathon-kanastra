@@ -82,7 +82,7 @@ def comparar():
         'cadastro_cobertura_registros': dict(coverage), 'conflitos_fontes': dict(contradictions),
         'motivos_motor_atual':dict(motives), 'cadastro_fonte':fonte,
         'escopo': 'Motor de novas operações contra seed público de 5 títulos, data-base JSON/22-10-2026. Não é reclassificação do histórico nem comparação de valores financeiros ausentes no gabarito.',
-        'criterio_pendencia': 'Cadastro ausente não aprova; pendente se nenhuma violação confirmada, recusada se houver outra violação confirmada.',
+        'criterio_recusa': 'Toda nota não aprovada é recusada com motivos; cadastro ausente/inconclusivo gera SITUACAO_CADASTRAL_SACADO, sem terceiro estado.',
         'reconciliacao': 'Gabarito e mock têm contradições verificadas. Os rótulos não são usados para inferir cadastro ou alterar regras. Correspondência integral exige resolver esses conflitos e alinhar cenário/carteira/data-base.',
         'detalhamento_privado': str(output/'divergencias.csv'),
     }

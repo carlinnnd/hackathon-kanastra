@@ -1,5 +1,5 @@
 {
-  "executado_utc": "2026-10-24T18:01:25.465223+00:00",
+  "executado_utc": "2026-10-24T18:33:04.767753+00:00",
   "fontes_sha256": {
     "estoque_antecipe.csv": "313c75f4147e1e851eaaefd15dc035aa895c961434da1a91024fd0764559c2f1",
     "resultado_esperado_100k.json": "a5e0de969c0cf9d1f37aeea0100d7a4a2ba663da24c1641977f7a68934bc1ae8",
@@ -12,19 +12,16 @@
     "BARRADO": 15339
   },
   "motor_atual_status": {
-    "RECUSADA": 12306,
-    "PENDENTE_VERIFICACAO": 20277,
+    "RECUSADA": 32583,
     "APROVADA": 67971
   },
-  "concordancia_status": 76581,
-  "concordancia_todos_motivos": 74814,
+  "concordancia_status": 80800,
+  "concordancia_todos_motivos": 75736,
   "matriz_comparacao": {
-    "APROVADO -> RECUSADA": 2441,
-    "BARRADO -> PENDENTE_VERIFICACAO": 4219,
+    "APROVADO -> RECUSADA": 18499,
+    "BARRADO -> RECUSADA": 14084,
     "APROVADO -> APROVADA": 66716,
-    "APROVADO -> PENDENTE_VERIFICACAO": 16058,
-    "BARRADO -> APROVADA": 1255,
-    "BARRADO -> RECUSADA": 9865
+    "BARRADO -> APROVADA": 1255
   },
   "cadastro_cobertura_registros": {
     "ATIVA": 77555,
@@ -40,15 +37,14 @@
   },
   "motivos_motor_atual": {
     "NAO_VENCIDA": 1793,
-    "PENDENTE_VERIFICACAO": 22222,
-    "SITUACAO_CADASTRAL_SACADO": 777,
+    "SITUACAO_CADASTRAL_SACADO": 22999,
     "TIPO_RECEBIVEL": 9842,
     "VALOR_MINIMO": 34,
     "PRAZO_MAXIMO": 4502
   },
   "cadastro_fonte": "SIMULADO_CSV_SHA256_522ba08c9685a48d2c2a5b20bfde0773f58bb15b095e03cf605b44c224ca6916",
   "escopo": "Motor de novas operações contra seed público de 5 títulos, data-base JSON/22-10-2026. Não é reclassificação do histórico nem comparação de valores financeiros ausentes no gabarito.",
-  "criterio_pendencia": "Cadastro ausente não aprova; pendente se nenhuma violação confirmada, recusada se houver outra violação confirmada.",
+  "criterio_recusa": "Toda nota não aprovada é recusada com motivos; cadastro ausente/inconclusivo gera SITUACAO_CADASTRAL_SACADO, sem terceiro estado.",
   "reconciliacao": "Gabarito e mock têm contradições verificadas. Os rótulos não são usados para inferir cadastro ou alterar regras. Correspondência integral exige resolver esses conflitos e alinhar cenário/carteira/data-base.",
   "detalhamento_privado": "C:\\hackathon_kanastra\\Codex\\antecipe\\.data\\gabarito-conference\\divergencias.csv"
 }

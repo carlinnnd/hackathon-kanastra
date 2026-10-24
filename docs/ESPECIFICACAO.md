@@ -79,7 +79,7 @@ O arquivo oficial contém 9 validadores (7 ativos e 2 inativos), com seus códig
 ### 3.2. Verificação Cadastral (Premissa Documentada)
 - Validação matemática de CNPJ não atesta situação cadastral na Receita Federal.
 - O motor classifica a situação em: `ATIVA`, `INATIVA` e `NAO_VERIFICADA`.
-- Revisão de 24/10/2026: ausência de confirmação cadastral gera `NAO_VERIFICADA`; o título fica `PENDENTE_VERIFICACAO` quando não há outra violação confirmada. Uma violação confirmada mantém `RECUSADA`, preservando todos os motivos. Dados malformados ficam `ERRO_DADOS`.
+- Correção posterior do usuário em 24/10/2026: novas notas têm somente `APROVADA` ou `RECUSADA`. Ausência de confirmação cadastral (`NAO_VERIFICADA`) recusa por `SITUACAO_CADASTRAL_SACADO`, com mensagem explicativa. Dados malformados também recusam, preservando o motivo específico. Não existe terceiro estado de decisão.
 - Para testes e demonstrações, é utilizada uma tabela sintética explicitamente identificada como **SIMULADA** (ativada via `ENABLE_DEMO_CADASTRO=true`).
 - O arquivo fornecido `cnpj_situacao_mock.csv` é a fonte simulada configurada. Análise de carteira histórica é descritiva, separada de novas operações. Contrato atualizado, limites e divergências com o gabarito: `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.
 

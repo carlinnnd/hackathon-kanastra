@@ -581,7 +581,7 @@ tr:hover td {
 .finance-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin: 24px 0; padding: 20px 0; border-block: 1px solid #334155; }
 .finance-strip div { display: flex; flex-direction: column; gap: 8px; font-size: .8rem; }
 .finance-strip strong { font-size: 1.1rem; }
-.badge.pending { background: #3b351b; color: #fde68a; border: 1px solid #75642e; }
+.badge.historic { background: #3b351b; color: #fde68a; border: 1px solid #75642e; }
 .alert-banner-text, .audit-meta-item { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .filters-group { min-width: 0; max-width: 100%; flex-wrap: wrap; }
 .filters-group .select-control { min-width: 0; max-width: 100%; }

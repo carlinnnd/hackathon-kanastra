@@ -75,13 +75,6 @@ class ResultadoAvaliacao:
             return "CARTEIRA_HISTORICA"
         if self.aprovado:
             return "APROVADA"
-        codes = [m.codigo for m in self.motivos]
-        if any(c.startswith("FORMATO_INVALIDO") or c in {
-            "CAMPOS_OBRIGATORIOS_VAZIOS", "LINHA_MALFORMADA_COLUNAS", "VALOR_EXCEDE_CAPACIDADE"
-        } for c in codes):
-            return "ERRO_DADOS"
-        if codes and all(c == "PENDENTE_VERIFICACAO" for c in codes):
-            return "PENDENTE_VERIFICACAO"
         return "RECUSADA"
 
 

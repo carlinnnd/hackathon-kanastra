@@ -152,7 +152,7 @@ def get_simulation(
     simulation_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    status_filtro: Optional[str] = Query(None, alias="status", pattern="^(aprovado|recusado|APROVADA|RECUSADA|PENDENTE_VERIFICACAO|ERRO_DADOS|CARTEIRA_HISTORICA)$"),
+    status_filtro: Optional[str] = Query(None, alias="status", pattern="^(aprovado|recusado|APROVADA|RECUSADA|CARTEIRA_HISTORICA)$"),
     reason: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):

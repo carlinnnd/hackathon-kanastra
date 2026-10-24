@@ -1,5 +1,7 @@
 # Parecer de Revisão Técnica Independente — Pipeline de Resultados Antecipe
 
+> Histórico: a revisão abaixo se refere à proposta anterior de quatro classificações. O usuário posteriormente determinou decisão binária para novas notas. Cadastro inconclusivo e dados inválidos agora resultam em RECUSADA com motivo. Contrato vigente: `RESULTADOS_E_CADASTRO.md`.
+
 **Data:** 24/10/2026
 **Auditor Independente:** Agente Revisor Técnico
 **Destinatário:** Coordenador do Projeto / Júri Técnico Hackathon

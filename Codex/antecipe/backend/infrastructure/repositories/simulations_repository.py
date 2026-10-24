@@ -126,11 +126,13 @@ class SimulationsRepository:
             query = query.filter(SimulationItemModel.aprovado == True)
         elif status == "recusado":
             query = query.filter(SimulationItemModel.aprovado == False)
-        elif status in {"APROVADA", "RECUSADA", "PENDENTE_VERIFICACAO", "ERRO_DADOS", "CARTEIRA_HISTORICA"}:
+        elif status in {"APROVADA", "RECUSADA", "CARTEIRA_HISTORICA"}:
             query = query.join(SimulationItemDetailModel,
                 (SimulationItemDetailModel.simulation_id == SimulationItemModel.simulation_id) &
                 (SimulationItemDetailModel.linha == SimulationItemModel.linha)
-            ).filter(SimulationItemDetailModel.status == status)
+            ).filter(SimulationItemDetailModel.status.in_(
+                ["RECUSADA", "PENDENTE_VERIFICACAO", "ERRO_DADOS"] if status == "RECUSADA" else [status]
+            ))
 
         if reason:
             query = query.filter(SimulationItemModel.motivos_json.like(f"%{reason}%"))

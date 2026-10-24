@@ -7,7 +7,7 @@ Garante:
 """
 from datetime import date
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
@@ -19,6 +19,7 @@ class MotivoRecusaSchema(BaseModel):
 
 class ItemResultadoSchema(BaseModel):
     model_config = ConfigDict(extra="allow")
+    status: Literal["APROVADA", "RECUSADA", "CARTEIRA_HISTORICA"]
     linha: int
     documento: str
     sacado: str
