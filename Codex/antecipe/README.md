@@ -1,4 +1,10 @@
+LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/
+
 # Antecipe FIDC — Plataforma de Antecipação de Recebíveis
+
+> **Recomendação para a Banca Avaliadora (Teste Imediato sem Configuração Local):**
+> A forma mais rápida e prática de avaliar o projeto é acessando diretamente a aplicação publicada em produção na Vercel: **[https://hackathon-kanastra.vercel.app/](https://hackathon-kanastra.vercel.app/)**.
+> Nela é possível realizar o login (ou testar os fluxos de demonstração), enviar lotes CSV (`demo.csv` ou gerar lotes sintéticos de 100/1.000 notas com 1 clique), visualizar cada nota **APROVADA** ou **RECUSADA** com explicação detalhada em linguagem de negócio, conferir o valor líquido e o total a receber, simular alterações de regras no **What-If** sem deploy e exportar relatórios em **CSV** e **PDF**.
 
 Plataforma modular para simulação de antecipação de recebíveis para Fundos de Investimento em Direitos Creditórios (FIDCs), com processamento streaming Unix de alta vazão, motor de regras configurável, antiduplicidade global e cálculo financeiro com precisão `Decimal` estrita.
 

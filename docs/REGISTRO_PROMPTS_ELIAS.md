@@ -858,3 +858,164 @@ bom agora eu quero voltar a trabalhar na main do carlos, e fazer a minha main se
 - **O que foi feito com a resposta:** Adicionado o registro `ELIAS-0033` em `docs/REGISTRO_PROMPTS_ELIAS.md` mantendo todo o restante do repositório idêntico à `origin/main` do Carlos (`70b8bb3`), sem tocar no `origin`.
 - **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** `git status -sb` (confirmando que apenas `docs/REGISTRO_PROMPTS_ELIAS.md` possui os registros `ELIAS-0032` e `ELIAS-0033` sobre `origin/main`) e `python3 scripts/check_submission.py`.
+---
+
+## ELIAS-0034 — 2026-10-24T18:59:42-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+preciso disso agora (vamos mandar  o diretório do carlos, me dê o caminho que está os prompts e também dado o projeto atual, vai precisar de alguma env para os jurados testarem?) e se precisar me ajuda a colocar 
+```
+
+- **Resumo da resposta e análise técnica:**
+  Orientação para preenchimento do formulário oficial de submissão do Hackathon e preparação do arquivo `.env` completo para upload no formulário:
+  1. **Campo "Caminho do arquivo com os prompts no repositório":**
+     - Informar: `docs/REGISTRO_PROMPTS.md` (ou `docs/REGISTRO_PROMPTS.md (e registros individuais em docs/REGISTRO_PROMPTS_CARLOS.md, docs/REGISTRO_PROMPTS_ELIAS.md e docs/REGISTRO_PROMPTS_PINA.md)`). O arquivo `docs/REGISTRO_PROMPTS.md` na raiz de `docs/` já contém no cabeçalho os links diretos para os registros dos 3 integrantes da equipe.
+  2. **Campo "Arquivo .env (caso seja necessário pra subir a sua aplicação)":**
+     - Gerado o arquivo completo em `Codex/antecipe/.env` (e espelhado em `login/.env`, ambos ignorados pelo `.gitignore` para nunca irem ao GitHub) contendo todas as configurações de banco SQLite, caminhos de estoque/validadores, `ENABLE_DEMO_CADASTRO=true` e as variáveis `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` e `AUTH0_DB_CONNECTION=Username-Password-Authentication` exigidas pelo `Codex/antecipe/backend/api/auth_routes.py`.
+
+- **O que foi feito com a resposta:** Gerado o arquivo `.env` unificado e pronto para envio no formulário em `Codex/antecipe/.env` e `login/.env`, validado `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e registrado o prompt `ELIAS-0034` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `Codex/antecipe/.env` (gitignored), `login/.env` (gitignored), `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `git status -sb` (confirmando que os arquivos `.env` permanecem fora do Git) e `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).
+---
+
+## ELIAS-0035 — 2026-10-24T19:10:32-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+mas uma dúvida, a gente subiu ele na vercel, tem realmente necessidade de .env para testar?  e se for colocar .env, tem que ser a com as coisas do carlin
+```
+
+- **Resumo da resposta e análise técnica:**
+  Esclarecimento sobre a obrigatoriedade do campo `.env` no formulário de submissão e alinhamento com o `Codex/antecipe/.env.example` do Carlos:
+  1. **Por que o campo no formulário diz *"caso seja necessário pra subir a sua aplicação"* (opcional):**
+     - **Na Vercel:** Não precisa de arquivo `.env` no formulário, porque na Vercel as variáveis já estão salvas lá dentro do painel da Vercel e no `vercel.json`.
+     - **Se o jurado clonar o GitHub para rodar na máquina dele:** O `Codex/antecipe/backend/config.py` do Carlin já tem valores padrão (`default`) para tudo (`DATABASE_URL`, `ESTOQUE_CSV_PATH`, `VALIDADORES_JSON_PATH`, etc.), então a aplicação **sobe mesmo sem `.env`**.
+  2. **Por que é bom anexar o `.env` (e o que tem no `.env` do Carlin):**
+     - No `Codex/antecipe/.env.example` que o Carlin criou na `main`, ele colocou exatamente as variáveis do backend dele + os 4 campos do Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_DB_CONNECTION`).
+     - O arquivo `Codex/antecipe/.env` que gerei na sua máquina já usa **exatamente o molde do `Codex/antecipe/.env.example` do Carlin** preenchido com as chaves do Auth0 (a menos que o Carlin tenha gerado outro tenant Auth0 diferente na máquina dele — nesse caso, basta anexar o `Codex/antecipe/.env` da máquina do Carlin).
+
+- **O que foi feito com a resposta:** Explicação da função do campo opcional `.env` no formulário e confirmação de que `Codex/antecipe/.env` segue exatamente o `Codex/antecipe/.env.example` do Carlos. Registrado o prompt `ELIAS-0035` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).
+
+---
+
+## ELIAS-0036 — 2026-10-24T19:15:09-03:00 — antigravity
+
+- **Prompt enviado (sanitizado sem segredos):**
+
+```text
+AUTH0_CLIENT_ID="[REDACTED]"
+AUTH0_CLIENT_SECRET="[REDACTED]"
+AUTH0_DOMAIN="[REDACTED]"
+
+então basicamente é só subir isso como .env (e ta igual o meu né, no meu diretório?)
+```
+
+- **Resumo da resposta e análise técnica:**
+  Confirmação de que tanto `login/.env` quanto `Codex/antecipe/.env` no diretório local já estão idênticos e preenchidos com esses mesmos valores (além das variáveis padrão do `Codex/antecipe/.env.example` do Carlos), prontos para serem anexados diretamente no campo de upload do formulário de submissão (mantendo os segredos redigidos no histórico Markdown do repositório por segurança).
+
+- **O que foi feito com a resposta:** Verificado via script Python que `login/.env` e `Codex/antecipe/.env` contêm exatamente esses valores e registrado o prompt `ELIAS-0036` (com segredo sanitizado) em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py` (`Auditoria do kit: OK`).
+---
+
+## ELIAS-0037 — 2026-10-24T19:23:11-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+dado tudo que a gente falou e também as regras e contexto que eu irei mandar a seguir:
+[Enunciado completo Hackathon Antecipe + Edital Hackathon Kanastra seções 1 a 7]
+Preciso que você passe um "pente fino" no projeto verificando se estamos abrangendo tudo até o momento (estamos desenvolvendo mais coisa, já irei mandar aqui depois desse primeiro pente fino o restante das coisas).
+```
+
+- **Resumo da resposta e análise técnica:**
+  Execução de auditoria completa ("pente fino") de ponta a ponta sobre o estado atual do repositório frente a todos os requisitos eliminatórios do Edital (Seção 4) e todos os 5 critérios de avaliação (Seção 5 — 100 pontos):
+  1. **Scripts de Auditoria Executados:**
+     - `python3 scripts/check_submission.py` $\rightarrow$ `Auditoria do kit: OK`
+     - `python3 scripts/prompt_ledger.py audit` $\rightarrow$ `Prompts: 29 | Pendências: 0 | Eventos órfãos: 0` (+ 37 prompts detalhados em `docs/REGISTRO_PROMPTS_ELIAS.md` e registros do Pina em `docs/REGISTRO_PROMPTS_PINA.md`)
+     - `python3 -m unittest discover -s tests -p "test_*.py"` $\rightarrow$ `Ran 8 tests in 0.101s - OK`
+  2. **Checagem dos Requisitos Mínimos de Entrega (Seção 4 e Enunciado):**
+     - **4.1.1 Código-fonte e Aplicação Funcional (Tela + API):** Atendido (`Codex/antecipe/backend`, `Codex/antecipe/frontend`, `public/`, `app.py`). Suporta CSV `;`, decimal com vírgula `,`, datas `dd/mm/aaaa`, UTF-8, 11 colunas oficiais, regras lidas dinamicamente de `validadores_antecipe.json` (sem valores fixos no código), status `APROVADA`/`RECUSADA` com explicação clara para o cedente, valor líquido por nota e total a receber, além de API REST e WebSocket streaming.
+     - **4.1.2 Registro de Prompts (5 pts):** Atendido (`docs/REGISTRO_PROMPTS.md` indexando `REGISTRO_PROMPTS_CARLOS.md`, `REGISTRO_PROMPTS_ELIAS.md` e `REGISTRO_PROMPTS_PINA.md` em ordem cronológica com descrição do que foi feito com cada resposta).
+     - **4.1.3 README estruturado (Eliminatório):** Atendido (`README.md` na raiz apontando para o passo a passo completo Windows/Linux em `Codex/antecipe/README.md`, incluindo dependências, comandos, variáveis de ambiente e relatório técnico de decisões e escopo).
+  3. **Pontos de Atenção / Oportunidades de Polimento Identificadas no Pente Fino:**
+     - **Atenção 1 (Sincronização do `docs/REGISTRO_PROMPTS_ELIAS.md` no `origin/main`):** Os últimos prompts (`ELIAS-0032` a `ELIAS-0037`) estão salvos na sua máquina/fork e prontos para `git push origin main` assim que o Carlos liberar.
+     - **Atenção 2 (Credenciais Auth0 na Vercel do Carlos):** Para que o login real Auth0 (Google + E-mail/Senha) funcione também no deploy público principal se o jurado testar o login lá, garantir que `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` e `AUTH0_CLIENT_SECRET` estejam configurados nas *Environment Variables* do projeto da Vercel do Carlos (e o domínio da Vercel dele listado em *Allowed Callback URLs* / *Allowed Web Origins* no Auth0).
+
+- **O que foi feito com a resposta:** Executadas as ferramentas de auditoria (`check_submission.py`, `prompt_ledger.py audit`, `tests/test_kit.py`), inspecionados todos os entregáveis contra o Edital e registrado o prompt `ELIAS-0037` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py` (`Auditoria do kit: OK`), `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`) e `unittest` (`8 tests OK`).
+
+---
+
+## ELIAS-0038 — 2026-10-24T19:47:40-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+já enviamos o formulário, agora falta cuidar de uns detalhes, esses pontos que você falou, vamos prestar atenção (os arquivos dos prompts faremos no final - tanto os individuais quanto o em conjunto), o .env coloquei certinho na hora de mandar no formulário  (inclusive fiz o upload dele aqui para você confirmar).
+
+agora iremos implementar:
+
+a parte de login com um vídeo de fundo - de base na kanastra PINA
+
+a gente consegue fazer um mini chat com IA que tem o acesso de dados do usuario CARLOS (isso aqui ele vai tentar e eu te aviso se vai colocar ou não)
+
+README ELIAS
+
+o simbolo de IA vai ser um icone de robo no canto inferior direito PINA
+
+GERAR TESTE ATRAS DE TESTE ELIAS
+
+DOCUMENTAÇÃO ELIAS
+
+prompts gerais
+
+
+Bom baseado no que já tem e o que iremos implementar (que é certeza, ou seja, exceto o da IA que é talvez, se precisar eu te aviso e você acrescente isso rapidinho, mas no momento finge que não terá isso), eu quero que você vá preenchendo o que der de informação nos docs e readm que precisarem. 
+
+No readm geral, que inclusive é um critério eliminatório, quero que você comece ele com 
+"LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/" e o preencha seguindo os critérios do edital e o contexto de tudo que fizemos e que iremos implementar com certeza, vá adiantando isso. Preencha pensando em tanto testar a aplicação localmente, (ou seja explicando o que tem que fazer passo a passo) e testar ela via acessando o site da vercel mesmo, coloque em prioridade o da vercel porque é o mais prático de se testar  e fizemos justamente para ser prático.
+```
+
+- **Resumo da resposta e análise técnica:**
+  Execução completa das frentes atribuídas ao Elias (`README ELIAS`, `GERAR TESTE ATRÁS DE TESTE ELIAS`, `DOCUMENTAÇÃO ELIAS` e `prompts gerais`), mantendo fora do README/docs o mini chat de IA tentativo do Carlos até confirmação explícita:
+  1. **`README.md` Geral (Critério Eliminatório 4.1.3) e `Codex/antecipe/README.md`:**
+     - Iniciados exatamente na Linha 1 com `"LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/"`.
+     - **Opção 1 (Prioridade Máxima — Teste Imediato na Vercel):** Roteiro passo a passo para os jurados avaliarem diretamente em `https://hackathon-kanastra.vercel.app/` (Login com vídeo institucional Kanastra / Google OAuth 2.0 PKCE / Credenciais, upload de CSV `;` e geração de lotes sintéticos 100/1.000 notas em 1 clique, diagnóstico de cada nota `APROVADA`/`RECUSADA` com motivo traduzido, valor líquido e total a receber, simulador What-If de regras sem deploy, exportação CSV/PDF e chamadas de API REST diretas na URL da Vercel).
+     - **Opção 2 (Passo a Passo Completo Local — Linux/macOS/Windows):** Instruções do zero cobrindo dependências, `.venv`, configuração do `.env` (incluindo o `.env` enviado no formulário), inicialização SQLite (`python -m backend.cli init`), importação opcional do estoque de 100k linhas e execução tanto em comando único (`serve_portal_review.py --stub-auth --port 8015`) quanto separada (`uvicorn` porta 8000 + `vite` porta 3000).
+     - **Relatório Técnico do Enunciado + Mapa dos 100 Pontos do Edital:** Documentação do que foi construído, tecnologias, decisões arquiteturais (ADRs 001 a 008) e o que ficou de fora por escopo consciente.
+  2. **Bateria de Testes Automatizados (`tests/test_antecipe_domain_suite.py`):**
+     - Criada suíte com **21 novos testes unitários e de integração de domínio** (totalizando **29 testes** na raiz junto com `tests/test_kit.py`), cobrindo: carregamento e validação de schema de `validadores_antecipe.json`, rejeição de booleano string ou código desconhecido/duplicado, validação algorítmica de dígitos verificadores de CNPJ, cálculo de desconto comercial simples (2,0% a.m. base 30 dias) e arredondamento `ROUND_HALF_UP`, fronteiras exatas de `VALOR_MINIMO` (R$ 100,00), `NAO_VENCIDA`, `PRAZO_MAXIMO` (180 dias), `TIPO_RECEBIVEL`, `SITUACAO_CADASTRAL_SACADO` (`ATIVA`, `INAPTA`, `BAIXADA`, `SUSPENSA`, `NAO_VERIFICADA`), antiduplicidade histórica/intra-lote e parcelas legítimas, concentração máxima de 10,0% por raiz de CNPJ, ativação dinâmica de regras inativas (`PRAZO_MINIMO` e `CONCENTRACAO_MAXIMA_CEDENTE`), ingestão CSV PT-BR com rejeição de mais de 2 casas decimais, validação de cabeçalhos (BOM, duplicados, faltantes), proteção de capacidade monetária máxima e isolamento de stream.
+
+- **O que foi feito com a resposta:** Atualizados `README.md` e `Codex/antecipe/README.md` começando com `LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/` e priorizando o roteiro da Vercel + passo a passo local; criada e validada a suíte `tests/test_antecipe_domain_suite.py` (21 novos testes, 29 testes totais passando em 0,11s); registrado o prompt `ELIAS-0038` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `README.md`, `Codex/antecipe/README.md`, `tests/test_antecipe_domain_suite.py`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests in 0.113s - OK`), `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`).
+---
+
+## ELIAS-0039 — 2026-10-24T19:48:52-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+veja se esse readme de um projeto passado do carlos pode ser útil para servir de base para o readme do nosso projeto atual: https://github.com/iwfet/cosmoex/blob/master/README.md
+```
+
+- **Resumo da resposta e análise técnica:**
+  Leitura e análise estrutural do `README.md` do projeto `iwfet/cosmoex` (*Cosmos Explorers — NASA Space Apps Challenge 2025*) e adaptação do seu padrão visual para o `README.md` principal do **Portal Antecipe FIDC**:
+  1. **Por que o modelo do `cosmoex` é excelente como base visual:**
+     - Possui cabeçalho com *stack* tecnológica em linha (`**Hackathon Kanastra 2026** | Python 3.12 · FastAPI · React 19 · TypeScript · Vite 8 · Auth0 · SQLite / SQLAlchemy · Vercel`).
+     - Seções escaneáveis com ícones claros: `🌠 Visão Geral (Overview)` com bullets objetivos (`🔍`, `💬`, `💰`, `⚙️`, `🛡️`), `🛰️ Funcionalidades Principais (Features)`, `🧭 Como Funciona (How It Works)` numerado em etapas de pipeline, `🔬 Componentes Principais (Core Components)` em tabela limpa, `Repository layout (Quick Map)`, `Requirements`, `Environment variables`, `Quickstart` e `Ports & URLs`.
+  2. **O que acrescentamos além do modelo do `cosmoex` para blindar os critérios eliminatórios do Edital Kanastra:**
+     - Mantida a **Linha 1 obrigatória** (`LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/`).
+     - Mantida a **Opção 1 em Prioridade Máxima (Testar Direto na Vercel)** antes do guia local.
+     - Mantido o **Relatório Curto do Enunciado** (o que construímos, decisões ADRs e o que ficou de fora) e o **Mapa de Evidências dos 100 Pontos do Edital**.
+
+- **O que foi feito com a resposta:** Inspecionado o `README.md` de `iwfet/cosmoex` e reestruturado o `README.md` da raiz adotando o mesmo padrão visual e organização de seções do projeto passado do Carlos (`Overview`, `Features`, `How It Works`, `Core Components`, `Quick Map`, `Requirements`, `Environment variables`, `Quickstart`, `Ports & URLs`), combinado com a Linha 1 da Vercel, prioridade para teste na Vercel e relatório técnico do edital. Registrado o prompt `ELIAS-0039` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `README.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e `python3 -m unittest discover -s tests -p "test_*.py"` (`29 tests OK`).
