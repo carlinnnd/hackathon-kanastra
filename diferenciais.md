@@ -1,6 +1,6 @@
-Edited REGISTRO_PROMPTS_PINA.md
+# Catálogo de Diferenciais de Produto e Arquitetura (Backlog P2) — ANTECIPE FIDC
 
-*(Registrado como `PINA-0001` no seu [`docs/REGISTRO_PROMPTS_PINA.md`](file:///c:/Users/leand/Documentos/kanastra-project/docs/REGISTRO_PROMPTS_PINA.md)!)*
+> **Origem:** Especificado e registrado em `PINA-0004` ([`docs/REGISTRO_PROMPTS_PINA.md`](docs/REGISTRO_PROMPTS_PINA.md)) e referenciado no plano de coordenação (`P0011` em [`docs/REGISTRO_PROMPTS_CARLOS.md`](docs/REGISTRO_PROMPTS_CARLOS.md)).
 
 Cara, essa sua ideia do **Leitor de Nota Fiscal (DANFE) pela câmera direto no navegador Web (sem precisar baixar app)** é **MUITO BOA**!
 
