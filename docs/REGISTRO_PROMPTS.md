@@ -1280,3 +1280,103 @@ suba no git
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0019 — 2026-10-24T18:42:55+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `2574dd82f598df2b2e8e13e74ce1c19d14d513ed07f15df7dbf19a70c5fe2174`
+- Texto do prompt (sanitizado):
+
+```text
+﻿lembre que o arquivo em C:\hackathon_kanastra\cnpj_situacao_mock.csv vem com os cnpjs que contem a situacao cadastral ATIVA
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Confirmada a referencia cadastral: copia identica ao CSV da raiz, com 2999 ATIVA e 42 outras situacoes. ATIVA satisfaz a regra cadastral; demais regras continuam aplicaveis. Sem alteracao de codigo.
+```
+
+- **O que foi feito com a resposta:** Conferida a fonte cadastral existente; nenhuma alteracao de runtime necessaria.
+- Arquivos/artefatos: docs/REGISTRO_PROMPTS.md, docs/prompts-events.jsonl
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0020 — 2026-10-24T19:16:22+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `6ccfadde860ee180cc8385ca1f3100ec1b4914d4bc516b4d3bfc05bd3eae3daf`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Criado diagnostico reproduzivel das duas datas e da projecao do gabarito, sem alterar runtime ou regras.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0021 — 2026-10-24T19:26:15+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `c5cd771f6828233d1a2bd8baf5e9c1e7e6a272c31dd088ce8e467f156efdde5d`
+- Texto do prompt (sanitizado):
+
+```text
+﻿atualizei o mock, rode novamente
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Reexecutado diagnostico completo com leitura direta da raiz, conferidos hashes e procuradas outras copias; nenhuma alteracao de runtime ou deploy.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0022 — 2026-10-24T19:29:03+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `ec7dccc8b1166c90dcdc55c318b01180a40982592470f54a64a82cbacd5945e1`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Salvei o mock atualizado em C:\hackathon_kanastra\cnpj_situacao_mock.csv. Rode novamente.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0023 — 2026-10-24T19:32:07+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `ac67b32f326d34bb6dbfe09b7cef7cc24292a327968f822228f698a6a5492b7c`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Publique o mock atualizado no Git e na Vercel.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Publicado mock atualizado e auditorias agregadas no Git e em pacote isolado na Vercel; verificada fonte cadastral real e simulacao sintetica apos deploy.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
