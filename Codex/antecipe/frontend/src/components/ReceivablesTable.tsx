@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, AlertTriangle, Filter } from 'lucide-react';
 import { SimulationEnvelope, ResultadoItem } from '../types';
 import { obterExplicacaoRecusa } from '../services/rejections';
 import { formatarMoedaBRL } from '../services/currency';
+import { EconomicGroupCard } from './EconomicGroupCard';
 
 interface ReceivablesTableProps {
   simulation: SimulationEnvelope;
@@ -245,6 +246,12 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
                                   <div className="rejection-details-action">
                                     Ação recomendada: {explicacao.acaoRecomendada}
                                   </div>
+                                  {m.codigo === 'CONCENTRACAO_MAXIMA_SACADO' && (
+                                    <EconomicGroupCard
+                                      raizCnpj={String(m.dados?.raiz_cnpj || '58206002')}
+                                      dadosMotivo={m.dados}
+                                    />
+                                  )}
                                 </div>
                               );
                             })}

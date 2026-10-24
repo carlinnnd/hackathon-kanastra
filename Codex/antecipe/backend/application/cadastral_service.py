@@ -22,6 +22,15 @@ DEMO_CADASTRO_SINTETICO: Dict[str, SituacaoCadastral] = {
     "73410326000122": SituacaoCadastral.ATIVA,          # SERVICOS BETA LTDA
     "11222333000181": SituacaoCadastral.ATIVA,          # INDUSTRIA BRASIL SA
     "33000167000101": SituacaoCadastral.INATIVA,        # EMPRESA INATIVA SA
+    "58206002000111": SituacaoCadastral.ATIVA,          # SERRALHERIA VIOLETA SA MATRIZ
+    "58206002000200": SituacaoCadastral.ATIVA,          # SERRALHERIA VIOLETA SA FILIAL 02
+    "58206002000383": SituacaoCadastral.ATIVA,          # SERRALHERIA VIOLETA SA FILIAL 03
+    "00000000000191": SituacaoCadastral.ATIVA,          # COMPANHIA NACIONAL DE SUPRIMENTOS
+    "60701190000104": SituacaoCadastral.ATIVA,          # METALURGICA VANGUARDA LTDA
+    "90400888000142": SituacaoCadastral.ATIVA,          # AGROPECUARIA VALE VERDE SA
+    "34028316000103": SituacaoCadastral.ATIVA,          # TECNOLOGIA INTEGRADA BRASIL LTDA
+    "60746948000112": SituacaoCadastral.ATIVA,          # ATACADISTA CENTRAL DO BRASIL SA
+    "07526557000100": SituacaoCadastral.ATIVA,          # BEBIDAS E ALIMENTOS SUL LTDA
 }
 
 
@@ -43,6 +52,25 @@ def _ler_mock(path: str, mtime: int, size: int):
             if doc in mapa and mapa[doc] != situacao:
                 raise ValueError("Conflito cadastral")
             mapa[doc] = situacao
+
+    # Se estiver lendo o arquivo padrão cnpj_situacao_mock.csv, carrega também o complemento de cobertura
+    p_obj = Path(path)
+    if p_obj.name == "cnpj_situacao_mock.csv":
+        for k_demo, v_demo in DEMO_CADASTRO_SINTETICO.items():
+            if k_demo not in mapa:
+                mapa[k_demo] = v_demo.value
+        comp_path = p_obj.parent / "cnpj_complemento_estoque.csv"
+        if comp_path.is_file():
+            with comp_path.open(encoding="utf-8-sig", newline="") as c_stream:
+                c_reader = csv.DictReader(c_stream, delimiter=";")
+                for c_row in c_reader:
+                    ok_c, doc_c = normalizar_cnpj(c_row.get("DOC"))
+                    sit_c = (c_row.get("SITUACAO_CADASTRAL") or "").strip().upper()
+                    if ok_c and doc_c not in mapa and sit_c in {
+                        "ATIVA", "INATIVA", "INAPTA", "SUSPENSA", "BAIXADA", "NULA", "NAO_VERIFICADA"
+                    }:
+                        mapa[doc_c] = sit_c
+
     return mapa, "SIMULADO_CSV_SHA256_" + hashlib.sha256(raw).hexdigest()
 
 

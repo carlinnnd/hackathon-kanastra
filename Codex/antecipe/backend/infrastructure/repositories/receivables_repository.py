@@ -118,3 +118,69 @@ class ReceivablesRepository:
             "maior_concentracao_raiz_pct": maior_pct,
             "avisos": avisos
         }
+
+    def obter_raio_x_grupo_economico(self, fundo_id: int, raiz_cnpj: str) -> dict:
+        raiz_limpa = "".join(ch for ch in (raiz_cnpj or "") if ch.isdigit())[:8]
+        total_centavos = (
+            self.db.query(func.coalesce(func.sum(ReceivableModel.valor_nominal_centavos), 0))
+            .filter(ReceivableModel.fund_id == fundo_id)
+            .scalar()
+        )
+        total_carteira = Decimal(total_centavos) / Decimal(100)
+
+        rows = (
+            self.db.query(
+                ReceivableModel.doc_sacado,
+                ReceivableModel.nome_sacado,
+                func.count(ReceivableModel.id).label("qtd"),
+                func.coalesce(func.sum(ReceivableModel.valor_nominal_centavos), 0).label("soma_centavos"),
+            )
+            .filter(
+                ReceivableModel.fund_id == fundo_id,
+                ReceivableModel.raiz_cnpj_sacado == raiz_limpa,
+            )
+            .group_by(ReceivableModel.doc_sacado, ReceivableModel.nome_sacado)
+            .order_by(func.sum(ReceivableModel.valor_nominal_centavos).desc())
+            .all()
+        )
+
+        filiais = []
+        exposicao_grupo_cent = 0
+        nome_grupo = f"Grupo Econômico Raiz {raiz_limpa}"
+
+        for idx, r in enumerate(rows):
+            doc = r.doc_sacado or ""
+            nome = r.nome_sacado or f"Unidade {doc}"
+            if idx == 0 and nome:
+                nome_grupo = nome.split(" - ")[0].strip()
+            val_dec = Decimal(r.soma_centavos) / Decimal(100)
+            exposicao_grupo_cent += int(r.soma_centavos)
+            pct_unid = (val_dec / total_carteira * Decimal(100)) if total_carteira > 0 else Decimal("0.00")
+            ordem = doc[8:12] if len(doc) == 14 else "0001"
+            tipo_unidade = "MATRIZ (0001)" if ordem == "0001" else f"FILIAL ({ordem})"
+            filiais.append({
+                "doc_sacado": doc,
+                "nome_sacado": nome,
+                "tipo_unidade": tipo_unidade,
+                "qtd_titulos": int(r.qtd),
+                "valor_nominal": f"{val_dec:.2f}",
+                "percentual_carteira": f"{pct_unid:.2f}",
+            })
+
+        exposicao_grupo = Decimal(exposicao_grupo_cent) / Decimal(100)
+        conc_pct = (exposicao_grupo / total_carteira * Decimal(100)) if total_carteira > 0 else Decimal("0.00")
+        limite_pct = Decimal("10.00")
+        limite_brl = (total_carteira * limite_pct) / Decimal(100)
+        excesso_brl = max(Decimal("0.00"), exposicao_grupo - limite_brl)
+
+        return {
+            "raiz_cnpj": raiz_limpa,
+            "grupo_economico": nome_grupo,
+            "total_carteira_fundo": f"{total_carteira:.2f}",
+            "exposicao_atual_grupo": f"{exposicao_grupo:.2f}",
+            "concentracao_atual_pct": f"{conc_pct:.2f}",
+            "limite_regulamentar_pct": f"{limite_pct:.2f}",
+            "excesso_atual_brl": f"{excesso_brl:.2f}",
+            "bloqueado_novas_aquisicoes": conc_pct >= limite_pct,
+            "filiais": filiais,
+        }

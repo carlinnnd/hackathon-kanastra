@@ -86,6 +86,11 @@ class RuleVersionCreateSchema(BaseModel):
     change_reason: Optional[str] = "Atualização de regras"
 
 
+class WhatIfSimulationRequestSchema(BaseModel):
+    configuration: Dict[str, Any]
+    sample_rows: int = Field(default=100, ge=10, le=10000)
+
+
 class RuleVersionItemSchema(BaseModel):
     id: int
     version_number: int

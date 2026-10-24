@@ -17,3 +17,4 @@ data/*
 *.csv
 !samples/demo.csv
 !data/cnpj_situacao_mock.csv
+!data/cnpj_complemento_estoque.csv

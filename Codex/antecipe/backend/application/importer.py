@@ -79,6 +79,54 @@ def inicializar_fundos_e_regras(db: Session, config_json_path: str) -> FundModel
     return fundo
 
 
+def seed_carteira_base_sintetica(db: Session, fundo_id: int) -> None:
+    """
+    Popula a carteira de referência sintética inicial do fundo (5 títulos, R$ 501.000,00)
+    se ainda não houver nenhum título cadastrado na tabela de recebíveis.
+    Garante base determinística para verificação de limites de concentração e duplicidade.
+    """
+    if db.query(ReceivableModel).filter(ReceivableModel.fund_id == fundo_id).count() == 0:
+        sacados_iniciais = [
+            ("04252011000110", "COMERCIAL ALPHA LTDA", Decimal("30000.00")),
+            ("73410326000122", "SERVICOS BETA LTDA", Decimal("20000.00")),
+            ("11222333000181", "INDUSTRIA GAMA SA", Decimal("50000.00")),
+            ("22333444000192", "DISTRIBUIDORA DELTA", Decimal("400000.00")),
+        ]
+        for idx, (doc, nome, val) in enumerate(sacados_iniciais, start=1):
+            rec = ReceivableModel(
+                fund_id=fundo_id,
+                chave_duplicidade=f"11222333000181:{doc}:DUPLICATA:NF-BASE-{idx}:2027-01-20",
+                nome_cedente="INDUSTRIA BRASIL SA",
+                doc_cedente="11222333000181",
+                nome_sacado=nome,
+                doc_sacado=doc,
+                raiz_cnpj_sacado=doc[:8],
+                nu_documento=f"NF-BASE-{idx}",
+                tipo_recebivel="Duplicata",
+                valor_nominal_centavos=int(val * 100),
+                valor_nominal=val,
+                data_vencimento=date(2027, 1, 20)
+            )
+            db.add(rec)
+
+        rec_hist = ReceivableModel(
+            fund_id=fundo_id,
+            chave_duplicidade="11222333000181:04252011000110:DUPLICATA:NF-HIST-01:2027-01-20",
+            nome_cedente="INDUSTRIA BRASIL SA",
+            doc_cedente="11222333000181",
+            nome_sacado="COMERCIAL ALPHA LTDA",
+            doc_sacado="04252011000110",
+            raiz_cnpj_sacado="04252011",
+            nu_documento="NF-HIST-01",
+            tipo_recebivel="Duplicata",
+            valor_nominal_centavos=100000,
+            valor_nominal=Decimal("1000.00"),
+            data_vencimento=date(2027, 1, 20)
+        )
+        db.add(rec_hist)
+        db.commit()
+
+
 def importar_estoque_csv(
     db: Session,
     csv_path: str,

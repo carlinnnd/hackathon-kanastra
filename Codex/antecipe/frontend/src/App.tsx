@@ -1,13 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ShieldAlert, AlertTriangle, RefreshCw, Info, Wifi } from 'lucide-react';
+import {
+  ShieldAlert,
+  AlertTriangle,
+  RefreshCw,
+  Info,
+  Layers,
+  Calculator,
+  Sliders,
+  Building2,
+  LogOut,
+  Wifi,
+  Loader2,
+} from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { SummaryCards } from './components/SummaryCards';
 import { ReceivablesTable } from './components/ReceivablesTable';
+import { RejectionChart } from './components/RejectionChart';
+import { SingleEvaluateTab } from './components/SingleEvaluateTab';
+import { WhatIfSimulatorTab } from './components/WhatIfSimulatorTab';
+import { EconomicGroupCard } from './components/EconomicGroupCard';
+import { KanastraLogo } from './components/KanastraLogo';
+import { LoginPage } from './components/LoginPage';
+import { ResultAnalytics } from './components/ResultAnalytics';
 import { api } from './services/api';
 import {
   SimulationEnvelope,
   HealthResponse,
   PortfolioSummary,
+  RuleVersion,
+  AuthUser,
   StreamProgressInfo,
 } from './types';
 import {
@@ -15,22 +36,26 @@ import {
   verificarSnapshotCompleto,
 } from './services/publicDemoResults';
 import { BulkUploadSession } from './services/bulkUpload';
-import { ResultAnalytics } from './components/ResultAnalytics';
 
 export const App: React.FC = () => {
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => api.getAuthSession());
+  const [activeTab, setActiveTab] = useState<'lote' | 'individual' | 'what-if'>('lote');
+  const [showGlobalXRay, setShowGlobalXRay] = useState<boolean>(false);
+
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
+  const [activeRuleVersion, setActiveRuleVersion] = useState<RuleVersion | null>(null);
   const [simulation, setSimulation] = useState<SimulationEnvelope | null>(null);
 
-  // Snapshot original completo em memória (usado para modo público efêmero em arquivos pequenos)
   const snapshotOriginalRef = useRef<SimulationEnvelope | null>(null);
-
-  // Sessão ativa de WebSocket para streaming e paginação na mesma instância
   const bulkSessionRef = useRef<BulkUploadSession | null>(null);
   const [isWsSessionActive, setIsWsSessionActive] = useState(false);
   const [wsSessionExpiredNotice, setWsSessionExpiredNotice] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingFileLabel, setLoadingFileLabel] = useState<string>('');
+  const [loadingProgressPct, setLoadingProgressPct] = useState<number>(0);
+  const [loadingElapsedSec, setLoadingElapsedSec] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamProgress, setStreamProgress] = useState<StreamProgressInfo | null>(null);
   const [tipoAnalise, setTipoAnalise] = useState<'novas_operacoes' | 'carteira'>('novas_operacoes');
@@ -40,7 +65,6 @@ export const App: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<string>('todos');
   const [currentReason, setCurrentReason] = useState<string>('todos');
 
-  // Encerra sessão anterior ao desmontar
   useEffect(() => {
     return () => {
       if (bulkSessionRef.current) {
@@ -50,12 +74,33 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Carrega health e resumo do portfólio na montagem
+  // Cronômetro e barra de carregamento progressiva durante o processamento de lotes CSV
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingProgressPct(0);
+      setLoadingElapsedSec(0);
+      return;
+    }
+    setLoadingProgressPct(8);
+    const startMs = Date.now();
+    const timer = window.setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startMs) / 1000);
+      setLoadingElapsedSec(elapsed);
+      setLoadingProgressPct((prev) => {
+        if (prev >= 92) return prev;
+        const step = prev < 50 ? 9 : prev < 75 ? 4 : 2;
+        return Math.min(92, prev + step);
+      });
+    }, 350);
+    return () => window.clearInterval(timer);
+  }, [isLoading]);
+
   const checkBackendState = async () => {
     try {
-      const [hRes, pRes] = await Promise.allSettled([
+      const [hRes, pRes, rRes] = await Promise.allSettled([
         api.getHealth(),
         api.getPortfolioSummary(),
+        api.getRuleVersions(),
       ]);
 
       if (hRes.status === 'fulfilled') {
@@ -69,9 +114,17 @@ export const App: React.FC = () => {
       } else {
         setPortfolio(null);
       }
+
+      if (rRes.status === 'fulfilled') {
+        const active = rRes.value.find((v) => v.is_active) || rRes.value[0] || null;
+        setActiveRuleVersion(active);
+      } else {
+        setActiveRuleVersion(null);
+      }
     } catch {
       setHealth(null);
       setPortfolio(null);
+      setActiveRuleVersion(null);
     }
   };
 
@@ -80,14 +133,11 @@ export const App: React.FC = () => {
   }, []);
 
   const isModoPublico = Boolean(health?.aviso_demo_publica);
-
-  // Capacidades de upload informadas pelo backend
   const uploadCaps = health?.upload_capabilities;
   const isWsDisponivel = uploadCaps?.bulk_transport === 'websocket';
   const httpMaxBytes = (uploadCaps?.http_max_bytes || 4000000) - 1024;
 
   const handleFileSelected = async (file: File) => {
-    // Fecha sessão WebSocket anterior para liberar recursos
     if (bulkSessionRef.current) {
       bulkSessionRef.current.close();
       bulkSessionRef.current = null;
@@ -95,11 +145,11 @@ export const App: React.FC = () => {
     }
 
     setIsLoading(true);
+    setLoadingFileLabel(`${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
     setErrorMessage(null);
     setWsSessionExpiredNotice(null);
     setStreamProgress(null);
 
-    // Seleciona WebSocket SOMENTE se o backend anunciar explicitamente suporte e o arquivo exceder o limite seguro HTTP
     const deveUsarWebSocket = isWsDisponivel && (isModoPublico || file.size > httpMaxBytes);
 
     if (deveUsarWebSocket) {
@@ -114,6 +164,15 @@ export const App: React.FC = () => {
         {
           onProgress: (info: StreamProgressInfo) => {
             setStreamProgress(info);
+            if (info.fase === 'uploading' && info.totalBytes) {
+              const pct = Math.min(
+                75,
+                Math.max(5, Math.round(((info.bytesEnviados || 0) / info.totalBytes) * 75))
+              );
+              setLoadingProgressPct(pct);
+            } else if (info.fase === 'processing') {
+              setLoadingProgressPct((prev) => Math.max(prev, 85));
+            }
           },
           onError: (erro: { codigo: string; mensagem: string }) => {
             snapshotOriginalRef.current = null;
@@ -124,6 +183,7 @@ export const App: React.FC = () => {
             setIsWsSessionActive(false);
           },
           onComplete: (simEnvelope: SimulationEnvelope) => {
+            setLoadingProgressPct(100);
             snapshotOriginalRef.current = simEnvelope;
             setSimulation(simEnvelope);
             setCurrentStatus('todos');
@@ -138,12 +198,10 @@ export const App: React.FC = () => {
             setStreamProgress(null);
 
             if (wasCompleted) {
-              // Concluiu com sucesso: preserva resumo e desabilita consultas na sessão fechada
               setWsSessionExpiredNotice(
                 'A sessão interativa desta simulação foi encerrada pelo servidor. O resumo inicial foi preservado; para navegar por outras páginas ou filtros deste lote extenso, envie o arquivo novamente.'
               );
             } else {
-              // Falhou antes da conclusão: limpa estado stale e emite erro claro para reenvio
               snapshotOriginalRef.current = null;
               setSimulation(null);
               setErrorMessage((prev) =>
@@ -175,9 +233,9 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Se WS não estiver disponível ou arquivo for pequeno: preserva fluxo HTTP atual inalterado
     try {
       const res = await api.uploadSimulation(file, tipoAnalise);
+      setLoadingProgressPct(100);
       snapshotOriginalRef.current = res;
       setSimulation(res);
       setCurrentStatus('todos');
@@ -195,10 +253,42 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleSimulateSampleBatch = async (rows: 100 | 1000 | 10000 | 100000) => {
+    if (bulkSessionRef.current) {
+      bulkSessionRef.current.close();
+      bulkSessionRef.current = null;
+      setIsWsSessionActive(false);
+    }
+
+    setIsLoading(true);
+    setLoadingFileLabel(`Lote Sintético de Homologação (${rows.toLocaleString('pt-BR')} títulos)`);
+    setErrorMessage(null);
+    setWsSessionExpiredNotice(null);
+    setStreamProgress(null);
+
+    try {
+      const res = await api.simulateSampleBatch(rows);
+      setLoadingProgressPct(100);
+      snapshotOriginalRef.current = res;
+      setSimulation(res);
+      setCurrentStatus('todos');
+      setCurrentReason('todos');
+    } catch (err: unknown) {
+      snapshotOriginalRef.current = null;
+      setSimulation(null);
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('Erro ao simular lote sintético.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePageChange = async (newPage: number) => {
     if (!simulation) return;
 
-    // 1. Se a sessão WebSocket estiver ativa, consulta na MESMA conexão
     if (bulkSessionRef.current && isWsSessionActive) {
       setIsLoading(true);
       try {
@@ -219,7 +309,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 2. Se estiver em modo público efêmero e o snapshot for completo (lotes <= 50)
     if (
       isModoPublico &&
       snapshotOriginalRef.current &&
@@ -236,7 +325,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 3. Modo local/persistente padrão: consulta GET via backend
     setIsLoading(true);
     try {
       const res = await api.getSimulation(
@@ -261,16 +349,10 @@ export const App: React.FC = () => {
     setCurrentStatus(status);
     setCurrentReason(reason);
 
-    // 1. Se a sessão WebSocket estiver ativa, consulta na MESMA conexão
     if (bulkSessionRef.current && isWsSessionActive) {
       setIsLoading(true);
       try {
-        const filteredSim = await bulkSessionRef.current.query(
-          1,
-          50,
-          status,
-          reason
-        );
+        const filteredSim = await bulkSessionRef.current.query(1, 50, status, reason);
         setSimulation(filteredSim);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -282,7 +364,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 2. Se estiver em modo público efêmero e o snapshot for completo
     if (
       isModoPublico &&
       snapshotOriginalRef.current &&
@@ -299,7 +380,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 3. Modo local/persistente padrão: consulta GET via backend
     setIsLoading(true);
     try {
       const res = await api.getSimulation(
@@ -325,18 +405,24 @@ export const App: React.FC = () => {
     setErrorMessage(null);
     try {
       let blob: Blob;
-      if (bulkSessionRef.current) {
+      if (bulkSessionRef.current && isWsSessionActive) {
         blob = await bulkSessionRef.current.exportResult(format);
       } else {
-        const response = await fetch(`/api/simulations/${encodeURIComponent(simulation.simulation_id)}/export?format=${format}`);
-        if (!response.ok) throw new Error('Não foi possível exportar. Reenvie o arquivo se a sessão expirou.');
+        const response = await fetch(
+          `/api/simulations/${encodeURIComponent(simulation.simulation_id)}/export?format=${format}`
+        );
+        if (!response.ok) {
+          throw new Error('Não foi possível exportar. Reenvie o arquivo se a sessão expirou.');
+        }
         blob = await response.blob();
       }
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `antecipe-${simulation.simulation_id}-${format}.${format === 'pdf' ? 'pdf' : 'csv'}`;
-      document.body.appendChild(link); link.click(); link.remove();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Falha na exportação. Tente novamente.');
@@ -349,17 +435,16 @@ export const App: React.FC = () => {
   const estoqueDisponivel = backendOnline && health.estoque_carregado;
   const uploadHabilitado = backendOnline && estoqueDisponivel;
 
-  const fonteCadastralReal =
-    simulation?.auditoria.cadastro_fonte ||
-    health?.cadastro_fonte ||
-    (backendOnline ? 'CONSULTANDO' : 'OFFLINE');
-
   const versaoRegraReal =
     simulation?.rule_version !== undefined
-      ? `V${simulation.rule_version}`
+      ? `v${simulation.rule_version}`
+      : activeRuleVersion?.version_number !== undefined
+      ? `v${activeRuleVersion.version_number}`
       : health?.rule_version !== undefined
-      ? `V${health.rule_version}`
-      : (backendOnline ? '—' : 'OFFLINE');
+      ? `v${health.rule_version}`
+      : backendOnline
+      ? 'v1'
+      : 'Offline';
 
   const estoqueStatusReal =
     portfolio?.total_recebiveis !== undefined
@@ -367,298 +452,441 @@ export const App: React.FC = () => {
       : health?.total_registros_estoque !== undefined && health.estoque_carregado
       ? `${health.total_registros_estoque.toLocaleString('pt-BR')} títulos`
       : backendOnline
-      ? 'NÃO CARREGADO'
-      : 'OFFLINE';
+      ? 'Não carregado'
+      : 'Offline';
 
-  // Se a sessão expirou em lote extenso ou snapshot público parcial sem WS ativo
+  const handleLogout = () => {
+    api.clearAuthSession();
+    setAuthUser(null);
+  };
+
+  if (!authUser) {
+    return <LoginPage onLoginSuccess={(user) => setAuthUser(user)} />;
+  }
+
+  const userInitials = authUser.nome
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0].toUpperCase())
+    .join('');
+
+  // Exibe avisos de governança somente quando necessário (lote com concentração ou avisos na simulação)
+  const motivosCount = simulation?.resumo_motivos || {};
+  const temRecusaConcentracaoNoLote =
+    (motivosCount['CONCENTRACAO_MAXIMA_SACADO'] || 0) > 0 ||
+    Boolean(
+      simulation?.analytics?.motivos?.some(
+        (m) => m.codigo === 'CONCENTRACAO_MAXIMA_SACADO' && m.quantidade > 0
+      )
+    );
+  const avisosRelevantes = [
+    ...(simulation?.avisos || []),
+    ...(temRecusaConcentracaoNoLote && portfolio?.avisos ? portfolio.avisos : []),
+  ];
+
   const filtrosDesabilitados =
     Boolean(wsSessionExpiredNotice) ||
     Boolean(isModoPublico && !isWsSessionActive && simulation && !verificarSnapshotCompleto(simulation));
 
-  return (
-    <div className="app-container">
-      {/* Cabeçalho Institucional */}
-      <header className="header" role="banner">
-        <div className="header-title-group">
-          <h1>
-            <span>Antecipe</span>
-            <span className="header-badge">Motor de Simulação FIDC</span>
-          </h1>
-          <p className="header-subtitle">
-            Plataforma de esteira de simulação de elegibilidade, análise de risco e antecipação de recebíveis.
-          </p>
-        </div>
+  // Porcentagem efetiva da barra de progresso
+  const effectiveProgressPct =
+    streamProgress?.fase === 'uploading' && streamProgress.totalBytes
+      ? Math.min(100, Math.round(((streamProgress.bytesEnviados || 0) / streamProgress.totalBytes) * 100))
+      : loadingProgressPct;
 
-        <div className="header-meta">
-          <div
-            className="status-pill"
-            aria-live="polite"
-            aria-label={`Status do backend: ${backendOnline ? 'Operacional' : 'Indisponível'}`}
-          >
-            <span
-              className={`status-indicator ${backendOnline ? 'online' : 'offline'}`}
-              aria-hidden="true"
-            />
-            <span>
-              {backendOnline
-                ? `Motor Conectado (${health?.fundo || 'FIDC'})`
-                : 'Motor Offline / Conectando'}
-            </span>
+  return (
+    <div className="kanastra-shell">
+      {/* Topbar Kanastra */}
+      <header className="kanastra-topbar" role="banner">
+        <div className="kanastra-topbar-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
+            <KanastraLogo size={28} subtitle="Backoffice FIDC" />
+
+            <nav className="kanastra-nav-tabs" aria-label="Módulos da plataforma">
+              <button
+                type="button"
+                className={`kanastra-nav-tab ${activeTab === 'lote' ? 'active' : ''}`}
+                onClick={() => setActiveTab('lote')}
+              >
+                <Layers size={15} aria-hidden="true" />
+                <span>Remessas CSV</span>
+              </button>
+
+              <button
+                type="button"
+                className={`kanastra-nav-tab ${activeTab === 'individual' ? 'active' : ''}`}
+                onClick={() => setActiveTab('individual')}
+              >
+                <Calculator size={15} aria-hidden="true" />
+                <span>Análise Individual</span>
+              </button>
+
+              <button
+                type="button"
+                className={`kanastra-nav-tab ${activeTab === 'what-if' ? 'active' : ''}`}
+                onClick={() => setActiveTab('what-if')}
+              >
+                <Sliders size={15} aria-hidden="true" />
+                <span>Política e Regras</span>
+              </button>
+            </nav>
           </div>
 
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={checkBackendState}
-            aria-label="Atualizar status do motor e carteira"
-            style={{ padding: '6px 12px', fontSize: '0.8125rem' }}
-          >
-            <RefreshCw size={14} aria-hidden="true" />
-            <span>Verificar</span>
-          </button>
+          <div className="kanastra-user-area">
+            <div
+              className="status-pill"
+              aria-live="polite"
+              aria-label={`Status do motor: ${backendOnline ? 'Online' : 'Offline'}`}
+            >
+              <span
+                className={`status-indicator ${backendOnline ? 'online' : 'offline'}`}
+                aria-hidden="true"
+              />
+              <span>{backendOnline ? 'Motor Ativo' : 'Offline'}</span>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={checkBackendState}
+              aria-label="Sincronizar estado do motor"
+              title="Sincronizar estado do motor"
+              style={{ padding: '6px 9px' }}
+            >
+              <RefreshCw size={13} aria-hidden="true" />
+            </button>
+
+            <div className="kanastra-user-badge" title={`${authUser.email} • ${authUser.cargo}`}>
+              <div className="kanastra-user-avatar" aria-hidden="true">
+                {userInitials || 'KN'}
+              </div>
+              <div className="kanastra-user-info">
+                <span className="kanastra-user-name">{authUser.nome}</span>
+                <span className="kanastra-user-role">{authUser.cargo}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleLogout}
+              style={{ padding: '6px 11px', fontSize: '0.78rem' }}
+              title="Encerrar sessão"
+            >
+              <LogOut size={13} aria-hidden="true" />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Aviso de Modo Demonstração Pública Efêmera (se aplicável) */}
-      {health?.aviso_demo_publica && (
-        <div
-          className="alert-banner"
-          style={{ borderLeftColor: 'var(--status-info-border)', marginBottom: '24px' }}
-          role="region"
-          aria-label="Aviso de ambiente de demonstração pública"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Info size={20} color="var(--status-info-text)" aria-hidden="true" />
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', margin: 0 }}>
-              {health.aviso_demo_publica}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Faixa de Contexto de Risco e Simulação Cadastral */}
-      <section className="alert-banner" aria-labelledby="banner-context-title">
-        <div className="alert-banner-text">
-          <strong id="banner-context-title">
-            Ambiente de Simulação de Risco & Análise de Elegibilidade
-          </strong>
-          <p>
-            Operação de simulação (sem desembolso financeiro ou cessão definitiva). Fonte
-            cadastral: <strong>{fonteCadastralReal}</strong>. Concentração por raiz do CNPJ do sacado e
-            duplicidade auditadas pelo motor.
-          </p>
-        </div>
-
-        <div className="alert-banner-badges">
-          <span className="badge-tag">DATA-BASE: 2026-10-22</span>
-          <span className="badge-tag">REGRA ATIVA: {versaoRegraReal}</span>
-          <span className="badge-tag">ESTOQUE: {estoqueStatusReal}</span>
-        </div>
-      </section>
-
-      {/* Avisos do Portfólio / Governança */}
-      {portfolio?.avisos && portfolio.avisos.length > 0 && (
-        <div
-          className="alert-banner"
-          style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '24px' }}
-          role="region"
-          aria-label="Avisos da carteira do fundo"
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <AlertTriangle size={20} color="var(--status-warning-text)" aria-hidden="true" />
-            <div>
-              <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.875rem' }}>
-                Avisos de Carteira e Governança:
-              </strong>
-              <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                {portfolio.avisos.map((aviso, i) => (
-                  <li key={i}>{aviso}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Alerta de Sessão WebSocket Expirada */}
-      {wsSessionExpiredNotice && (
-        <div
-          className="alert-banner"
-          style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '24px' }}
-          role="region"
-          aria-label="Aviso de sessão expirada"
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <AlertTriangle size={20} color="var(--status-warning-text)" aria-hidden="true" />
-            <div>
-              <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.875rem' }}>
-                Sessão Interativa Encerrada
-              </strong>
-              <p style={{ marginTop: 4, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                {wsSessionExpiredNotice}
+      <div className="app-container">
+        {/* Aviso de Modo Demonstração Pública Efêmera (se aplicável) */}
+        {health?.aviso_demo_publica && (
+          <div
+            className="alert-banner"
+            style={{ borderLeftColor: 'var(--status-info-border)', marginBottom: '20px' }}
+            role="region"
+            aria-label="Aviso de ambiente de demonstração pública"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Info size={18} color="var(--status-info-text)" aria-hidden="true" />
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', margin: 0 }}>
+                {health.aviso_demo_publica}
               </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Alerta de Indisponibilidade do Backend ou Estoque Ausente */}
-      {!uploadHabilitado && (
-        <div
-          className="error-toast"
-          role="alert"
-          aria-live="polite"
-          style={{
-            backgroundColor: 'var(--status-warning-bg)',
-            borderColor: 'var(--status-warning-border)',
-            color: 'var(--status-warning-text)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={20} aria-hidden="true" />
-            <span>
-              {!backendOnline
-                ? 'Motor backend indisponível ou desconectado. Inicie o servidor FastAPI em http://localhost:8000 e clique em "Verificar".'
-                : 'Estoque do FIDC não carregado no motor. O envio de arquivos está temporariamente suspenso.'}
-            </span>
+        {/* Faixa de Contexto do Fundo */}
+        <section className="kanastra-subheader" aria-label="Fundo sob gestão">
+          <div className="kanastra-subheader-meta">
+            <span className="kanastra-fund-title">ANTECIPE FIDC</span>
+            <span className="kanastra-meta-sep">•</span>
+            <span>CNPJ 92.234.400/0001-80</span>
+            <span className="kanastra-meta-sep">•</span>
+            <span>Data-base: 22/10/2026</span>
+            <span className="kanastra-meta-sep">•</span>
+            <span>Regra {versaoRegraReal}</span>
+            <span className="kanastra-meta-sep">•</span>
+            <span>Carteira: {estoqueStatusReal}</span>
           </div>
-        </div>
-      )}
 
-      {/* Alerta de Erro de Conexão ou Validação */}
-      {errorMessage && (
-        <div className="error-toast" role="alert" aria-live="assertive">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShieldAlert size={20} aria-hidden="true" />
-            <span>{errorMessage}</span>
+          <div>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ padding: '5px 11px', fontSize: '0.76rem' }}
+              onClick={() => setShowGlobalXRay((prev) => !prev)}
+            >
+              <Building2 size={13} aria-hidden="true" />
+              <span>
+                {showGlobalXRay
+                  ? 'Ocultar Exposição Societária'
+                  : 'Exposição por Grupo Econômico'}
+              </span>
+            </button>
           </div>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => setErrorMessage(null)}
-            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-            aria-label="Fechar mensagem de erro"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
-      {/* Seção Principal de Upload */}
-      <main>
-        <section className="analysis-mode" aria-label="Finalidade do arquivo CSV">
-          <label htmlFor="analysis-mode"><strong>O que este CSV representa?</strong></label>
-          <select id="analysis-mode" className="select-control" value={tipoAnalise} disabled={isLoading || isExporting}
-            onChange={e => setTipoAnalise(e.target.value as 'novas_operacoes' | 'carteira')}>
-            <option value="novas_operacoes">Novas notas para antecipação</option>
-            <option value="carteira">Estoque histórico dos fundos</option>
-          </select>
-          <p>{tipoAnalise === 'carteira' ? 'Analisa a carteira enviada, seus valores, vencimentos e concentração por fundo. Não classifica o histórico como novas aprovações ou recusas e não realiza aquisição.' : 'Avalia novas notas com todas as regras ativas, consulta cadastral simulada e duplicidade contra o estoque de referência. Para o arquivo histórico de 100 mil registros, selecione Estoque histórico.'}</p>
         </section>
-        <FileUpload
-          onFileSelected={handleFileSelected}
-          isLoading={isLoading}
-          disabled={!uploadHabilitado || isExporting}
-        />
 
-        {/* Indicador de Progresso Real (Streaming WebSocket ou Processamento Indeterminado) */}
-        {isLoading && (
+        {showGlobalXRay && (
+          <div style={{ marginBottom: '20px' }}>
+            <EconomicGroupCard raizCnpj="58206002" />
+          </div>
+        )}
+
+        {/* Avisos de Governança exibidos apenas quando pertinentes à operação */}
+        {avisosRelevantes.length > 0 && (
           <div
-            className="loading-box"
-            role="status"
-            aria-live="polite"
-            aria-label="Processando arquivo CSV com o motor de regras"
+            className="alert-banner"
+            style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '20px' }}
+            role="region"
+            aria-label="Avisos de enquadramento da operação"
           >
-            {streamProgress ? (
-              streamProgress.fase === 'uploading' ? (
-                <>
-                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Wifi size={18} color="var(--accent-blue)" aria-hidden="true" />
-                    <span>Transmitindo lote via WebSocket (janela de 4 MiB)...</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
+              <div>
+                <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.84rem' }}>
+                  Notificação de Enquadramento da Carteira
+                </strong>
+                <ul
+                  style={{
+                    marginTop: 4,
+                    paddingLeft: 18,
+                    fontSize: '0.8rem',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {avisosRelevantes.map((aviso, i) => (
+                    <li key={i}>{aviso}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta de Sessão WebSocket Expirada */}
+        {wsSessionExpiredNotice && (
+          <div
+            className="alert-banner"
+            style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '20px' }}
+            role="region"
+            aria-label="Aviso de sessão expirada"
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
+              <div>
+                <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.84rem' }}>
+                  Sessão Interativa Encerrada
+                </strong>
+                <p style={{ marginTop: 4, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  {wsSessionExpiredNotice}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta de Indisponibilidade do Backend */}
+        {!uploadHabilitado && (
+          <div
+            className="error-toast"
+            role="alert"
+            aria-live="polite"
+            style={{
+              backgroundColor: 'var(--status-warning-bg)',
+              borderColor: 'var(--status-warning-border)',
+              color: 'var(--status-warning-text)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={18} aria-hidden="true" />
+              <span>
+                {!backendOnline
+                  ? 'Servidor de validação indisponível. Verifique o serviço FastAPI em http://localhost:8000.'
+                  : 'A carteira histórica do fundo não foi localizada no banco de dados.'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta de Erro de Conexão ou Validação */}
+        {errorMessage && (
+          <div className="error-toast" role="alert" aria-live="assertive">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ShieldAlert size={18} aria-hidden="true" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setErrorMessage(null)}
+              style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+              aria-label="Fechar mensagem de erro"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
+        {/* Conteúdo Principal por Aba */}
+        <main>
+          {activeTab === 'individual' && <SingleEvaluateTab />}
+
+          {activeTab === 'what-if' && (
+            <WhatIfSimulatorTab onRulesUpdated={checkBackendState} />
+          )}
+
+          {activeTab === 'lote' && (
+            <>
+              <section className="analysis-mode" aria-label="Finalidade do arquivo CSV">
+                <label htmlFor="analysis-mode">
+                  <strong>Finalidade da remessa CSV</strong>
+                </label>
+                <select
+                  id="analysis-mode"
+                  className="select-control"
+                  value={tipoAnalise}
+                  disabled={isLoading || isExporting}
+                  onChange={(e) =>
+                    setTipoAnalise(e.target.value as 'novas_operacoes' | 'carteira')
+                  }
+                >
+                  <option value="novas_operacoes">
+                    Novas operações para antecipação (avaliação de elegibilidade e deságio)
+                  </option>
+                  <option value="carteira">
+                    Auditoria descritiva de estoque histórico (sem nova aquisição)
+                  </option>
+                </select>
+                <p>
+                  {tipoAnalise === 'carteira'
+                    ? 'Analisa descritivamente o estoque enviado, seus valores, vencimentos e concentração por fundo.'
+                    : 'Avalia os títulos da planilha frente às regras ativas do fundo, situação cadastral, concentração por raiz de CNPJ e antiduplicidade.'}
+                </p>
+              </section>
+
+              <FileUpload
+                onFileSelected={handleFileSelected}
+                onSimulateSampleBatch={handleSimulateSampleBatch}
+                isLoading={isLoading}
+                disabled={!uploadHabilitado || isExporting}
+              />
+
+              {/* Barra de Carregamento Completa durante o Processamento de Lote CSV */}
+              {isLoading && (
+                <div
+                  className="loading-box"
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Carregando e processando lote CSV"
+                >
+                  <div className="loading-header-row">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {streamProgress?.fase === 'uploading' ? (
+                        <Wifi size={18} color="#34d399" aria-hidden="true" />
+                      ) : (
+                        <Loader2 size={18} color="#34d399" className="spin-icon" aria-hidden="true" />
+                      )}
+                      <strong style={{ fontSize: '0.96rem', color: 'var(--text-primary)' }}>
+                        {streamProgress
+                          ? streamProgress.fase === 'uploading'
+                            ? 'Transmitindo lote CSV via streaming...'
+                            : 'Motor avaliando regras de elegibilidade e concentração...'
+                          : 'Carregando e processando remessa CSV...'}
+                      </strong>
+                    </div>
+                    <span className="loading-pct-badge">{effectiveProgressPct}%</span>
                   </div>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                    Bytes confirmados: <strong>{((streamProgress.bytesEnviados || 0) / (1024 * 1024)).toFixed(2)} MB</strong> de <strong>{((streamProgress.totalBytes || 1) / (1024 * 1024)).toFixed(2)} MB</strong>
-                  </p>
-                  <div className="progress-bar-container">
+
+                  <div
+                    className="progress-bar-container"
+                    role="progressbar"
+                    aria-valuenow={effectiveProgressPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Progresso do processamento do lote CSV"
+                  >
                     <div
-                      style={{
-                        height: '100%',
-                        backgroundColor: 'var(--accent-blue)',
-                        width: `${Math.min(100, Math.round(((streamProgress.bytesEnviados || 0) / (streamProgress.totalBytes || 1)) * 100))}%`,
-                        transition: 'width 0.2s ease',
-                      }}
+                      className="progress-bar-fill"
+                      style={{ width: `${effectiveProgressPct}%` }}
                     />
                   </div>
-                </>
-              ) : (
+
+                  <div className="loading-meta-row">
+                    <span>
+                      {loadingFileLabel ? `Arquivo: ${loadingFileLabel}` : 'Validando registros da planilha'}
+                    </span>
+                    <span>
+                      {streamProgress?.fase === 'uploading' && streamProgress.totalBytes
+                        ? `${((streamProgress.bytesEnviados || 0) / (1024 * 1024)).toFixed(2)} MB / ${(
+                            streamProgress.totalBytes /
+                            (1024 * 1024)
+                          ).toFixed(2)} MB`
+                        : streamProgress?.linhasProcessadas
+                        ? `${streamProgress.linhasProcessadas.toLocaleString('pt-BR')} títulos processados`
+                        : `Tempo decorrido: ${loadingElapsedSec}s`}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Resumo, Gráficos, Exportações e Detalhamento da Simulação */}
+              {simulation && (
                 <>
-                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                    Motor processando regras do fundo...
-                  </div>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                    Linhas processadas pelo motor: <strong>{streamProgress.linhasProcessadas?.toLocaleString('pt-BR') || 0}</strong> títulos
-                  </p>
-                  <div className="progress-bar-container">
-                    <div className="progress-bar-indeterminate" />
-                  </div>
+                  <SummaryCards simulation={simulation} />
+
+                  <RejectionChart
+                    simulation={simulation}
+                    currentReason={currentReason}
+                    onSelectReason={(reasonCode) => {
+                      const nextStatus = reasonCode === 'todos' ? 'todos' : 'RECUSADA';
+                      handleFilterChange(nextStatus, reasonCode);
+                    }}
+                  />
+
+                  <ResultAnalytics
+                    simulation={simulation}
+                    onExport={handleExport}
+                    exporting={isExporting}
+                    exportDisabled={isExporting || Boolean(wsSessionExpiredNotice) || isLoading}
+                  />
+
+                  <ReceivablesTable
+                    simulation={simulation}
+                    onPageChange={handlePageChange}
+                    onFilterChange={handleFilterChange}
+                    currentStatus={currentStatus}
+                    currentReason={currentReason}
+                    filtrosDesabilitados={filtrosDesabilitados}
+                  />
+
+                  <section className="audit-card" aria-label="Metadados de auditoria da simulação">
+                    <div className="audit-meta-item">
+                      ID da Operação: <strong>{simulation.simulation_id}</strong>
+                    </div>
+                    <div className="audit-meta-item">
+                      Fonte Cadastral: <strong>{simulation.auditoria.cadastro_fonte}</strong>
+                    </div>
+                    <div className="audit-meta-item">
+                      Carteira de Referência:{' '}
+                      <strong>{simulation.auditoria.carteira_referencia}</strong>
+                    </div>
+                    <div className="audit-meta-item">
+                      Hash da Regra:{' '}
+                      <span style={{ fontFamily: 'var(--font-mono)' }}>
+                        {simulation.auditoria.configuration_hash.substring(0, 12)}...
+                      </span>
+                    </div>
+                  </section>
                 </>
-              )
-            ) : (
-              <>
-                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                  Processando lote e avaliando elegibilidade...
-                </div>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                  O motor está validando regras de prazo, valores, duplicidade e limites de
-                  concentração com o estoque FIDC.
-                </p>
-                <div className="progress-bar-container">
-                  <div className="progress-bar-indeterminate" />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Resumo e Detalhamento da Simulação */}
-        {simulation && (
-          <>
-            <SummaryCards simulation={simulation} />
-            <ResultAnalytics simulation={simulation} onExport={handleExport} exporting={isExporting}
-              exportDisabled={isExporting || Boolean(wsSessionExpiredNotice) || isLoading} />
-
-            <ReceivablesTable
-              simulation={simulation}
-              onPageChange={handlePageChange}
-              onFilterChange={handleFilterChange}
-              currentStatus={currentStatus}
-              currentReason={currentReason}
-              filtrosDesabilitados={filtrosDesabilitados}
-            />
-
-            {/* Metadados de Auditoria e Rastreabilidade */}
-            <section className="audit-card" aria-label="Metadados de auditoria da simulação">
-              <div className="audit-meta-item">
-                Identificador da Simulação:{' '}
-                <strong>{simulation.simulation_id}</strong>
-              </div>
-              <div className="audit-meta-item">
-                Fonte Cadastral: <strong>{simulation.auditoria.cadastro_fonte}</strong>
-              </div>
-              <div className="audit-meta-item">
-                Carteira de Referência:{' '}
-                <strong>{simulation.auditoria.carteira_referencia}</strong>
-              </div>
-              <div className="audit-meta-item">
-                Hash de Configuração:{' '}
-                <span style={{ fontFamily: 'var(--font-mono)' }}>
-                  {simulation.auditoria.configuration_hash.substring(0, 12)}...
-                </span>
-              </div>
-            </section>
-          </>
-        )}
-      </main>
+              )}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 };

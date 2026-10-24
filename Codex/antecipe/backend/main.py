@@ -4,8 +4,10 @@ Configura middlewares (CORS, Safe Logging com template allowlist, tratamento de 
 proteção de tamanho HTTP, e inclusão de rotas REST e WebSocket Bulk Stream).
 """
 import re
+import sys
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,9 +17,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .api.routes import router
 from .api.bulk_routes import bulk_router
 from .infrastructure.database.session import Base, engine, SessionLocal
-from .application.importer import inicializar_fundos_e_regras, importar_estoque_csv
+from .application.importer import inicializar_fundos_e_regras, importar_estoque_csv, seed_carteira_base_sintetica
 from .config import settings
 from .logger import logger
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+try:
+    from login.vercel_auth_helper import auth_router
+except ImportError:
+    auth_router = None
 
 
 def init_db():
@@ -32,6 +42,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         fundo = inicializar_fundos_e_regras(db, settings.VALIDADORES_JSON_PATH)
+        seed_carteira_base_sintetica(db, fundo.id)
         logger.info(
             "Aplicacao Antecipe inicializada com sucesso",
             extra={
@@ -195,3 +206,5 @@ async def safe_logging_middleware(request: Request, call_next):
 
 app.include_router(router)
 app.include_router(bulk_router)
+if auth_router is not None:
+    app.include_router(auth_router)

@@ -4,12 +4,21 @@ import { api } from '../services/api';
 
 interface FileUploadProps {
   onFileSelected: (file: File) => void;
+  onSimulateSampleBatch?: (rows: 100 | 1000 | 10000 | 100000) => void;
   isLoading: boolean;
   disabled?: boolean;
 }
 
+const LOTES_HOMOLOGACAO: Array<{ rows: 100 | 1000 | 10000 | 100000; label: string; slug: string }> = [
+  { rows: 100, label: 'Remessa Compacta', slug: 'lote_compacto.csv' },
+  { rows: 1000, label: 'Remessa Padrão', slug: 'lote_padrao.csv' },
+  { rows: 10000, label: 'Remessa Corporativa', slug: 'lote_corporativo.csv' },
+  { rows: 100000, label: 'Remessa Massiva', slug: 'lote_massivo.csv' },
+];
+
 export const FileUpload: React.FC<FileUploadProps> = ({
   onFileSelected,
+  onSimulateSampleBatch,
   isLoading,
   disabled = false,
 }) => {
@@ -21,10 +30,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const validateAndProcessFile = (file: File | undefined) => {
     if (!file) return;
 
-    // Validação case-insensitive da extensão .csv
     const isCsv = file.name.toLowerCase().endsWith('.csv');
     if (!isCsv) {
-      setValidationError('Por favor, selecione um arquivo no formato CSV (.csv).');
+      setValidationError('Selecione um arquivo válido no formato CSV (.csv).');
       setSelectedFileName(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -36,7 +44,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     setSelectedFileName(file.name);
     onFileSelected(file);
 
-    // Permite reenviar o mesmo arquivo selecionando novamente
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -79,7 +86,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   return (
     <section aria-labelledby="upload-section-title">
       <h2 id="upload-section-title" className="sr-only">
-        Área de envio de lote de recebíveis
+        Importação de remessa de recebíveis
       </h2>
 
       {validationError && (
@@ -128,16 +135,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <div className="upload-heading">
           {selectedFileName ? (
             <span style={{ color: 'var(--text-primary)' }}>
-              Arquivo: <strong>{selectedFileName}</strong>
+              Remessa selecionada: <strong>{selectedFileName}</strong>
             </span>
           ) : (
-            'Arraste e solte o arquivo CSV ou clique no botão abaixo'
+            'Importar arquivo de remessa CSV'
           )}
         </div>
 
         <p className="upload-subtext">
-          Formato CSV delimitado por ponto e vírgula (;), codificação UTF-8 com os 11 cabeçalhos
-          requeridos. O motor processará a simulação de elegibilidade de ponta a ponta.
+          Arraste o arquivo delimitado por ponto e vírgula ou selecione a planilha no seu
+          computador para iniciar a verificação de enquadramento.
         </p>
 
         <div className="upload-actions">
@@ -148,21 +155,55 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             disabled={disabled || isLoading}
             aria-label="Abrir seletor de arquivos CSV"
           >
-            <FileText size={16} aria-hidden="true" />
-            <span>{selectedFileName ? 'Trocar arquivo' : 'Selecionar arquivo CSV'}</span>
+            <FileText size={15} aria-hidden="true" />
+            <span>{selectedFileName ? 'Substituir arquivo CSV' : 'Selecionar arquivo CSV'}</span>
           </button>
 
           <a
             href={api.getDemoCsvUrl()}
-            download="demo_recebiveis.csv"
+            download="modelo_remessa_antecipe.csv"
             className="btn-secondary"
-            aria-label="Baixar planilha de demonstração sintética com exemplos de aprovação e recusa"
+            aria-label="Baixar planilha modelo de demonstração"
           >
-            <Download size={16} aria-hidden="true" />
-            <span>Baixar CSV de demonstração</span>
+            <Download size={15} aria-hidden="true" />
+            <span>Baixar planilha modelo</span>
           </a>
         </div>
+
+        {onSimulateSampleBatch && (
+          <div className="upload-homologation-bar">
+            <span className="upload-homologation-label">Bases de homologação:</span>
+
+            <div className="upload-homologation-actions">
+              {LOTES_HOMOLOGACAO.map((item) => (
+                <div key={item.rows} className="upload-homologation-item">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.76rem' }}
+                    disabled={disabled || isLoading}
+                    onClick={() => {
+                      setSelectedFileName(item.slug);
+                      onSimulateSampleBatch(item.rows);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                  </button>
+                  <a
+                    href={api.getSampleCsvUrl(item.rows)}
+                    download={item.slug}
+                    className="upload-homologation-dl"
+                    title={`Baixar ${item.slug}`}
+                  >
+                    CSV
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
 };
+

@@ -27,7 +27,7 @@ from ..infrastructure.database.models import FundModel, RuleVersionModel, CargaE
 from ..infrastructure.repositories.receivables_repository import ReceivablesRepository
 from ..infrastructure.repositories.rules_repository import RulesRepository
 from ..infrastructure.repositories.simulations_repository import SimulationsRepository
-from .cadastral_service import carregar_cadastro
+from .cadastral_service import carregar_cadastro, obter_mapa_cadastral_para_lote
 from .result_reporting import AgregadorResultados, serializar_resultado
 from ..logger import logger
 
@@ -245,6 +245,9 @@ class SimulationService:
         envelope = {
             "tipo_analise": tipo_analise,
             "analytics": analytics,
+            "resumo_motivos": {
+                m["codigo"]: m["quantidade"] for m in (analytics.get("motivos", []) if analytics else [])
+            },
             "nao_aprovados": total_itens - aprovados_count if tipo_analise == "novas_operacoes" else agregador.status["RECUSADA"],
             "recusas_confirmadas": agregador.status["RECUSADA"],
             "simulation_id": sim_id,
@@ -285,3 +288,103 @@ class SimulationService:
         )
 
         return sim_id, envelope
+
+    def executar_simulacao_what_if(
+        self,
+        custom_config: dict,
+        itens_lista: List[Tuple[int, Optional[ReceivelInput], Optional[ResultadoAvaliacao]]],
+    ) -> dict:
+        """
+        Executa simulação comparativa 'What-If' puramente em memória (sem mutar o banco),
+        confrontando a versão ativa de regras com a configuração hipotética fornecida.
+        """
+        fundo = self.db.query(FundModel).filter(FundModel.nome.ilike("%ANTECIPE%")).first()
+        if not fundo:
+            raise ValueError("Fundo principal não encontrado.")
+
+        versao_ativa = self.rules_repo.obter_versao_ativa(fundo.id)
+        if not versao_ativa:
+            raise ValueError("Nenhuma regra ativa configurada.")
+
+        raw_ativa = json.loads(versao_ativa.configuration_json, parse_float=Decimal)
+        dt_base = parse_data_br(settings.DATA_BASE) or date(2026, 10, 22)
+
+        cfg_baseline = carregar_configuracao(raw_ativa, dt_base)
+        cfg_what_if = carregar_configuracao(custom_config, dt_base)
+
+        snapshot_base = self.receivables_repo.carregar_snapshot_carteira(fundo.id, chaves_candidatas=None)
+
+        docs_unicos = {it.doc_sacado for _, it, _ in itens_lista if it is not None}
+        mapa_cadastral = obter_mapa_cadastral_para_lote(docs_unicos)
+
+        def _avaliar_cenario(cfg_motor) -> dict:
+            motor = MotorAvaliacao(cfg_motor)
+            snap_copia = snapshot_base.criar_copia_isolada()
+            estado = EstadoProjetadoLote(
+                total_nominal=snap_copia.total_nominal,
+                exposicoes_sacado_raiz=dict(snap_copia.exposicoes_sacado_raiz),
+                exposicoes_cedente=dict(snap_copia.exposicoes_cedente),
+                chaves_vistas_no_lote=set(),
+            )
+            total = 0
+            aprov = 0
+            recus = 0
+            nom_cent = 0
+            liq_cent = 0
+            motivos_map: Dict[str, int] = {}
+
+            for _, item, erro in itens_lista:
+                total += 1
+                if erro:
+                    res = erro
+                elif item:
+                    res = motor.avaliar_recebivel(
+                        recebivel=item,
+                        contexto_cadastral=mapa_cadastral,
+                        estado_lote=estado,
+                        snapshot_historico=snap_copia,
+                    )
+                else:
+                    continue
+
+                if res.valor_nominal:
+                    nom_cent += int((res.valor_nominal * 100).to_integral_value())
+                if res.aprovado:
+                    aprov += 1
+                    if res.valor_liquido:
+                        liq_cent += int((res.valor_liquido * 100).to_integral_value())
+                else:
+                    recus += 1
+                    for m in res.motivos:
+                        motivos_map[m.codigo] = motivos_map.get(m.codigo, 0) + 1
+
+            nom_dec = Decimal(nom_cent) / Decimal(100)
+            liq_dec = Decimal(liq_cent) / Decimal(100)
+            taxa_aprov = (Decimal(aprov) / Decimal(total) * Decimal(100)) if total > 0 else Decimal("0.0")
+            return {
+                "total_itens": total,
+                "aprovados": aprov,
+                "recusados": recus,
+                "total_nominal": f"{nom_dec:.2f}",
+                "total_liquido": f"{liq_dec:.2f}",
+                "taxa_aprovacao_pct": f"{taxa_aprov:.1f}",
+                "resumo_motivos": motivos_map,
+                "_liq_dec": liq_dec,
+            }
+
+        res_base = _avaliar_cenario(cfg_baseline)
+        res_what = _avaliar_cenario(cfg_what_if)
+
+        liq_delta = res_what.pop("_liq_dec") - res_base.pop("_liq_dec")
+        aprov_delta = res_what["aprovados"] - res_base["aprovados"]
+
+        return {
+            "baseline_version": versao_ativa.version_number,
+            "data_base": cfg_what_if.data_base.isoformat(),
+            "baseline": res_base,
+            "what_if": res_what,
+            "delta": {
+                "aprovados_delta": aprov_delta,
+                "liquido_delta_brl": f"{liq_delta:.2f}",
+            },
+        }

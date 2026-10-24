@@ -38,6 +38,7 @@ class TestVercelDemoWrapperIsolated(unittest.TestCase):
             env = dict(os.environ)
             env["PUBLIC_DEMO_MODE"] = "true"
             env["ENABLE_DEMO_CADASTRO"] = "true"
+            env["CADASTRO_MOCK_PATH"] = ""
             env["DATABASE_URL"] = db_url
             env["VALIDADORES_JSON_PATH"] = str(validadores_json)
             env["PYTHONPATH"] = str(codex_root)
