@@ -11,6 +11,7 @@ from dotenv import dotenv_values
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from ..config import settings
+from ..logger import logger
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticação"])
 COOKIE = "antecipe_auth0_session"
@@ -57,8 +58,35 @@ def provider(cfg, path, body=None, token=None):
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             return json.load(response)
-    except urllib.error.HTTPError:
-        fail('AUTH0_AUTENTICACAO_RECUSADA', 'Não foi possível autenticar no Auth0. Confira as credenciais e a configuração da aplicação.')
+    except urllib.error.HTTPError as exc:
+        try:
+            rejection = json.loads(exc.read(8192))
+        except (ValueError, OSError):
+            rejection = {}
+        error = rejection.get('error') if isinstance(rejection, dict) else None
+        management = body is not None and body.get('grant_type') == 'client_credentials'
+        if management:
+            code, message, status = ('POLITICAS_AUTORIZACAO_RECUSADA',
+                'O Auth0 recusou o serviço de políticas. Revise a aplicação Machine-to-Machine e autorize a Management API com read:users e update:users_app_metadata.', 503)
+        elif exc.code == 429:
+            code, message, status = 'AUTH0_LIMITE_CONSULTAS', 'O Auth0 limitou as consultas. Aguarde e tente novamente.', 503
+        elif path == 'userinfo':
+            code, message, status = 'SESSAO_EXPIRADA', 'Sua sessão não pôde ser confirmada. Entre novamente.', 401
+        elif error == 'unauthorized_client' and path == 'oauth/token':
+            code, message, status = ('AUTH0_FLUXO_NAO_AUTORIZADO',
+                'A entrada deve ser concluída na página segura do Auth0.', 503)
+        elif error in {'invalid_client', 'unauthorized_client'}:
+            code, message, status = ('AUTH0_CONFIGURACAO_RECUSADA',
+                'O Auth0 recusou a configuração do aplicativo. O administrador deve conferir a credencial, a conexão de usuários e o fluxo de autenticação habilitado.', 503)
+        elif path == 'dbconnections/signup':
+            code, message, status = ('AUTH0_CADASTRO_RECUSADO',
+                'O cadastro não foi concluído. Confira os dados e os requisitos de senha; se já possui uma conta, utilize Entrar.', 422)
+        else:
+            code, message, status = 'AUTH0_AUTENTICACAO_RECUSADA', 'Não foi possível entrar. Confira seus dados ou recupere o acesso pelo Auth0.', 401
+        # Somente códigos internos e status; nunca corpo, descrição, credenciais ou perfil do provedor.
+        logger.warning('Auth0 recusou uma operação', extra={'event': 'AUTH0_PROVIDER_REJECTED',
+            'error_code': code, 'status_code': exc.code})
+        fail(code, message, status)
     except (OSError, ValueError):
         fail('AUTH0_INDISPONIVEL', 'Auth0 indisponível. Tente novamente.', 502)
 
@@ -105,7 +133,7 @@ def public_config(response: Response):
     enabled = bool(cfg['domain'] and cfg['client_id'])
     return {'configured': enabled, 'enabled': enabled, 'domain': cfg['domain'] if enabled else None,
             'clientId': cfg['client_id'] if enabled else None, 'useServerExchange': True,
-            'personalPoliciesConfigured': bool(os.environ.get('AUTH0_MANAGEMENT_API_CLIENT_ID') and os.environ.get('AUTH0_MANAGEMENT_API_CLIENT_SECRET'))}
+            'personalPoliciesConfigured': enabled, 'databaseConnection': cfg['connection'] if enabled else None}
 
 
 class LoginRequest(BaseModel):
@@ -130,10 +158,22 @@ def login(payload: LoginRequest, request: Request, response: Response):
         provider(cfg, 'dbconnections/signup', body)
     body = {'grant_type': 'http://auth0.com/oauth/grant-type/password-realm',
             'client_id': cfg['client_id'], 'realm': cfg['connection'], 'username': payload.email.strip(),
-            'password': payload.password, 'scope': 'openid profile email'}
+            'password': payload.password, 'scope': 'openid profile email read:current_user update:current_user_metadata create:current_user_metadata',
+            'audience': f"https://{cfg['domain']}/api/v2/"}
     if cfg['client_secret']:
         body['client_secret'] = cfg['client_secret']
-    return establish(cfg, provider(cfg, 'oauth/token', body), request, response)
+    try:
+        return establish(cfg, provider(cfg, 'oauth/token', body), request, response)
+    except HTTPException as exc:
+        if payload.mode == 'signup':
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            raise HTTPException(status_code=409, detail={
+                'codigo': 'CONTA_CRIADA_LOGIN_NAO_CONCLUIDO',
+                'mensagem': 'Sua conta foi criada no Auth0, mas a entrada não foi concluída. Não repita o cadastro. ' + detail.get('mensagem', 'Entre novamente.'),
+                'causa_codigo': detail.get('codigo'),
+                'cadastro_criado': True,
+            }, headers={'Cache-Control': 'no-store'}) from None
+        raise
 
 
 class ExchangeRequest(BaseModel):

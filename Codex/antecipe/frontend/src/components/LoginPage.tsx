@@ -10,7 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import { KanastraLogo } from './KanastraLogo';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
 import { AuthUser } from '../types';
 
 interface LoginPageProps {
@@ -74,7 +74,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       });
       onLoginSuccess(user);
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (err instanceof ApiError && ['AUTH0_FLUXO_NAO_AUTORIZADO', 'CONTA_CRIADA_LOGIN_NAO_CONCLUIDO'].includes(err.codigo || '')) {
+        setPassword('');
+        try { await api.beginEmailLogin(email); }
+        catch (redirectError) { setErrorMsg(redirectError instanceof Error ? redirectError.message : 'Não foi possível abrir o Auth0.'); }
+      } else if (err instanceof Error) {
         setErrorMsg(err.message);
       } else {
         setErrorMsg('Não foi possível autenticar. Verifique seu e-mail e senha.');

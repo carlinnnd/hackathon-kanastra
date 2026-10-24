@@ -36,6 +36,10 @@ async function run() {
   await auth.beginGoogleLogin();
   const redirect = new URL(location.assigned);
   assert.equal(redirect.searchParams.get('code_challenge_method'), 'S256');
+  assert.equal(redirect.searchParams.get('audience'), 'https://example.auth0.com/api/v2/');
+  assert.ok(redirect.searchParams.get('scope').includes('read:current_user'));
+  assert.ok(redirect.searchParams.get('scope').includes('update:current_user_metadata'));
+  assert.ok(!redirect.searchParams.get('scope').includes('update:users'));
   assert.ok(redirect.searchParams.get('code_challenge'));
   assert.ok(redirect.searchParams.get('state'));
   assert.ok(!location.assigned.includes('client_secret'));
@@ -52,6 +56,11 @@ async function run() {
   location.search = '?code=synthetic&state=forged';
   await assert.rejects(invalid.restoreAuthSession(), /inválida/);
   assert.equal(exchanged, 1);
+  await auth.beginEmailLogin('qa@example.invalid');
+  const emailRedirect = new URL(location.assigned);
+  assert.equal(emailRedirect.searchParams.get('login_hint'), 'qa@example.invalid');
+  assert.equal(emailRedirect.searchParams.get('connection'), null);
+  assert.ok(!location.assigned.includes('password'));
   await auth.endAuthSession();
   assert.equal(await auth.restoreAuthSession(), null);
   console.log('Auth: PKCE, state, callback unico, replay, rejeicao e logout passaram.');

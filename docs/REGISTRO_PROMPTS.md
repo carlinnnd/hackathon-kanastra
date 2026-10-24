@@ -1540,3 +1540,63 @@ Integracao corrigida na branchlocalfix/integracao-auth-20261024, preservando JSX
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0032 — 2026-10-24T22:07:13+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `fd714566825ab9e3485255e866c2836961892ec970fcff715dfa1ffcd1ae8c67`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Erro no WebSocket ao enviar CSV em produção: conexão para /api/simulations/stream falhou no bundle index-Bti42FuU.js. Corrigir o upload.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+WebSocket passou a devolver erros estruturados de sessão/política antes de ler CSV; preservados limites e bloqueio de dados não autorizados. Correção preparada para publicar.
+```
+
+- **O que foi feito com a resposta:** Corrigida recusa opaca do WebSocket: aceitar transporte e retornar erro estruturado antes de receber CSV.
+- Arquivos/artefatos: Codex/antecipe/backend/api/bulk_routes.py; backend/tests/test_auth_rejection_regression.py
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0033 — 2026-10-24T22:07:13+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `30ca9f09c451bdda226d86ede836952ad2c949ecfa400a7e2c583ce42f5f2dc3`
+- Texto do prompt (sanitizado):
+
+```text
+﻿O cadastro de conta e acesso às políticas também retornam recusa de autenticação no Auth0. Corrigir a integração.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Preparados PKCE com escopos da própria conta, políticas pessoais em user_metadata e tratamento de cadastro criado com entrada incompleta.93testes e frontend aprovados; novo login real ainda necessário.
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: 93testes em6,72s; TypeScript/testes/build e PKCE/state/replay/escopos passaram. Sondagem real confirmou403de permissões e grant. Consentimento real pendente do titular.
+
+## P0034 — 2026-10-24T22:07:13+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `b29150376ee70ead9ccbd587a7bac73acf7f3a57fd3fc945a408e9909a1d72e9`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Credencial conferida em sondagem autorizada. Auth0 confirmou falta de autorização M2M e grant de senha desabilitado. Arquivo temporário apagado; segredo não publicado.
+```
+
+- **O que foi feito com a resposta:** Usada configuração reapresentada somente na sondagem autorizada; nenhuma credencial foi colocada em código/Git ou alterada na Vercel.
+- Arquivos/artefatos: Arquivo temporário em Codex/antecipe/.data apagado; sem arquivo de credenciais publicado.
+- Verificação: Provedor confirmou access_denied na Management API e unauthorized_client no grant de senha; saídas restritas a códigos e booleanos, sem corpo bruto ou segredo.
+

@@ -34,7 +34,7 @@ def main():
             import copy
             os.environ['AUTH0_MANAGEMENT_API_CLIENT_ID'] = 'synthetic-review'
             metadata = {}
-            def synthetic_management(subject, patch=None):
+            def synthetic_management(subject, patch=None, token=None):
                 current = metadata.setdefault(subject, {})
                 if patch is not None:
                     current.update(copy.deepcopy(patch))

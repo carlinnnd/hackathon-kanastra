@@ -1,7 +1,7 @@
 import type { AuthUser } from '../types';
 
 const TRANSACTION = 'antecipe_auth0_transaction_v2';
-type Config = { configured: boolean; domain: string | null; clientId: string | null };
+type Config = { configured: boolean; domain: string | null; clientId: string | null; databaseConnection?: string | null };
 
 async function json<T>(response: Response): Promise<T> {
   const body = await response.json();
@@ -14,6 +14,14 @@ function base64url(bytes: Uint8Array): string {
 }
 
 export async function beginGoogleLogin(): Promise<void> {
+  return beginLogin('google-oauth2');
+}
+
+export async function beginEmailLogin(email: string): Promise<void> {
+  return beginLogin(undefined, email);
+}
+
+async function beginLogin(connection?: string, email?: string): Promise<void> {
   const cfg = await json<Config>(await fetch('/api/auth/config', { cache: 'no-store' }));
   if (!cfg.configured || !cfg.domain || !cfg.clientId) throw new Error('Auth0 não configurado no servidor.');
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
@@ -23,8 +31,11 @@ export async function beginGoogleLogin(): Promise<void> {
   sessionStorage.setItem(TRANSACTION, JSON.stringify({ verifier, state, redirectUri, createdAt: Date.now() }));
   const url = new URL(`https://${cfg.domain}/authorize`);
   for (const [key, value] of Object.entries({ response_type: 'code', client_id: cfg.clientId,
-    redirect_uri: redirectUri, scope: 'openid profile email', connection: 'google-oauth2',
+    redirect_uri: redirectUri, scope: 'openid profile email read:current_user update:current_user_metadata create:current_user_metadata',
+    audience: `https://${cfg.domain}/api/v2/`,
     state, code_challenge: challenge, code_challenge_method: 'S256' })) url.searchParams.set(key, value);
+  if (connection) url.searchParams.set('connection', connection);
+  if (email) url.searchParams.set('login_hint', email);
   location.assign(url.toString());
 }
 

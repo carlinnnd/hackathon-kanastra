@@ -74,9 +74,10 @@ def test_private_api_requires_server_verified_session(isolated, auth_provider, m
     monkeypatch.setattr(settings, 'PUBLIC_DEMO_MODE', False)
     assert client.get('/api/health').status_code == 200
     assert client.get('/api/portfolio/summary').status_code == 401
-    with pytest.raises(WebSocketDisconnect):
-        with client.websocket_connect('/api/simulations/stream'):
-            pass
+    with client.websocket_connect('/api/simulations/stream') as ws:
+        rejected = ws.receive_json()
+        assert rejected['type'] == 'error'
+        assert rejected['codigo'] == 'SESSAO_AUSENTE'
     assert client.post('/api/auth/login', json={'email': 'qa@example.invalid', 'password': 'synthetic-password'}).status_code == 200
     assert client.get('/api/portfolio/summary').status_code == 200
     client.post('/api/auth/logout')

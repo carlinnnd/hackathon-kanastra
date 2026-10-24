@@ -182,18 +182,20 @@ async def websocket_simulation_stream(websocket: WebSocket):
     from .auth_routes import verify_access
     from fastapi import HTTPException
     from starlette.concurrency import run_in_threadpool
-    try:
-        await run_in_threadpool(verify_access, websocket)
-    except HTTPException:
-        await websocket.close(code=1008)
-        return
+    # Aceita o transporte antes das consultas externas para devolver falhas estruturadas.
+    # Nenhum frame CSV é lido nem enviado ao motor antes de validar sessão e política.
+    await websocket.accept()
     from .policy_routes import active_configuration
     try:
+        await run_in_threadpool(verify_access, websocket)
         personal_configuration = await run_in_threadpool(active_configuration, websocket)
-    except HTTPException:
-        await websocket.close(code=1008)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, dict) else {}
+        await websocket.send_json({'type': 'error',
+            'codigo': detail.get('codigo', 'AUTENTICACAO_RECUSADA'),
+            'mensagem': detail.get('mensagem', 'Não foi possível confirmar a sessão e a política da análise.')})
+        await websocket.close(code=1008 if exc.status_code in {401, 403} else 1011)
         return
-    await websocket.accept()
 
     try:
         msg_init = await asyncio.wait_for(websocket.receive_json(), timeout=10.0)

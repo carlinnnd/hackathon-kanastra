@@ -13,7 +13,7 @@ def accounts(monkeypatch):
     remote = {}
     monkeypatch.setenv('AUTH0_MANAGEMENT_API_CLIENT_ID', 'synthetic-client')
     monkeypatch.setattr(auth_routes, 'profile', lambda cfg, token: {'id': 'auth0|' + token})
-    def management(subject, patch=None):
+    def management(subject, patch=None, token=None):
         metadata = remote.setdefault(subject, {})
         if patch is not None:
             metadata.update(copy.deepcopy(patch))
@@ -71,20 +71,16 @@ def test_validation_limits_and_remote_failure(isolated, accounts, monkeypatch):
 
 def test_management_uses_encoded_verified_subject_and_patch_namespace(monkeypatch):
     from unittest.mock import patch
-    monkeypatch.setenv('AUTH0_MANAGEMENT_API_CLIENT_ID', 'synthetic-client')
-    monkeypatch.setenv('AUTH0_MANAGEMENT_API_CLIENT_SECRET', 'synthetic-secret')
     monkeypatch.setattr(auth_routes, 'config', lambda: {'domain':'example.auth0.com','client_id':'public'})
-    monkeypatch.setattr(auth_routes, 'provider', lambda *args, **kwargs: {'access_token': 'synthetic-management', 'expires_in': 60})
-    policy_routes._token_cache.update(key=None, expires=0)
     class Response(io.BytesIO):
         pass
     def urlopen(request, timeout):
         assert request.full_url.endswith('/api/v2/users/auth0%7Caccount-a')
         assert request.method == 'PATCH'
-        assert json.loads(request.data) == {'app_metadata': {'antecipe_active_policy': 'id'}}
+        assert json.loads(request.data) == {'user_metadata': {'antecipe_active_policy': 'id'}}
         return Response(b'{"app_metadata":{"unrelated":"preserved"}}')
     with patch('urllib.request.urlopen', side_effect=urlopen):
-        assert policy_routes.management('auth0|account-a', {'antecipe_active_policy':'id'}) == {'unrelated':'preserved'}
+        assert policy_routes.management('auth0|account-a', {'antecipe_active_policy':'id'}, token='synthetic-current-user-token') == {'unrelated':'preserved'}
 
 
 def test_stream_freezes_personal_policy_at_start(isolated, accounts):

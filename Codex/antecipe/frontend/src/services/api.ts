@@ -1,4 +1,4 @@
-import { beginGoogleLogin, restoreAuthSession, endAuthSession } from './auth';
+import { beginEmailLogin, beginGoogleLogin, restoreAuthSession, endAuthSession } from './auth';
 /**
  * Serviço de Integração API Antecipe
  * Configurado com endpoints canônicos sem expor PII ou segredos.
@@ -84,6 +84,7 @@ export const api = {
   getAuthSession(): AuthUser | null { return null; },
   restoreAuthSession,
   beginGoogleLogin,
+  beginEmailLogin,
   async logout(): Promise<void> { await endAuthSession(); },
   async login(payload: LoginPayload): Promise<AuthUser> {
     const response = await fetch(`${API_BASE}/auth/login`, {
