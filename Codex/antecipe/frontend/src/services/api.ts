@@ -84,7 +84,7 @@ export const api = {
   getAuthSession(): AuthUser | null { return null; },
   restoreAuthSession,
   beginGoogleLogin,
-  beginEmailLogin,
+  beginEmailLogin: (email: string, mode?: 'login' | 'signup') => beginEmailLogin(email, mode),
   async logout(): Promise<void> { await endAuthSession(); },
   async login(payload: LoginPayload): Promise<AuthUser> {
     const response = await fetch(`${API_BASE}/auth/login`, {
@@ -231,15 +231,51 @@ export const api = {
     return `${API_BASE}/samples/${rows}`;
   },
 
-  async uploadSimulation(file: File, tipoAnalise = 'novas_operacoes'): Promise<SimulationEnvelope> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const res = await fetch(`${API_BASE}/simulations?tipo_analise=${encodeURIComponent(tipoAnalise)}`, {
-      method: 'POST',
-      body: formData,
+  async uploadSimulation(
+    file: File,
+    tipoAnalise = 'novas_operacoes',
+    onProgress?: (loaded: number, total: number) => void
+  ): Promise<SimulationEnvelope> {
+    if (!onProgress) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/simulations?tipo_analise=${encodeURIComponent(tipoAnalise)}`, {
+        method: 'POST',
+        body: formData,
+      });
+      return handleResponse<SimulationEnvelope>(res);
+    }
+    return new Promise<SimulationEnvelope>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/simulations?tipo_analise=${encodeURIComponent(tipoAnalise)}`);
+      if (xhr.upload) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            onProgress(e.loaded, e.total);
+          }
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText) as SimulationEnvelope);
+          } catch {
+            reject(new Error('Erro ao ler resposta do servidor.'));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new ApiError(err.detail?.mensagem || `Erro ${xhr.status}`, xhr.status, err.detail?.codigo));
+          } catch {
+            reject(new ApiError(`Erro HTTP ${xhr.status}`, xhr.status));
+          }
+        }
+      };
+      xhr.onerror = () => reject(new Error('Falha de rede ao enviar arquivo.'));
+      const formData = new FormData();
+      formData.append('file', file);
+      xhr.send(formData);
     });
-    return handleResponse<SimulationEnvelope>(res);
   },
 
   async getSimulation(

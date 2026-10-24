@@ -53,7 +53,7 @@ export const App: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingFileLabel, setLoadingFileLabel] = useState<string>('');
-  const [loadingProgressPct, setLoadingProgressPct] = useState<number>(0);
+  const [uploadBytes, setUploadBytes] = useState<{ loaded: number; total: number }>({ loaded: 0, total: 0 });
   const [loadingElapsedSec, setLoadingElapsedSec] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [streamProgress, setStreamProgress] = useState<StreamProgressInfo | null>(null);
@@ -73,24 +73,16 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Cronômetro e barra de carregamento progressiva durante o processamento de lotes CSV
+  // Cronômetro simples de tempo decorrido durante o envio de lotes CSV
   useEffect(() => {
     if (!isLoading) {
-      setLoadingProgressPct(0);
       setLoadingElapsedSec(0);
       return;
     }
-    setLoadingProgressPct(8);
     const startMs = Date.now();
     const timer = window.setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startMs) / 1000);
-      setLoadingElapsedSec(elapsed);
-      setLoadingProgressPct((prev) => {
-        if (prev >= 92) return prev;
-        const step = prev < 50 ? 9 : prev < 75 ? 4 : 2;
-        return Math.min(92, prev + step);
-      });
-    }, 350);
+      setLoadingElapsedSec(Math.floor((Date.now() - startMs) / 1000));
+    }, 500);
     return () => window.clearInterval(timer);
   }, [isLoading]);
 
@@ -148,6 +140,7 @@ export const App: React.FC = () => {
     }
 
     setIsLoading(true);
+    setUploadBytes({ loaded: 0, total: file.size });
     setLoadingFileLabel(`${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
     setErrorMessage(null);
     setWsSessionExpiredNotice(null);
@@ -167,14 +160,8 @@ export const App: React.FC = () => {
         {
           onProgress: (info: StreamProgressInfo) => {
             setStreamProgress(info);
-            if (info.fase === 'uploading' && info.totalBytes) {
-              const pct = Math.min(
-                75,
-                Math.max(5, Math.round(((info.bytesEnviados || 0) / info.totalBytes) * 75))
-              );
-              setLoadingProgressPct(pct);
-            } else if (info.fase === 'processing') {
-              setLoadingProgressPct((prev) => Math.max(prev, 85));
+            if (info.bytesEnviados !== undefined && info.totalBytes) {
+              setUploadBytes({ loaded: info.bytesEnviados, total: info.totalBytes });
             }
           },
           onError: (erro: { codigo: string; mensagem: string }) => {
@@ -186,7 +173,7 @@ export const App: React.FC = () => {
             setIsWsSessionActive(false);
           },
           onComplete: (simEnvelope: SimulationEnvelope) => {
-            setLoadingProgressPct(100);
+            setUploadBytes({ loaded: file.size, total: file.size });
             snapshotOriginalRef.current = simEnvelope;
             setSimulation(simEnvelope);
             setCurrentStatus('todos');
@@ -237,8 +224,10 @@ export const App: React.FC = () => {
     }
 
     try {
-      const res = await api.uploadSimulation(file, tipoAnalise);
-      setLoadingProgressPct(100);
+      const res = await api.uploadSimulation(file, tipoAnalise, (loaded, total) => {
+        setUploadBytes({ loaded, total });
+      });
+      setUploadBytes({ loaded: file.size, total: file.size });
       snapshotOriginalRef.current = res;
       setSimulation(res);
       setCurrentStatus('todos');
@@ -468,11 +457,11 @@ export const App: React.FC = () => {
     Boolean(wsSessionExpiredNotice) ||
     Boolean(isModoPublico && !isWsSessionActive && simulation && !verificarSnapshotCompleto(simulation));
 
-  // Porcentagem efetiva da barra de progresso
+  // Porcentagem efetiva da barra de progresso baseada estritamente no peso/bytes do arquivo
   const effectiveProgressPct =
-    streamProgress?.fase === 'uploading' && streamProgress.totalBytes
-      ? Math.min(100, Math.round(((streamProgress.bytesEnviados || 0) / streamProgress.totalBytes) * 100))
-      : loadingProgressPct;
+    uploadBytes.total > 0
+      ? Math.min(100, Math.round((uploadBytes.loaded / uploadBytes.total) * 100))
+      : 0;
 
   return (
     <div className="kanastra-shell">
@@ -515,7 +504,7 @@ export const App: React.FC = () => {
           <div className="kanastra-user-area">
             <div className="kanastra-user-badge" title={`${authUser.email} • ${authUser.cargo}`}>
               <div className="kanastra-user-avatar" aria-hidden="true">
-                {userInitials || 'KN'}
+                {userInitials || 'AT'}
               </div>
               <div className="kanastra-user-info">
                 <span className="kanastra-user-name">{authUser.nome}</span>
@@ -611,37 +600,6 @@ export const App: React.FC = () => {
         {showGlobalXRay && (
           <div style={{ marginBottom: '20px' }}>
             <EconomicGroupCard raizCnpj="58206002" />
-          </div>
-        )}
-
-        {/* Avisos de Governança exibidos apenas quando pertinentes à operação */}
-        {avisosRelevantes.length > 0 && (
-          <div
-            className="alert-banner"
-            style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '20px' }}
-            role="region"
-            aria-label="Avisos de enquadramento da operação"
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
-              <div>
-                <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.84rem' }}>
-                  Notificação de Enquadramento da Carteira
-                </strong>
-                <ul
-                  style={{
-                    marginTop: 4,
-                    paddingLeft: 18,
-                    fontSize: '0.8rem',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {avisosRelevantes.map((aviso, i) => (
-                    <li key={i}>{aviso}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
           </div>
         )}
 
@@ -752,27 +710,21 @@ export const App: React.FC = () => {
                 disabled={!uploadHabilitado || isExporting}
               />
 
-              {/* Barra de Carregamento Completa durante o Processamento de Lote CSV */}
+              {/* Barra de Carregamento baseada exclusivamente no peso do arquivo CSV */}
               {isLoading && (
                 <div
                   className="loading-box"
                   role="status"
                   aria-live="polite"
-                  aria-label="Carregando e processando lote CSV"
+                  aria-label="Carregando lote CSV"
                 >
                   <div className="loading-header-row">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {streamProgress?.fase === 'uploading' ? (
-                        <Wifi size={18} color="#34d399" aria-hidden="true" />
-                      ) : (
-                        <Loader2 size={18} color="#34d399" className="spin-icon" aria-hidden="true" />
-                      )}
+                      <Loader2 size={18} color="#34d399" className="spin-icon" aria-hidden="true" />
                       <strong style={{ fontSize: '0.96rem', color: 'var(--text-primary)' }}>
-                        {streamProgress
-                          ? streamProgress.fase === 'uploading'
-                            ? 'Transmitindo lote CSV via streaming...'
-                            : 'Motor avaliando regras de elegibilidade e concentração...'
-                          : 'Carregando e processando remessa CSV...'}
+                        {effectiveProgressPct >= 100
+                          ? 'Upload concluído. Processando resultado...'
+                          : 'Transmitindo arquivo CSV...'}
                       </strong>
                     </div>
                     <span className="loading-pct-badge">{effectiveProgressPct}%</span>
@@ -784,7 +736,7 @@ export const App: React.FC = () => {
                     aria-valuenow={effectiveProgressPct}
                     aria-valuemin={0}
                     aria-valuemax={100}
-                    aria-label="Progresso do processamento do lote CSV"
+                    aria-label="Progresso do envio do arquivo CSV"
                   >
                     <div
                       className="progress-bar-fill"
@@ -794,17 +746,15 @@ export const App: React.FC = () => {
 
                   <div className="loading-meta-row">
                     <span>
-                      {loadingFileLabel ? `Arquivo: ${loadingFileLabel}` : 'Validando registros da planilha'}
+                      {loadingFileLabel ? `Arquivo: ${loadingFileLabel}` : 'Planilha CSV'}
                     </span>
                     <span>
-                      {streamProgress?.fase === 'uploading' && streamProgress.totalBytes
-                        ? `${((streamProgress.bytesEnviados || 0) / (1024 * 1024)).toFixed(2)} MB / ${(
-                            streamProgress.totalBytes /
+                      {uploadBytes.total > 0
+                        ? `${((uploadBytes.loaded || 0) / (1024 * 1024)).toFixed(2)} MB / ${(
+                            uploadBytes.total /
                             (1024 * 1024)
                           ).toFixed(2)} MB`
-                        : streamProgress?.linhasProcessadas
-                        ? `${streamProgress.linhasProcessadas.toLocaleString('pt-BR')} títulos processados`
-                        : `Tempo decorrido: ${loadingElapsedSec}s`}
+                        : '0.00 MB / 0.00 MB'}
                     </span>
                   </div>
                 </div>

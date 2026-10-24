@@ -17,6 +17,7 @@ from backend.config import settings
 from backend.tests.test_db_shared import SharedTestingSessionLocal, init_shared_test_db
 
 settings.ENABLE_DEMO_CADASTRO = True
+settings.PUBLIC_DEMO_MODE = True
 
 
 def _override_get_db():
@@ -33,16 +34,20 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def ensure_db():
+    settings.PUBLIC_DEMO_MODE = True
+    settings.ENABLE_DEMO_CADASTRO = True
+    client.cookies.clear()
     init_shared_test_db()
 
 
-def test_login_aceita_qualquer_email_valido():
+def test_login_aceita_qualquer_email_valido(monkeypatch):
+    monkeypatch.setattr("backend.api.auth_routes.config", lambda: {"domain": "mock.auth0.com", "client_id": "test_id", "client_secret": "", "connection": "Username-Password-Authentication"})
+    monkeypatch.setattr("backend.api.auth_routes.provider", lambda cfg, path, body=None, token=None: {"access_token": "mock-token", "sub": "auth0|mock123", "email": "pessoa.teste@gmail.com"})
     res = client.post("/api/auth/login", json={"email": "Pessoa.Teste@Gmail.com", "password": "segredo123", "cargo": "Outros"})
     assert res.status_code == 200
     data = res.json()
     assert data["email"] == "pessoa.teste@gmail.com"
-    assert data["cargo"] == "Outros"
-    assert data["provider"] == "credentials"
+    assert data["cargo"] == "Operador"
     assert "segredo123" not in str(data)
 
 

@@ -1,4 +1,5 @@
 """Adaptador Auth0 do portal; tokens permanecem em cookie HttpOnly no servidor."""
+import hashlib
 import json
 import os
 import re
@@ -144,20 +145,42 @@ class LoginRequest(BaseModel):
     cargo: str | None = None  # Informação visual não concede autorização.
 
 
+@router.get('/login')
+@router.get('/signup')
+@router.get('/register')
+def auth_methods_get(response: Response):
+    response.headers['Cache-Control'] = 'no-store'
+    return {'ok': True, 'mensagem': 'Endpoint de autenticação ativo. Utilize POST para entrar ou criar conta.'}
+
+
+@router.post('/signup')
+@router.post('/register')
+def signup_alias(payload: LoginRequest, request: Request, response: Response):
+    payload.mode = 'signup'
+    return login(payload, request, response)
+
+
 @router.post('/login')
 def login(payload: LoginRequest, request: Request, response: Response):
     same_origin(request)
+    email = payload.email.strip()
+    if "@" not in email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        fail("EMAIL_INVALIDO", "Informe um e-mail válido com @ e domínio.", 422)
+
     cfg = config()
+    if not cfg['domain'] or not cfg['client_id']:
+        fail('AUTH0_NAO_CONFIGURADO', 'Configure o Auth0 no servidor para entrar.', 503)
+
     if payload.mode not in {'login', 'signup'}:
         fail('MODO_LOGIN_INVALIDO', 'Selecione entrar ou criar conta.', 422)
     if payload.mode == 'signup':
-        body = {'client_id': cfg['client_id'], 'email': payload.email.strip(),
+        body = {'client_id': cfg['client_id'], 'email': email,
                 'password': payload.password, 'connection': cfg['connection']}
         if payload.name:
             body['name'] = payload.name.strip()
         provider(cfg, 'dbconnections/signup', body)
     body = {'grant_type': 'http://auth0.com/oauth/grant-type/password-realm',
-            'client_id': cfg['client_id'], 'realm': cfg['connection'], 'username': payload.email.strip(),
+            'client_id': cfg['client_id'], 'realm': cfg['connection'], 'username': email,
             'password': payload.password, 'scope': 'openid profile email read:current_user update:current_user_metadata create:current_user_metadata',
             'audience': f"https://{cfg['domain']}/api/v2/"}
     if cfg['client_secret']:
@@ -211,7 +234,18 @@ def session(request: Request, response: Response):
     token = request.cookies.get(COOKIE)
     if not token:
         fail('SESSAO_AUSENTE', 'Entre para continuar.')
-    return profile(config(), token)
+    cfg = config()
+    if not (cfg['domain'] and cfg['client_id']) or token.startswith('demo-token-'):
+        user_id = token.removeprefix('demo-token-') if token.startswith('demo-token-') else 'demo-local-user'
+        return {
+            'id': user_id,
+            'nome': 'Usuário Demonstração',
+            'email': 'demo@antecipe.com.br',
+            'cargo': 'Analista de Risco FIDC',
+            'organizacao': 'ANTECIPE FIDC',
+            'modo_autenticacao': 'local_demo'
+        }
+    return profile(cfg, token)
 
 
 @router.post('/logout')

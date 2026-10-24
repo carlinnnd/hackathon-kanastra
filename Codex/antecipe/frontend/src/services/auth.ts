@@ -17,11 +17,11 @@ export async function beginGoogleLogin(): Promise<void> {
   return beginLogin('google-oauth2');
 }
 
-export async function beginEmailLogin(email: string): Promise<void> {
-  return beginLogin(undefined, email);
+export async function beginEmailLogin(email: string, mode: 'login' | 'signup' = 'login'): Promise<void> {
+  return beginLogin(undefined, email, mode);
 }
 
-async function beginLogin(connection?: string, email?: string): Promise<void> {
+async function beginLogin(connection?: string, email?: string, mode: 'login' | 'signup' = 'login'): Promise<void> {
   const cfg = await json<Config>(await fetch('/api/auth/config', { cache: 'no-store' }));
   if (!cfg.configured || !cfg.domain || !cfg.clientId) throw new Error('Auth0 não configurado no servidor.');
   const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
@@ -36,6 +36,7 @@ async function beginLogin(connection?: string, email?: string): Promise<void> {
     state, code_challenge: challenge, code_challenge_method: 'S256' })) url.searchParams.set(key, value);
   if (connection) url.searchParams.set('connection', connection);
   if (email) url.searchParams.set('login_hint', email);
+  if (mode === 'signup') url.searchParams.set('screen_hint', 'signup');
   location.assign(url.toString());
 }
 

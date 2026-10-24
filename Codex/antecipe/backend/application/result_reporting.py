@@ -120,6 +120,8 @@ def obter_analytics(db, simulation_id):
 def normalizar_resultado(row):
     """Resultado de novas notas sempre binário, inclusive ao consultar versões anteriores."""
     row = dict(row)
+    if "documento" not in row or not row["documento"]:
+        row["documento"] = row.get("nu_documento") or row.get("numero_documento") or ""
     row["status"] = "CARTEIRA_HISTORICA" if row.get("status") == "CARTEIRA_HISTORICA" else "APROVADA" if row["aprovado"] else "RECUSADA"
     row["motivos"] = [dict(m) for m in row.get("motivos", [])]
     for reason in row["motivos"]:

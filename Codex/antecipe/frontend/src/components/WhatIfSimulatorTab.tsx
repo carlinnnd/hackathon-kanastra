@@ -225,8 +225,8 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
               <span>Configuração de Política, Parâmetros do Fundo e Simulador &ldquo;What-If&rdquo;</span>
             </h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-              Altere qualquer parâmetro das regras de negócio ou precificação diretamente por esta interface. Você pode{' '}
-              <strong>simular o impacto</strong> antes ou <strong>salvar e selecionar uma política da sua conta</strong> sem editar arquivos JSON.
+              Altere qualquer parâmetro das regras de negócio ou precificação diretamente por esta interface para{' '}
+              <strong>simular o impacto (What-If)</strong> em tempo real na carteira sem alterar as regras vigentes do fundo.
             </p>
           </div>
 
@@ -242,21 +242,12 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
             </button>
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-primary"
               onClick={handleRunWhatIf}
               disabled={loading || saving || !baseRules}
             >
               <Play size={15} aria-hidden="true" />
               <span>{loading ? 'Simulando...' : 'Simular Impacto (What-If)'}</span>
-            </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleSaveAndApplyRules}
-              disabled={loading || saving || !baseRules || !policiesReady || !changeReason.trim()}
-            >
-              <Save size={15} aria-hidden="true" />
-              <span>{saving ? 'Salvando Política...' : 'Salvar como nova política'}</span>
             </button>
           </div>
         </div>
@@ -559,25 +550,6 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
                 );
               })}
             </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="wi-change-reason"
-              style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}
-            >
-              Nome da nova política:
-            </label>
-            <input
-              id="wi-change-reason"
-              maxLength={100}
-              type="text"
-              className="select-control"
-              style={{ width: '100%' }}
-              value={changeReason}
-              onChange={(e) => setChangeReason(e.target.value)}
-              placeholder="Ex.: Política comercial de outubro"
-            />
           </div>
         </div>
 

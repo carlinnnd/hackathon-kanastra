@@ -1,18 +1,18 @@
 import React from 'react';
 
-interface KanastraLogoProps {
+interface LogoProps {
   size?: number;
   showText?: boolean;
   subtitle?: string;
 }
 
 /**
- * Marca institucional Kanastra (símbolo geométrico modular em camadas + tipografia limpa)
+ * Marca institucional Antecipe (identidade visual moderna de antecipação de recebíveis)
  */
-export const KanastraLogo: React.FC<KanastraLogoProps> = ({
+export const KanastraLogo: React.FC<LogoProps> = ({
   size = 30,
   showText = true,
-  subtitle = 'Antecipe FIDC',
+  subtitle = 'Backoffice FIDC',
 }) => {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
@@ -28,23 +28,22 @@ export const KanastraLogo: React.FC<KanastraLogoProps> = ({
           flexShrink: 0,
         }}
       >
-        <rect width="40" height="40" rx="8" fill="#14735A" />
-        <rect x="9" y="9" width="10" height="22" rx="1.8" fill="#FFFFFF" />
-        <rect x="21.5" y="9" width="9.5" height="9.5" rx="1.8" fill="#A7F3D0" />
-        <rect x="21.5" y="21.5" width="9.5" height="9.5" rx="1.8" fill="#FFFFFF" />
+        <rect width="40" height="40" rx="8" fill="#059669" />
+        <path d="M12 28L20 12L28 28H23L20 21L17 28H12Z" fill="#FFFFFF" />
+        <circle cx="20" cy="17" r="2.5" fill="#A7F3D0" />
       </svg>
 
       {showText && (
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
           <span
             style={{
-              fontSize: '1.15rem',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
+              fontSize: '1.18rem',
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
               color: '#f8fafc',
             }}
           >
-            kanastra
+            Antecipe
           </span>
           {subtitle && (
             <>
@@ -72,3 +71,4 @@ export const KanastraLogo: React.FC<KanastraLogoProps> = ({
     </div>
   );
 };
+

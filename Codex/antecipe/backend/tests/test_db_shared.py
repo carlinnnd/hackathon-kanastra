@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from pathlib import Path
+
 from backend.infrastructure.database.session import Base
 from backend.application.importer import inicializar_fundos_e_regras
 from backend.infrastructure.database.models import ReceivableModel, FundModel
@@ -28,6 +30,10 @@ def init_shared_test_db():
     Base.metadata.create_all(bind=shared_test_engine)
     db = SharedTestingSessionLocal()
     json_path = os.path.abspath("validadores_antecipe.json")
+    if not os.path.isfile(json_path):
+        candidate = Path(__file__).resolve().parents[4] / "validadores_antecipe.json"
+        if candidate.is_file():
+            json_path = str(candidate)
     fundo = inicializar_fundos_e_regras(db, json_path)
 
     # Popula carteira base se vazia

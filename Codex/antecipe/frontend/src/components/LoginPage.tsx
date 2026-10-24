@@ -74,9 +74,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       });
       onLoginSuccess(user);
     } catch (err: unknown) {
-      if (err instanceof ApiError && ['AUTH0_FLUXO_NAO_AUTORIZADO', 'CONTA_CRIADA_LOGIN_NAO_CONCLUIDO'].includes(err.codigo || '')) {
+      if (err instanceof ApiError && ['AUTH0_FLUXO_NAO_AUTORIZADO', 'CONTA_CRIADA_LOGIN_NAO_CONCLUIDO', 'AUTH0_CADASTRO_RECUSADO'].includes(err.codigo || '')) {
         setPassword('');
-        try { await api.beginEmailLogin(email); }
+        try { await api.beginEmailLogin(email, mode); }
         catch (redirectError) { setErrorMsg(redirectError instanceof Error ? redirectError.message : 'Não foi possível abrir o Auth0.'); }
       } else if (err instanceof Error) {
         setErrorMsg(err.message);
@@ -142,7 +142,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
           <div className="kanastra-hero-footer">
             <span>ANTECIPE FIDC • CNPJ 92.234.400/0001-80</span>
-            <span>Kanastra Backoffice</span>
+            <span>Antecipe Backoffice</span>
           </div>
         </section>
 
