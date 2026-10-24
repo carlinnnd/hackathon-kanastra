@@ -1068,3 +1068,43 @@ carlos colocou mais coisa, primeiro preciso dar o pull nas informações, mas se
 - **Arquivos/artefatos:** `docs/ARQUITETURA_SCANNER_WEB.md` (removido), `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/MATRIZ_RECUSAS.md`, `README.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** `python3 scripts/check_submission.py --final` (`Auditoria final: OK`), `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`) e `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests in 0.11s - OK`).
 
+---
+
+## ELIAS-0041 — 2026-10-24T20:27:08-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+dá um git pull da última versão que o carlin colocou na main origin
+```
+
+- **Resumo da resposta e análise técnica:**
+  Commitadas as atualizações locais de documentação (`README.md`, `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/MATRIZ_RECUSAS.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`, `docs/REGISTRO_PROMPTS_PINA.md` e remoção de `docs/ARQUITETURA_SCANNER_WEB.md`) e executado `git pull --rebase origin main`, trazendo os 2 novos commits do Carlos (`c40e908`: *"fix(auth,pdf): encerra sessao Auth0 federada no logout, exige prompt=login e substitui Kanastra por Antecipe no PDF"* e `d0d4047`: *"feat(ui): mantém apenas data-base na faixa de contexto e remove exposicao societaria global"*) sem conflitos e sem perder nenhum arquivo local.
+
+- **O que foi feito com a resposta:** Executado `git pull --rebase origin main` até `d0d4047` preservando todos os commits locais de documentação e testes do Elias/Pina, e validados os testes e auditoria final.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests OK`), `python3 scripts/check_submission.py --final` (`Auditoria final: OK`) e `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`).
+
+
+
+---
+
+## ELIAS-0042 — 2026-10-24T20:31:03-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+pronto agora, que temos tudo certinho, quero que que você faça a documentação seguindo os critérios do edital e que cubra tudo para a gente pontuar total, e ajeite todos os prompts (os meus, do pina e do carlin ajeitados nos prompts geral), garanta que o readm funciona para acessar o site vercel e também se a pessoa quiser testar localmente
+```
+
+- **Resumo da resposta e análise técnica:**
+  Consolidação final de toda a documentação e unificação integral do registro de prompts da equipe (`docs/REGISTRO_PROMPTS.md`) para cobrir 100% dos requisitos do Edital:
+  1. **Unificação Geral dos Prompts em `docs/REGISTRO_PROMPTS.md` (`scripts/prompt_ledger.py`):**
+     - Atualizado `scripts/prompt_ledger.py` para que `docs/REGISTRO_PROMPTS.md` incorpore automaticamente, além dos **34 prompts do Carlos (`P0001` a `P0034`)**, todos os **10 prompts do Pina (`PINA-0001` a `PINA-0010`)** e todos os **42 prompts do Elias (`ELIAS-0001` a `ELIAS-0042`)** diretamente no mesmo arquivo unificado (`docs/REGISTRO_PROMPTS.md`, totalizando **86 prompts documentados** com ordem cronológica e descrição do que foi feito com cada resposta), mantendo também os arquivos individuais (`REGISTRO_PROMPTS_CARLOS.md`, `REGISTRO_PROMPTS_ELIAS.md` e `REGISTRO_PROMPTS_PINA.md`).
+  2. **Revisão Completa do `README.md` (Vercel + Local) e Documentação (`docs/`):**
+     - Garantido que o `README.md` inicia na Linha 1 com `LINK DA APLICAÇÃO: https://hackathon-kanastra.vercel.app/`, traz em destaque a **Opção 1 (Testar Direto na Vercel)** e a **Opção 2 (Passo a Passo Local Linux/macOS/Windows)** testada, além do Relatório Técnico e Mapa dos 100 Pontos do Edital.
+     - Validados `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md` (ADRs 001 a 010), `docs/ESPECIFICACAO.md`, `docs/EVIDENCIAS.md` e `docs/MATRIZ_RECUSAS.md` com `python3 scripts/check_submission.py --final` (`Auditoria final: OK`).
+
+- **O que foi feito com a resposta:** Unificados os prompts de Carlos (`P0001`–`P0034`), Pina (`PINA-0001`–`PINA-0010`) e Elias (`ELIAS-0001`–`ELIAS-0042`) dentro de `docs/REGISTRO_PROMPTS.md` via `scripts/prompt_ledger.py`; revisada toda a documentação técnica e o `README.md` (Vercel + Local); executadas todas as baterias de testes e auditorias finais.
+- **Arquivos/artefatos:** `scripts/prompt_ledger.py`, `docs/REGISTRO_PROMPTS.md`, `docs/REGISTRO_PROMPTS_CARLOS.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`, `docs/REGISTRO_PROMPTS_PINA.md`, `README.md`, `Codex/antecipe/README.md`, `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/MATRIZ_RECUSAS.md`
+- **Verificação:** `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests OK`), `python3 scripts/check_submission.py --final` (`Auditoria final: OK`) e `python3 scripts/prompt_ledger.py audit` (`Prompts: 34 | Pendências: 0 | Eventos órfãos: 0`).

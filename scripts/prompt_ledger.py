@@ -106,6 +106,8 @@ def render(records, orphans, title="Registro cronológico de prompts"):
         "",
         "> *Nota de integridade documental:* O texto integral fiel dos prompts oficiais encontra-se preservado sob `.hackathon/prompts/` (ex: `p0002_user.txt`). Na visualização sanitizada acima, sentenças com mais de duas vírgulas ou ponto-e-vírgula são marcadas como `[LINHA_TABULAR_OMITIDA]` pela rotina de proteção estrita contra vazamento de dados tabulares/CSV.",
         "",
+        "## Link do Chat utilizado no gpt : https://chatgpt.com/share/6add11ef-1b68-83e9-a251-183b83577dc5",
+        "",
     ]
     if not records:
         output.extend(["Nenhum prompt registrado ainda.", ""])
@@ -143,6 +145,8 @@ class Ledger:
         self.path = self.root / "docs" / "prompts-events.jsonl"
         self.public = self.root / "docs" / "REGISTRO_PROMPTS.md"
         self.carlos = self.root / "docs" / "REGISTRO_PROMPTS_CARLOS.md"
+        self.elias = self.root / "docs" / "REGISTRO_PROMPTS_ELIAS.md"
+        self.pina = self.root / "docs" / "REGISTRO_PROMPTS_PINA.md"
     @contextlib.contextmanager
     def locked(self):
         self.private.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -173,13 +177,27 @@ class Ledger:
             file.flush()
             os.fsync(file.fileno())
 
+    def _build_team_sections(self):
+        sections = []
+        for label, member_path in (
+            ("Parte II — Registro Cronológico de PINA (Leandro)", self.pina),
+            ("Parte III — Registro Cronológico de ELIAS", self.elias),
+        ):
+            if member_path.is_file():
+                raw = member_path.read_text(encoding="utf-8")
+                idx = raw.find("\n## ")
+                if idx != -1:
+                    sections.append(f"\n---\n\n# {label}\n{raw[idx:].rstrip()}\n")
+        return "".join(sections)
+
     def update_public(self):
         entries, orphans = aggregate(load_events(self.path))
         self.public.parent.mkdir(parents=True, exist_ok=True)
+        team_extra = self._build_team_sections()
         fd, temp_path = tempfile.mkstemp(prefix=".prompts-", dir=self.public.parent)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(render(entries, orphans))
+                handle.write(render(entries, orphans) + team_extra)
             os.replace(temp_path, self.public)
             # Renderiza espelhamento para o registro de Carlos
             carlos_fd, carlos_temp = tempfile.mkstemp(prefix=".prompts-carlos-", dir=self.public.parent)
