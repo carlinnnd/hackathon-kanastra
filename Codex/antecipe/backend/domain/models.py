@@ -31,6 +31,7 @@ class ReceivelInput:
     valor_nominal: Decimal
     data_vencimento: date
     data_aquisicao: Optional[date] = None
+    originais: Dict[str, str] = field(default_factory=dict)
 
     @property
     def raiz_cnpj_sacado(self) -> str:
@@ -66,6 +67,15 @@ class ResultadoAvaliacao:
     motivos: List[MotivoRecusa] = field(default_factory=list)
     dias_vencimento: Optional[int] = None
     desconto: Optional[Decimal] = None
+    detalhes: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def status(self) -> str:
+        if self.detalhes.get("tipo_analise") == "carteira" and not self.motivos:
+            return "CARTEIRA_HISTORICA"
+        if self.aprovado:
+            return "APROVADA"
+        return "RECUSADA"
 
 
 @dataclass

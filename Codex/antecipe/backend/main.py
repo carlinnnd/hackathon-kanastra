@@ -1,7 +1,7 @@
 """
 Aplicação Principal FastAPI Antecipe.
 Configura middlewares (CORS, Safe Logging com template allowlist, tratamento de exceções sem vazamento,
-e proteção antecipada de tamanho de requisição no stream HTTP para uploads CSV e payloads JSON).
+proteção de tamanho HTTP, e inclusão de rotas REST e WebSocket Bulk Stream).
 """
 import re
 import time
@@ -13,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .api.routes import router
+from .api.bulk_routes import bulk_router
 from .infrastructure.database.session import Base, engine, SessionLocal
 from .application.importer import inicializar_fundos_e_regras, importar_estoque_csv
 from .config import settings
@@ -67,7 +68,10 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
         content = {"detail": detail}
     else:
         content = {"detail": {"codigo": f"HTTP_{exc.status_code}", "mensagem": str(detail)}}
-    return JSONResponse(status_code=exc.status_code, content=content)
+
+    # Preserva rigorosamente o cabeçalho 'Allow' em respostas HTTP 405 Method Not Allowed
+    headers = dict(exc.headers) if exc.headers else {}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
 
 
 @app.exception_handler(RequestValidationError)
@@ -190,3 +194,4 @@ async def safe_logging_middleware(request: Request, call_next):
 
 
 app.include_router(router)
+app.include_router(bulk_router)

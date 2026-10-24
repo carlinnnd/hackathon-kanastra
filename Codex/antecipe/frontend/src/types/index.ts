@@ -10,6 +10,7 @@ export interface MotivoRecusa {
 }
 
 export interface ResultadoItem {
+  status?: 'APROVADA' | 'RECUSADA' | 'CARTEIRA_HISTORICA';
   linha: number;
   documento: string;
   sacado: string;
@@ -33,6 +34,8 @@ export interface AuditoriaMeta {
 }
 
 export interface SimulationEnvelope {
+  tipo_analise?: 'novas_operacoes' | 'carteira';
+  analytics?: SimulationAnalytics | null;
   simulation_id: string;
   rule_version: number;
   rule_version_id: number;
@@ -49,6 +52,29 @@ export interface SimulationEnvelope {
   avisos: string[];
 }
 
+export interface SimulationAnalytics {
+  tipo_analise: 'novas_operacoes' | 'carteira';
+  status_counts: Record<string, number>;
+  valor_nominal_total: string;
+  valor_nominal_elegivel: string;
+  valor_desconto: string;
+  valor_liquido: string;
+  aprovacao_valor_pct: string;
+  prazo_medio_ponderado: string | null;
+  motivos: {codigo: string; quantidade: number; valor_nominal: string}[];
+  faixas_vencimento: Record<string, number>;
+  exposicoes: {doc_fundo?: string; raiz: string; percentual: string; valor_nominal: string}[];
+  metodologia: string;
+}
+
+export interface UploadCapabilities {
+  http_max_bytes: number;
+  bulk_max_bytes: number;
+  max_records: number;
+  bulk_transport: 'websocket' | 'http';
+  bulk_path: string;
+}
+
 export interface HealthResponse {
   status: string;
   estoque_carregado: boolean;
@@ -57,6 +83,7 @@ export interface HealthResponse {
   rule_version?: number;
   cadastro_fonte?: string;
   aviso_demo_publica?: string;
+  upload_capabilities?: UploadCapabilities;
 }
 
 export interface PortfolioSummary {
@@ -84,4 +111,11 @@ export interface ApiErrorDetail {
 
 export interface ApiErrorResponse {
   detail?: string | ApiErrorDetail;
+}
+
+export interface StreamProgressInfo {
+  fase: 'uploading' | 'processing';
+  bytesEnviados?: number;
+  totalBytes?: number;
+  linhasProcessadas?: number;
 }

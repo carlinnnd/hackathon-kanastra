@@ -1,0 +1,50 @@
+{
+  "executado_utc": "2026-10-24T18:33:04.767753+00:00",
+  "fontes_sha256": {
+    "estoque_antecipe.csv": "313c75f4147e1e851eaaefd15dc035aa895c961434da1a91024fd0764559c2f1",
+    "resultado_esperado_100k.json": "a5e0de969c0cf9d1f37aeea0100d7a4a2ba663da24c1641977f7a68934bc1ae8",
+    "cnpj_situacao_mock.csv": "522ba08c9685a48d2c2a5b20bfde0773f58bb15b095e03cf605b44c224ca6916",
+    "validadores_antecipe.json": "508aa6e12cefd8d7d4933b11e3d57358bf3d1b7f4b6b6b88ad32afb286316fd8"
+  },
+  "linhas_e_documentos_conferidos": 100554,
+  "gabarito_status": {
+    "APROVADO": 85215,
+    "BARRADO": 15339
+  },
+  "motor_atual_status": {
+    "RECUSADA": 32583,
+    "APROVADA": 67971
+  },
+  "concordancia_status": 80800,
+  "concordancia_todos_motivos": 75736,
+  "matriz_comparacao": {
+    "APROVADO -> RECUSADA": 18499,
+    "BARRADO -> RECUSADA": 14084,
+    "APROVADO -> APROVADA": 66716,
+    "BARRADO -> APROVADA": 1255
+  },
+  "cadastro_cobertura_registros": {
+    "ATIVA": 77555,
+    "NAO_VERIFICADA": 22222,
+    "SUSPENSA": 154,
+    "INAPTA": 493,
+    "BAIXADA": 130
+  },
+  "conflitos_fontes": {
+    "aprovado_gabarito_sem_cadastro_mock": 16593,
+    "cadastro_nao_ativo_mock_sem_motivo_no_gabarito": 777,
+    "cadastro_ativo_no_mock_mas_barrado_no_gabarito": 1392
+  },
+  "motivos_motor_atual": {
+    "NAO_VENCIDA": 1793,
+    "SITUACAO_CADASTRAL_SACADO": 22999,
+    "TIPO_RECEBIVEL": 9842,
+    "VALOR_MINIMO": 34,
+    "PRAZO_MAXIMO": 4502
+  },
+  "cadastro_fonte": "SIMULADO_CSV_SHA256_522ba08c9685a48d2c2a5b20bfde0773f58bb15b095e03cf605b44c224ca6916",
+  "escopo": "Motor de novas operações contra seed público de 5 títulos, data-base JSON/22-10-2026. Não é reclassificação do histórico nem comparação de valores financeiros ausentes no gabarito.",
+  "criterio_recusa": "Toda nota não aprovada é recusada com motivos; cadastro ausente/inconclusivo gera SITUACAO_CADASTRAL_SACADO, sem terceiro estado.",
+  "reconciliacao": "Gabarito e mock têm contradições verificadas. Os rótulos não são usados para inferir cadastro ou alterar regras. Correspondência integral exige resolver esses conflitos e alinhar cenário/carteira/data-base.",
+  "detalhamento_privado": "C:\\hackathon_kanastra\\Codex\\antecipe\\.data\\gabarito-conference\\divergencias.csv"
+}

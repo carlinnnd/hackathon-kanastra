@@ -27,6 +27,8 @@ export function aplicarFiltroPaginacaoLocal(
     itensFiltrados = itensFiltrados.filter((item: ResultadoItem) => item.aprovado);
   } else if (statusFiltro === 'recusado') {
     itensFiltrados = itensFiltrados.filter((item: ResultadoItem) => !item.aprovado);
+  } else if (statusFiltro !== 'todos') {
+    itensFiltrados = itensFiltrados.filter((item: ResultadoItem) => (item.status || (item.aprovado ? 'APROVADA' : 'RECUSADA')) === statusFiltro);
   }
 
   if (motivoFiltro && motivoFiltro !== 'todos') {

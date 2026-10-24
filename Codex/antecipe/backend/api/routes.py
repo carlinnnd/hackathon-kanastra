@@ -8,7 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, File, status as http_status
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -22,6 +22,9 @@ from ..infrastructure.repositories.rules_repository import RulesRepository
 from ..infrastructure.repositories.receivables_repository import ReceivablesRepository
 from ..infrastructure.repositories.simulations_repository import SimulationsRepository
 from ..application.simulation_service import SimulationService, TotalExcedeCapacidadeError
+from ..application.cadastral_service import carregar_cadastro
+from ..application.result_reporting import obter_analytics, serializar_pagina
+from ..application.exports import exportar
 from .schemas import (
     SimulationResponseSchema,
     ReceivablesEvaluateRequestSchema,
@@ -64,7 +67,14 @@ def get_health(db: Session = Depends(get_db)):
         "fundo": fundo.nome if fundo else "ANTECIPE FIDC",
         "total_registros_estoque": total_reg,
         "rule_version": versao_ativa.version_number if versao_ativa else None,
-        "cadastro_fonte": "SIMULADO_DEMO" if settings.ENABLE_DEMO_CADASTRO else "NAO_VERIFICADA_PADRAO",
+        "cadastro_fonte": carregar_cadastro()[1],
+        "upload_capabilities": {
+            "http_max_bytes": settings.MAX_UPLOAD_SIZE_BYTES,
+            "bulk_max_bytes": settings.MAX_STREAM_FILE_BYTES,
+            "max_records": settings.MAX_STREAM_RECORDS,
+            "bulk_transport": "websocket",
+            "bulk_path": "/api/simulations/stream"
+        }
     }
     if settings.PUBLIC_DEMO_MODE:
         health_resp["aviso_demo_publica"] = (
@@ -101,7 +111,8 @@ class LimitedRawIO(io.RawIOBase):
 @router.post("/simulations", response_model=SimulationResponseSchema)
 async def post_simulation_csv(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    tipo_analise: str = Query("novas_operacoes", pattern="^(novas_operacoes|carteira)$"),
 ):
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(
@@ -116,7 +127,7 @@ async def post_simulation_csv(
         itens_iter = iterar_csv_recebiveis(text_stream, delimitador=";")
         
         service = SimulationService(db)
-        sim_id, envelope = service.executar_simulacao_lote(itens_iter)
+        sim_id, envelope = service.executar_simulacao_lote(itens_iter, tipo_analise=tipo_analise)
         return envelope
     except UnicodeDecodeError:
         raise HTTPException(
@@ -136,11 +147,12 @@ async def post_simulation_csv(
 
 
 @router.get("/simulations/{simulation_id}", response_model=SimulationResponseSchema)
+@router.get("/simulations/{simulation_id}/items", response_model=SimulationResponseSchema)
 def get_simulation(
     simulation_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    status_filtro: Optional[str] = Query(None, alias="status", pattern="^(aprovado|recusado)$"),
+    status_filtro: Optional[str] = Query(None, alias="status", pattern="^(aprovado|recusado|APROVADA|RECUSADA|CARTEIRA_HISTORICA)$"),
     reason: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
@@ -162,22 +174,14 @@ def get_simulation(
 
     total_pages = (total_itens_filtrados + page_size - 1) // page_size if total_itens_filtrados else 1
 
-    resultados = []
-    for it in itens_db:
-        motivos_lista = json.loads(it.motivos_json) if it.motivos_json else []
-        resultados.append({
-            "linha": it.linha,
-            "documento": it.documento,
-            "sacado": it.sacado,
-            "aprovado": it.aprovado,
-            "valor_nominal": f"{Decimal(str(it.valor_nominal)):.2f}" if it.valor_nominal is not None else None,
-            "valor_liquido": f"{Decimal(str(it.valor_liquido)):.2f}" if it.valor_liquido is not None else None,
-            "motivos": motivos_lista,
-        })
+    resultados = serializar_pagina(db, simulation_id, itens_db)
+    analytics = obter_analytics(db, simulation_id)
 
     avisos = json.loads(sim.avisos_json) if hasattr(sim, "avisos_json") and sim.avisos_json else []
 
     return {
+        "analytics": analytics,
+        "tipo_analise": analytics["tipo_analise"] if analytics else "novas_operacoes",
         "simulation_id": sim.id,
         "rule_version": sim.rule_version.version_number,
         "rule_version_id": sim.rule_version_id,
@@ -202,6 +206,32 @@ def get_simulation(
         },
         "avisos": avisos
     }
+
+
+@router.get("/simulations/{simulation_id}/analytics")
+def get_simulation_analytics(simulation_id: str, db: Session = Depends(get_db)):
+    if not SimulationsRepository(db).obter_simulacao(simulation_id):
+        raise HTTPException(404, detail={"codigo": "SIMULACAO_NAO_ENCONTRADA", "mensagem": "Simulação não encontrada."})
+    analytics = obter_analytics(db, simulation_id)
+    if not analytics:
+        raise HTTPException(409, detail={"codigo": "REPROCESSAMENTO_NECESSARIO", "mensagem": "Reprocesse a simulação para gerar as novas análises."})
+    return analytics
+
+
+@router.get("/simulations/{simulation_id}/export")
+def get_simulation_export(simulation_id: str, format: str = Query("csv", pattern="^(csv|pdf|violacoes)$"), db: Session = Depends(get_db)):
+    get_simulation_analytics(simulation_id, db)
+    bind = db.get_bind()
+    def body():
+        # Sessão própria: compatível com cleanup de Depends antes do StreamingResponse.
+        with Session(bind=bind) as session:
+            sim = SimulationsRepository(session).obter_simulacao(simulation_id)
+            chunks, _ = exportar(session, sim, format)
+            yield from chunks
+    ext = "pdf" if format == "pdf" else "csv"
+    return StreamingResponse(body(), media_type="application/pdf" if ext == "pdf" else "text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="antecipe-{simulation_id}-{format}.{ext}"',
+                 "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
 
 @router.post("/receivables/evaluate", response_model=SimulationResponseSchema)
@@ -393,6 +423,22 @@ def get_demo_csv():
     demo_path = Path(__file__).resolve().parent.parent.parent / "samples" / "demo.csv"
     if not demo_path.is_file():
         raise HTTPException(status_code=404, detail="Arquivo demo.csv não localizado.")
+    cadastro, fonte = carregar_cadastro()
+    if fonte.startswith("SIMULADO_CSV"):
+        # O exemplo de aprovação também precisa existir na fonte cadastral selecionada.
+        active = next((doc for doc, situacao in cadastro.items() if situacao == "ATIVA" and doc[:8] not in {"04252011", "11222333", "22333444", "73410326"}), None)
+        if active:
+            with demo_path.open(encoding="utf-8-sig", newline="") as stream:
+                reader = csv.DictReader(stream, delimiter=";")
+                output = io.StringIO(newline="")
+                writer = csv.DictWriter(output, fieldnames=reader.fieldnames, delimiter=";")
+                writer.writeheader()
+                for row in reader:
+                    if normalizar_documento(row["DOC_SACADO"]) == "04252011000110" and row["NU_DOCUMENTO"] != "NF-HIST-01":
+                        row["DOC_SACADO"] = active
+                    writer.writerow(row)
+            return PlainTextResponse("\ufeff" + output.getvalue(), media_type="text/csv; charset=utf-8",
+                headers={"Content-Disposition": 'attachment; filename="demo.csv"', "Cache-Control": "no-store"})
     return FileResponse(
         path=str(demo_path),
         filename="demo.csv",

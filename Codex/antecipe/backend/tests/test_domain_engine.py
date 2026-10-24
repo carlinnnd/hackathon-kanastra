@@ -176,7 +176,8 @@ class TestDomainEngineCompleto(unittest.TestCase):
         )
         self.assertFalse(res.aprovado)
         self.assertEqual(res.motivos[0].codigo, "SITUACAO_CADASTRAL_SACADO")
-        self.assertIn("não foi verificada", res.motivos[0].mensagem)
+        self.assertEqual(res.status, "RECUSADA")
+        self.assertIn("nota foi recusada", res.motivos[0].mensagem)
 
     # 7. Situação cadastral inativa
     def test_07_situacao_cadastral_inativa(self):

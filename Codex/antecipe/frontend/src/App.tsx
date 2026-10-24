@@ -1,29 +1,54 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ShieldAlert, AlertTriangle, RefreshCw, Info } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, RefreshCw, Info, Wifi } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { SummaryCards } from './components/SummaryCards';
 import { ReceivablesTable } from './components/ReceivablesTable';
 import { api } from './services/api';
-import { SimulationEnvelope, HealthResponse, PortfolioSummary } from './types';
+import {
+  SimulationEnvelope,
+  HealthResponse,
+  PortfolioSummary,
+  StreamProgressInfo,
+} from './types';
 import {
   aplicarFiltroPaginacaoLocal,
   verificarSnapshotCompleto,
 } from './services/publicDemoResults';
+import { BulkUploadSession } from './services/bulkUpload';
+import { ResultAnalytics } from './components/ResultAnalytics';
 
 export const App: React.FC = () => {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
   const [simulation, setSimulation] = useState<SimulationEnvelope | null>(null);
 
-  // Snapshot original completo em memória (usado para modo público efêmero)
+  // Snapshot original completo em memória (usado para modo público efêmero em arquivos pequenos)
   const snapshotOriginalRef = useRef<SimulationEnvelope | null>(null);
+
+  // Sessão ativa de WebSocket para streaming e paginação na mesma instância
+  const bulkSessionRef = useRef<BulkUploadSession | null>(null);
+  const [isWsSessionActive, setIsWsSessionActive] = useState(false);
+  const [wsSessionExpiredNotice, setWsSessionExpiredNotice] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [streamProgress, setStreamProgress] = useState<StreamProgressInfo | null>(null);
+  const [tipoAnalise, setTipoAnalise] = useState<'novas_operacoes' | 'carteira'>('novas_operacoes');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Filtros
   const [currentStatus, setCurrentStatus] = useState<string>('todos');
   const [currentReason, setCurrentReason] = useState<string>('todos');
+
+  // Encerra sessão anterior ao desmontar
+  useEffect(() => {
+    return () => {
+      if (bulkSessionRef.current) {
+        bulkSessionRef.current.close();
+        bulkSessionRef.current = null;
+      }
+    };
+  }, []);
 
   // Carrega health e resumo do portfólio na montagem
   const checkBackendState = async () => {
@@ -56,18 +81,108 @@ export const App: React.FC = () => {
 
   const isModoPublico = Boolean(health?.aviso_demo_publica);
 
+  // Capacidades de upload informadas pelo backend
+  const uploadCaps = health?.upload_capabilities;
+  const isWsDisponivel = uploadCaps?.bulk_transport === 'websocket';
+  const httpMaxBytes = (uploadCaps?.http_max_bytes || 4000000) - 1024;
+
   const handleFileSelected = async (file: File) => {
+    // Fecha sessão WebSocket anterior para liberar recursos
+    if (bulkSessionRef.current) {
+      bulkSessionRef.current.close();
+      bulkSessionRef.current = null;
+      setIsWsSessionActive(false);
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
+    setWsSessionExpiredNotice(null);
+    setStreamProgress(null);
+
+    // Seleciona WebSocket SOMENTE se o backend anunciar explicitamente suporte e o arquivo exceder o limite seguro HTTP
+    const deveUsarWebSocket = isWsDisponivel && (isModoPublico || file.size > httpMaxBytes);
+
+    if (deveUsarWebSocket) {
+      setStreamProgress({
+        fase: 'uploading',
+        bytesEnviados: 0,
+        totalBytes: file.size,
+      });
+
+      const session = new BulkUploadSession(
+        file,
+        {
+          onProgress: (info: StreamProgressInfo) => {
+            setStreamProgress(info);
+          },
+          onError: (erro: { codigo: string; mensagem: string }) => {
+            snapshotOriginalRef.current = null;
+            setSimulation(null);
+            setErrorMessage(`[${erro.codigo}] ${erro.mensagem}`);
+            setIsLoading(false);
+            setStreamProgress(null);
+            setIsWsSessionActive(false);
+          },
+          onComplete: (simEnvelope: SimulationEnvelope) => {
+            snapshotOriginalRef.current = simEnvelope;
+            setSimulation(simEnvelope);
+            setCurrentStatus('todos');
+            setCurrentReason('todos');
+            setIsLoading(false);
+            setStreamProgress(null);
+            setIsWsSessionActive(true);
+          },
+          onSessionClosed: (wasCompleted: boolean) => {
+            setIsWsSessionActive(false);
+            setIsLoading(false);
+            setStreamProgress(null);
+
+            if (wasCompleted) {
+              // Concluiu com sucesso: preserva resumo e desabilita consultas na sessão fechada
+              setWsSessionExpiredNotice(
+                'A sessão interativa desta simulação foi encerrada pelo servidor. O resumo inicial foi preservado; para navegar por outras páginas ou filtros deste lote extenso, envie o arquivo novamente.'
+              );
+            } else {
+              // Falhou antes da conclusão: limpa estado stale e emite erro claro para reenvio
+              snapshotOriginalRef.current = null;
+              setSimulation(null);
+              setErrorMessage((prev) =>
+                prev || 'A conexão foi encerrada antes da conclusão do processamento. Por favor, reenvie o arquivo.'
+              );
+            }
+          },
+        },
+        uploadCaps?.bulk_path,
+        tipoAnalise
+      );
+
+      bulkSessionRef.current = session;
+
+      try {
+        await session.start();
+      } catch (err: unknown) {
+        snapshotOriginalRef.current = null;
+        setSimulation(null);
+        setIsLoading(false);
+        setStreamProgress(null);
+        setIsWsSessionActive(false);
+        if (err instanceof Error) {
+          setErrorMessage(err.message);
+        } else {
+          setErrorMessage('Erro ao inicializar conexão de streaming WebSocket.');
+        }
+      }
+      return;
+    }
+
+    // Se WS não estiver disponível ou arquivo for pequeno: preserva fluxo HTTP atual inalterado
     try {
-      const res = await api.uploadSimulation(file);
-      // Salva snapshot original em memória
+      const res = await api.uploadSimulation(file, tipoAnalise);
       snapshotOriginalRef.current = res;
       setSimulation(res);
       setCurrentStatus('todos');
       setCurrentReason('todos');
     } catch (err: unknown) {
-      // Limpa resultado anterior em caso de erro para não exibir dados obsoletos como novos
       snapshotOriginalRef.current = null;
       setSimulation(null);
       if (err instanceof Error) {
@@ -83,9 +198,33 @@ export const App: React.FC = () => {
   const handlePageChange = async (newPage: number) => {
     if (!simulation) return;
 
-    // Se estiver em modo público e tivermos o snapshot completo original,
-    // paginamos estritamente em memória sem disparar GET que retornaria 404
-    if (isModoPublico && snapshotOriginalRef.current && verificarSnapshotCompleto(snapshotOriginalRef.current)) {
+    // 1. Se a sessão WebSocket estiver ativa, consulta na MESMA conexão
+    if (bulkSessionRef.current && isWsSessionActive) {
+      setIsLoading(true);
+      try {
+        const paginatedSim = await bulkSessionRef.current.query(
+          newPage,
+          50,
+          currentStatus,
+          currentReason
+        );
+        setSimulation(paginatedSim);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setErrorMessage(err.message);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // 2. Se estiver em modo público efêmero e o snapshot for completo (lotes <= 50)
+    if (
+      isModoPublico &&
+      snapshotOriginalRef.current &&
+      verificarSnapshotCompleto(snapshotOriginalRef.current)
+    ) {
       const visualizacao = aplicarFiltroPaginacaoLocal(
         snapshotOriginalRef.current,
         currentStatus,
@@ -97,7 +236,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Modo local / persistente: consulta normal via backend
+    // 3. Modo local/persistente padrão: consulta GET via backend
     setIsLoading(true);
     try {
       const res = await api.getSimulation(
@@ -122,9 +261,33 @@ export const App: React.FC = () => {
     setCurrentStatus(status);
     setCurrentReason(reason);
 
-    // Se estiver em modo público e tivermos o snapshot completo original,
-    // aplicamos filtro estritamente em memória sem disparar GET que retornaria 404
-    if (isModoPublico && snapshotOriginalRef.current && verificarSnapshotCompleto(snapshotOriginalRef.current)) {
+    // 1. Se a sessão WebSocket estiver ativa, consulta na MESMA conexão
+    if (bulkSessionRef.current && isWsSessionActive) {
+      setIsLoading(true);
+      try {
+        const filteredSim = await bulkSessionRef.current.query(
+          1,
+          50,
+          status,
+          reason
+        );
+        setSimulation(filteredSim);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setErrorMessage(err.message);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // 2. Se estiver em modo público efêmero e o snapshot for completo
+    if (
+      isModoPublico &&
+      snapshotOriginalRef.current &&
+      verificarSnapshotCompleto(snapshotOriginalRef.current)
+    ) {
       const visualizacao = aplicarFiltroPaginacaoLocal(
         snapshotOriginalRef.current,
         status,
@@ -136,7 +299,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Modo local / persistente: consulta normal via backend
+    // 3. Modo local/persistente padrão: consulta GET via backend
     setIsLoading(true);
     try {
       const res = await api.getSimulation(
@@ -156,11 +319,36 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleExport = async (format: 'csv' | 'pdf' | 'violacoes') => {
+    if (!simulation) return;
+    setIsExporting(true);
+    setErrorMessage(null);
+    try {
+      let blob: Blob;
+      if (bulkSessionRef.current) {
+        blob = await bulkSessionRef.current.exportResult(format);
+      } else {
+        const response = await fetch(`/api/simulations/${encodeURIComponent(simulation.simulation_id)}/export?format=${format}`);
+        if (!response.ok) throw new Error('Não foi possível exportar. Reenvie o arquivo se a sessão expirou.');
+        blob = await response.blob();
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `antecipe-${simulation.simulation_id}-${format}.${format === 'pdf' ? 'pdf' : 'csv'}`;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Falha na exportação. Tente novamente.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const backendOnline = health !== null && health.status === 'ok';
   const estoqueDisponivel = backendOnline && health.estoque_carregado;
   const uploadHabilitado = backendOnline && estoqueDisponivel;
 
-  // Metadata real do backend ou indicação de offline
   const fonteCadastralReal =
     simulation?.auditoria.cadastro_fonte ||
     health?.cadastro_fonte ||
@@ -182,9 +370,10 @@ export const App: React.FC = () => {
       ? 'NÃO CARREGADO'
       : 'OFFLINE';
 
-  // Guarda para snapshot parcial em modo público (> 50 itens)
-  const isSnapshotPublicoParcial =
-    Boolean(isModoPublico && simulation && !verificarSnapshotCompleto(simulation));
+  // Se a sessão expirou em lote extenso ou snapshot público parcial sem WS ativo
+  const filtrosDesabilitados =
+    Boolean(wsSessionExpiredNotice) ||
+    Boolean(isModoPublico && !isWsSessionActive && simulation && !verificarSnapshotCompleto(simulation));
 
   return (
     <div className="app-container">
@@ -291,25 +480,23 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Avisos da Simulação Atual */}
-      {simulation?.avisos && simulation.avisos.length > 0 && (
+      {/* Alerta de Sessão WebSocket Expirada */}
+      {wsSessionExpiredNotice && (
         <div
           className="alert-banner"
           style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '24px' }}
           role="region"
-          aria-label="Avisos da simulação"
+          aria-label="Aviso de sessão expirada"
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <AlertTriangle size={20} color="var(--status-warning-text)" aria-hidden="true" />
             <div>
               <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.875rem' }}>
-                Avisos da Simulação:
+                Sessão Interativa Encerrada
               </strong>
-              <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                {simulation.avisos.map((aviso, i) => (
-                  <li key={i}>{aviso}</li>
-                ))}
-              </ul>
+              <p style={{ marginTop: 4, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                {wsSessionExpiredNotice}
+              </p>
             </div>
           </div>
         </div>
@@ -321,7 +508,11 @@ export const App: React.FC = () => {
           className="error-toast"
           role="alert"
           aria-live="polite"
-          style={{ backgroundColor: 'var(--status-warning-bg)', borderColor: 'var(--status-warning-border)', color: 'var(--status-warning-text)' }}
+          style={{
+            backgroundColor: 'var(--status-warning-bg)',
+            borderColor: 'var(--status-warning-border)',
+            color: 'var(--status-warning-text)',
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <AlertTriangle size={20} aria-hidden="true" />
@@ -355,13 +546,22 @@ export const App: React.FC = () => {
 
       {/* Seção Principal de Upload */}
       <main>
+        <section className="analysis-mode" aria-label="Finalidade do arquivo CSV">
+          <label htmlFor="analysis-mode"><strong>O que este CSV representa?</strong></label>
+          <select id="analysis-mode" className="select-control" value={tipoAnalise} disabled={isLoading || isExporting}
+            onChange={e => setTipoAnalise(e.target.value as 'novas_operacoes' | 'carteira')}>
+            <option value="novas_operacoes">Novas notas para antecipação</option>
+            <option value="carteira">Estoque histórico dos fundos</option>
+          </select>
+          <p>{tipoAnalise === 'carteira' ? 'Analisa a carteira enviada, seus valores, vencimentos e concentração por fundo. Não classifica o histórico como novas aprovações ou recusas e não realiza aquisição.' : 'Avalia novas notas com todas as regras ativas, consulta cadastral simulada e duplicidade contra o estoque de referência. Para o arquivo histórico de 100 mil registros, selecione Estoque histórico.'}</p>
+        </section>
         <FileUpload
           onFileSelected={handleFileSelected}
           isLoading={isLoading}
-          disabled={!uploadHabilitado}
+          disabled={!uploadHabilitado || isExporting}
         />
 
-        {/* Indicador Honesto de Processamento Indeterminado */}
+        {/* Indicador de Progresso Real (Streaming WebSocket ou Processamento Indeterminado) */}
         {isLoading && (
           <div
             className="loading-box"
@@ -369,16 +569,54 @@ export const App: React.FC = () => {
             aria-live="polite"
             aria-label="Processando arquivo CSV com o motor de regras"
           >
-            <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
-              Processando lote e avaliando elegibilidade...
-            </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-              O motor está validando regras de prazo, valores, duplicidade e limites de
-              concentração com o estoque FIDC.
-            </p>
-            <div className="progress-bar-container">
-              <div className="progress-bar-indeterminate" />
-            </div>
+            {streamProgress ? (
+              streamProgress.fase === 'uploading' ? (
+                <>
+                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <Wifi size={18} color="var(--accent-blue)" aria-hidden="true" />
+                    <span>Transmitindo lote via WebSocket (janela de 4 MiB)...</span>
+                  </div>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                    Bytes confirmados: <strong>{((streamProgress.bytesEnviados || 0) / (1024 * 1024)).toFixed(2)} MB</strong> de <strong>{((streamProgress.totalBytes || 1) / (1024 * 1024)).toFixed(2)} MB</strong>
+                  </p>
+                  <div className="progress-bar-container">
+                    <div
+                      style={{
+                        height: '100%',
+                        backgroundColor: 'var(--accent-blue)',
+                        width: `${Math.min(100, Math.round(((streamProgress.bytesEnviados || 0) / (streamProgress.totalBytes || 1)) * 100))}%`,
+                        transition: 'width 0.2s ease',
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                    Motor processando regras do fundo...
+                  </div>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                    Linhas processadas pelo motor: <strong>{streamProgress.linhasProcessadas?.toLocaleString('pt-BR') || 0}</strong> títulos
+                  </p>
+                  <div className="progress-bar-container">
+                    <div className="progress-bar-indeterminate" />
+                  </div>
+                </>
+              )
+            ) : (
+              <>
+                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Processando lote e avaliando elegibilidade...
+                </div>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                  O motor está validando regras de prazo, valores, duplicidade e limites de
+                  concentração com o estoque FIDC.
+                </p>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-indeterminate" />
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -386,23 +624,8 @@ export const App: React.FC = () => {
         {simulation && (
           <>
             <SummaryCards simulation={simulation} />
-
-            {/* Aviso de Snapshot Parcial em Modo Público */}
-            {isSnapshotPublicoParcial && (
-              <div
-                className="alert-banner"
-                style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '16px' }}
-                role="region"
-                aria-label="Aviso de snapshot parcial"
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
-                    Exibindo apenas a primeira página retornada ({simulation.resultados.length} de {simulation.total_itens} títulos). Filtros e paginação subsequente em lote extenso requerem instância persistente com banco de dados dedicado.
-                  </span>
-                </div>
-              </div>
-            )}
+            <ResultAnalytics simulation={simulation} onExport={handleExport} exporting={isExporting}
+              exportDisabled={isExporting || Boolean(wsSessionExpiredNotice) || isLoading} />
 
             <ReceivablesTable
               simulation={simulation}
@@ -410,7 +633,7 @@ export const App: React.FC = () => {
               onFilterChange={handleFilterChange}
               currentStatus={currentStatus}
               currentReason={currentReason}
-              filtrosDesabilitados={isSnapshotPublicoParcial}
+              filtrosDesabilitados={filtrosDesabilitados}
             />
 
             {/* Metadados de Auditoria e Rastreabilidade */}

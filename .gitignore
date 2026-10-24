@@ -21,3 +21,6 @@ estoque_antecipe_100k/
 resultado_esperado_100k.json
 .vercel/
 *.csv
+!Codex/antecipe/data/cnpj_situacao_mock.csv
+Codex/antecipe/.data/
+Codex/antecipe/output/

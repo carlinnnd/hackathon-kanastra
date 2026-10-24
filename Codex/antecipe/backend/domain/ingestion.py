@@ -321,6 +321,7 @@ def parse_linha_csv(
         valor_nominal=valor_nominal,
         data_vencimento=data_venc,
         data_aquisicao=data_aq,
+        originais=dict(row_dict),
     )
     return recebivel, None
 
@@ -371,4 +372,6 @@ def iterar_csv_recebiveis(
 
         row_dict = dict(zip(headers_limpos, raw_row))
         item, erro = parse_linha_csv(idx, row_dict)
+        if erro:
+            erro.detalhes["originais"] = dict(row_dict)
         yield (idx, item, erro)

@@ -14,10 +14,12 @@ Para lotes completos já recebidos pelo navegador (até 50 títulos na resposta 
 
 O diretório raiz `public/` contém somente o bundle estático previamente validado, com Vite 8.1.5, React 19.2.8 e TypeScript 6.0.3. Esse artefato versionado permite publicar a base sem alegar instalação npm limpa do manifesto final. Após uma alteração de frontend, validar `lint` e `build` e regenerar `public/` a partir de `Codex/antecipe/frontend/dist`; não editar o JavaScript compilado manualmente.
 
-Na raiz do repositório, com o projeto Vercel correto vinculado:
+Publicação atual: use o pacote isolado, que combina as fontes do backend, o cadastro mock e o bundle validado. O `public/` histórico da raiz não é regenerado automaticamente por um deploy direto. Consulte [Cadastro, decisões e relatórios](docs/RESULTADOS_E_CADASTRO.md).
 
 ```bash
-vercel deploy --prod
+python Codex/antecipe/scripts/prepare_deploy.py Codex/antecipe/.data/deploy-NOVO
+vercel link --project hackathon-kanastra --scope carlos-s-projects-198e4b14 --cwd Codex/antecipe/.data/deploy-NOVO
+vercel deploy --prod --scope carlos-s-projects-198e4b14 --cwd Codex/antecipe/.data/deploy-NOVO
 ```
 
 O teste dirigido do wrapper é `python -m pytest backend/tests/test_vercel_demo.py -q`, a partir de `Codex/antecipe`. A verificação pós-deploy deve cobrir `/`, `/api/health`, `/api/portfolio/summary`, download do CSV e simulação das nove notas.

@@ -67,8 +67,9 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
             aria-label="Filtrar por status de aprovação"
           >
             <option value="todos">Todos os status</option>
-            <option value="aprovado">Apenas Aprovados</option>
-            <option value="recusado">Apenas Recusados</option>
+            <option value="APROVADA">Aprovadas</option>
+            <option value="RECUSADA">Recusadas</option>
+            {simulation.tipo_analise === 'carteira' && <option value="CARTEIRA_HISTORICA">Carteira histórica</option>}
           </select>
 
           <label htmlFor="filter-reason" className="sr-only">
@@ -164,7 +165,9 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
                         {item.aprovado ? (
                           <span className="badge approved">APROVADO</span>
                         ) : (
-                          <span className="badge rejected">RECUSADO</span>
+                          <span className={`badge ${item.status === 'CARTEIRA_HISTORICA' ? 'historic' : 'rejected'}`}>
+                            {item.status === 'CARTEIRA_HISTORICA' ? 'HISTÓRICO' : 'RECUSADA'}
+                          </span>
                         )}
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
@@ -184,6 +187,8 @@ export const ReceivablesTable: React.FC<ReceivablesTableProps> = ({
                           <span style={{ color: 'var(--status-success-text)', fontSize: '0.8125rem' }}>
                             Conforme política do fundo
                           </span>
+                        ) : item.status === 'CARTEIRA_HISTORICA' ? (
+                          <span style={{color: 'var(--text-secondary)', fontSize: '0.8125rem'}}>Estoque histórico; sem decisão de antecipação</span>
                         ) : explicacaoPrimeiro && primeiroMotivo ? (
                           <span
                             style={{

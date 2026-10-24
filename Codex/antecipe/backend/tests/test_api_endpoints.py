@@ -146,6 +146,7 @@ def test_09_recusa_por_situacao_cadastral_inativa_e_nao_verificada():
     motivos_item2 = [m["codigo"] for m in data["resultados"][1]["motivos"]]
     assert "SITUACAO_CADASTRAL_SACADO" in motivos_item1
     assert "SITUACAO_CADASTRAL_SACADO" in motivos_item2
+    assert data["resultados"][1]["status"] == "RECUSADA"  # CNPJ inválido é violação confirmada.
 
 
 def test_10_duplicidade_intra_lote():

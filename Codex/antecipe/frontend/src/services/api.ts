@@ -41,11 +41,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
         }
       }
     } catch {
-      // Se não for JSON, mantém mensagem genérica segura
-      if (res.status === 503) {
+      // Se não for JSON (ex: Vercel 413 FUNCTION_PAYLOAD_TOO_LARGE ou 405 Method Not Allowed)
+      if (res.status === 413) {
+        codigo = 'ARQUIVO_MUITO_GRANDE';
+        errorMsg =
+          'O arquivo excede o limite máximo permitido pelo transporte HTTP do provedor (4,5 MB). Utilize o envio via streaming WebSocket para lotes extensos de até 1 milhão de títulos.';
+      } else if (res.status === 405) {
+        codigo = 'METODO_NAO_PERMITIDO';
+        errorMsg = 'Método HTTP não permitido para esta operação.';
+      } else if (res.status === 503) {
+        codigo = 'SERVICO_INDISPONIVEL';
         errorMsg = 'Serviço temporariamente indisponível. Verifique o status do motor.';
-      } else if (res.status === 413) {
-        errorMsg = 'Arquivo excede o limite máximo permitido para envio.';
       }
     }
 
@@ -71,11 +77,11 @@ export const api = {
     return handleResponse<RuleVersion[]>(res);
   },
 
-  async uploadSimulation(file: File): Promise<SimulationEnvelope> {
+  async uploadSimulation(file: File, tipoAnalise = 'novas_operacoes'): Promise<SimulationEnvelope> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch(`${API_BASE}/simulations`, {
+    const res = await fetch(`${API_BASE}/simulations?tipo_analise=${encodeURIComponent(tipoAnalise)}`, {
       method: 'POST',
       body: formData,
     });
