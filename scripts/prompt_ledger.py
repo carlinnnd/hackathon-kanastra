@@ -93,11 +93,18 @@ def fenced(text):
     return f"{marker}text\n{text}\n{marker}"
 
 
-def render(records, orphans):
+def render(records, orphans, title="Registro cronológico de prompts"):
     output = [
-        "# Registro cronológico de prompts",
+        f"# {title}",
         "",
         "Gerado a partir dos hooks e de inclusões manuais. Horários em UTC. Texto sanitizado, com SHA-256 do prompt original. Ações são confirmadas separadamente.",
+        "",
+        "> **Registros individuais da equipe:**",
+        "> - [Registro de Carlos (Orquestração & Frentes)](REGISTRO_PROMPTS_CARLOS.md)",
+        "> - [Registro de Elias](REGISTRO_PROMPTS_ELIAS.md)",
+        "> - [Registro de Pina (Leandro)](REGISTRO_PROMPTS_PINA.md)",
+        "",
+        "> *Nota de integridade documental:* O texto integral fiel dos prompts oficiais encontra-se preservado sob `.hackathon/prompts/` (ex: `p0002_user.txt`). Na visualização sanitizada acima, sentenças com mais de duas vírgulas ou ponto-e-vírgula são marcadas como `[LINHA_TABULAR_OMITIDA]` pela rotina de proteção estrita contra vazamento de dados tabulares/CSV.",
         "",
     ]
     if not records:
@@ -135,7 +142,7 @@ class Ledger:
         self.private = self.root / ".hackathon" / "prompts"
         self.path = self.root / "docs" / "prompts-events.jsonl"
         self.public = self.root / "docs" / "REGISTRO_PROMPTS.md"
-
+        self.carlos = self.root / "docs" / "REGISTRO_PROMPTS_CARLOS.md"
     @contextlib.contextmanager
     def locked(self):
         self.private.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -174,6 +181,15 @@ class Ledger:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 handle.write(render(entries, orphans))
             os.replace(temp_path, self.public)
+            # Renderiza espelhamento para o registro de Carlos
+            carlos_fd, carlos_temp = tempfile.mkstemp(prefix=".prompts-carlos-", dir=self.public.parent)
+            try:
+                with os.fdopen(carlos_fd, "w", encoding="utf-8") as handle:
+                    handle.write(render(entries, orphans, title="Registro cronológico de prompts — CARLOS"))
+                os.replace(carlos_temp, self.carlos)
+            finally:
+                if os.path.exists(carlos_temp):
+                    os.unlink(carlos_temp)
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -236,6 +252,10 @@ def main():
     manual = commands.add_parser("manual")
     manual.add_argument("--source", required=True)
     manual.add_argument("--prompt-file", type=Path, required=True)
+    stop = commands.add_parser("stop")
+    stop.add_argument("--session", default="session-01")
+    stop.add_argument("--response", default="Sem mensagem final capturada")
+    stop.add_argument("--turn", default="")
     close = commands.add_parser("close")
     close.add_argument("--id", required=True)
     close.add_argument("--action", required=True)
@@ -262,6 +282,10 @@ def main():
     if args.command == "manual":
         value = args.prompt_file.read_text(encoding="utf-8")
         print(f"Registrado {ledger.prompt(args.source, 'manual', value)}")
+        return 0
+    if args.command == "stop":
+        ledger.stop(args.session, args.response, args.turn)
+        print("Evento stop registrado")
         return 0
     if args.command == "close":
         ledger.close(args.id, args.action, args.files, args.verification)

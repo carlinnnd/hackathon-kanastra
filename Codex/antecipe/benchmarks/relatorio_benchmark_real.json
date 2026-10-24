@@ -1,0 +1,65 @@
+{
+  "info_sistema": {
+    "comando_executado": "Codex/antecipe/.venv/Scripts/python Codex/antecipe/benchmarks/run_real_benchmark.py",
+    "numero_repeticoes": 1,
+    "sistema_operacional": "Windows-10-10.0.26300-SP0",
+    "python_versao": "3.11.15",
+    "processador": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "timestamp_utc_inicio": "2026-10-24T14:24:40.480703Z",
+    "validacao": "oraculo_independente_linha_a_linha",
+    "hashes_fontes_antes": {
+      "backend/domain/engine.py": "30011fcb3ae4df8d0dfa5ea97bf0f81a6cc3f291687588c655b345578ccaa6dd",
+      "backend/domain/ingestion.py": "ce12691da03b895d98a138f9d8da8faf7b121f88fd61a64450980f96fe9f30dd",
+      "backend/domain/models.py": "4c57f47942b60f1b5c8778764281e3d8d419b550c518f6b860e7bb9c3f715e97",
+      "backend/domain/rules.py": "8b4073367b92c3d46fd9cc4cf35b09cf04ecb6eb1e94e15f99552a06649c6529",
+      "backend/domain/pricing.py": "3d2d7a801b1e88dde60620fe6a93518d85051cdd5411c73c43e19cfd1e7d7fb3",
+      "benchmarks/run_real_benchmark.py": "dec37ef1d2e97eac778be5baf03e2dce24f7eda4896c514160345a41a9840d3e"
+    },
+    "hashes_fontes_depois": {
+      "backend/domain/engine.py": "30011fcb3ae4df8d0dfa5ea97bf0f81a6cc3f291687588c655b345578ccaa6dd",
+      "backend/domain/ingestion.py": "ce12691da03b895d98a138f9d8da8faf7b121f88fd61a64450980f96fe9f30dd",
+      "backend/domain/models.py": "4c57f47942b60f1b5c8778764281e3d8d419b550c518f6b860e7bb9c3f715e97",
+      "backend/domain/rules.py": "8b4073367b92c3d46fd9cc4cf35b09cf04ecb6eb1e94e15f99552a06649c6529",
+      "backend/domain/pricing.py": "3d2d7a801b1e88dde60620fe6a93518d85051cdd5411c73c43e19cfd1e7d7fb3",
+      "benchmarks/run_real_benchmark.py": "dec37ef1d2e97eac778be5baf03e2dce24f7eda4896c514160345a41a9840d3e"
+    }
+  },
+  "resultados": {
+    "100000_linhas": {
+      "validacao_semantica_oraculo": "APROVADA_COM_SUCESSO",
+      "alcance_validacao": "confronto_linha_a_linha_aprovacao_primeiro_motivo_recusa_e_calculo_decimal",
+      "total_linhas": 100000,
+      "aprovados": 1890,
+      "recusados": 98110,
+      "total_nominal_aprovado": "1874852.00",
+      "total_liquido_aprovado": "1838604.87",
+      "duracao_segundos": 9.208,
+      "throughput_linhas_segundo": 10860.13,
+      "memoria_rss_inicio_mb": 21.41,
+      "memoria_rss_fim_mb": 26.8,
+      "memoria_rss_amostrado_pico_mb": 36.8,
+      "memoria_rss_so_pico_mb": 36.8,
+      "hash_decisoes_saida": "abc3534c6c662b01f8ef05d94346db00d47a18c79383b55adda22c43163c3330",
+      "timestamp_utc": "2026-10-24T14:24:40.480703Z",
+      "csv_sha256": "2bd449c5ade5017d1e575f3c709997589f63ba87072bb935c9f99c40c4aed165"
+    },
+    "500000_linhas": {
+      "validacao_semantica_oraculo": "APROVADA_COM_SUCESSO",
+      "alcance_validacao": "confronto_linha_a_linha_aprovacao_primeiro_motivo_recusa_e_calculo_decimal",
+      "total_linhas": 500000,
+      "aprovados": 1890,
+      "recusados": 498110,
+      "total_nominal_aprovado": "1874852.00",
+      "total_liquido_aprovado": "1838604.87",
+      "duracao_segundos": 45.3718,
+      "throughput_linhas_segundo": 11020.05,
+      "memoria_rss_inicio_mb": 26.37,
+      "memoria_rss_fim_mb": 46.51,
+      "memoria_rss_amostrado_pico_mb": 92.52,
+      "memoria_rss_so_pico_mb": 92.52,
+      "hash_decisoes_saida": "0e301a8551805cff6c710e2dbf8ca4e4231b68db8e6eedea1ed38a860e6be6fa",
+      "timestamp_utc": "2026-10-24T14:24:50.783874Z",
+      "csv_sha256": "4988b1c7f6fcf4cc43d80957f92cb4829b5b2f3f5278d11418bc7ce125b39a58"
+    }
+  }
+}

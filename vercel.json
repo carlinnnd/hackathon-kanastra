@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "functions": {
+    "app.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{.agents/**,.claude/**,.codex/**,agents/**,docs/**,research/**,tests/**,scripts/**,Codex/antecipe/backend/tests/**,Codex/antecipe/qa/**,Codex/antecipe/benchmarks/**,Codex/antecipe/frontend/**,**/__pycache__/**}"
+    }
+  },
+  "env": {
+    "PUBLIC_DEMO_MODE": "true",
+    "ENABLE_DEMO_CADASTRO": "true",
+    "MAX_UPLOAD_SIZE_BYTES": "4000000",
+    "VALIDADORES_JSON_PATH": "validadores_antecipe.json"
+  }
+}

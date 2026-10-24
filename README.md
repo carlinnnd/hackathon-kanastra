@@ -1,99 +1,62 @@
-# Hackathon Agent Kit — guia de início
+# Hackathon Antecipe — Plataforma de Antecipação de Recebíveis (FIDC)
 
-Pacote preparado a partir dos critérios 4.1.2 e 5.2 das imagens do edital. Idioma de operação: português do Brasil. Atualizado em 23/10/2026.
+> **Projeto Desenvolvido:** Plataforma modular de antecipação e simulação de recebíveis para o **ANTECIPE FIDC**.  
+> **Acesso rápido à aplicação:** Consulte o guia de execução e arquitetura completo em **[Codex/antecipe/README.md](Codex/antecipe/README.md)**.  
+> **Documentação de Requisitos e Evidências:** Especificação oficial em `docs/ESPECIFICACAO.md`, evidências reais em `docs/EVIDENCIAS.md`, decisões em `docs/DECISOES_TECNICAS.md`, matriz de recusas em `docs/MATRIZ_RECUSAS.md` e histórico de prompts em `docs/REGISTRO_PROMPTS_CARLOS.md`.
 
-## O que está pronto
+---
 
-- 9 perfis de agentes, cada um em formato nativo Codex (`.codex/agents/*.toml`) e Claude Code (`.claude/agents/*.md`).
-- 5 skills locais por competência, disponíveis para Codex em `.agents/skills/` e Claude em `.claude/skills/`.
-- Dois hooks de captura de prompts: `UserPromptSubmit` e `Stop`. Nenhum hook instala dependências nem envia informações para serviços externos.
-- Ferramentas Python sem dependências externas: registro de prompts, gerador de CSV sintético, benchmark e auditoria final.
-- Matrizes para recusa, evidências, decisões e rastreabilidade.
+## 1. Resumo da Solução Implementada
 
-**Isto é uma infraestrutura de trabalho, não uma solução pronta para o desafio.** O enunciado técnico completo, o schema do CSV, os motivos obrigatórios de recusa e o hardware oficial ainda precisam ser inseridos. Não declarar pontos ganhos nem performance antes da execução real.
+O sistema foi construído a partir dos requisitos oficiais de negócio e dos dados do edital:
+- **Motor de Regras Configurável:** Execução baseada em *Strategy + Registry* sem parâmetros financeiros fixos no código e com suporte a versionamento imutável de políticas carregadas de `validadores_antecipe.json` (configuração pública versionada no Git).
+- **Precisão Financeira Estrita:** Cálculo de desconto comercial simples com `decimal.Decimal` (zero uso de `float`), integridade centesimal na face (ADR-008) e arredondamento comercial `ROUND_HALF_UP` nos centavos por nota aprovada (não bancário).
+- **Antiduplicidade Global e Parcelas:** Identidade composta única (`DOC_CEDENTE + DOC_SACADO + TIPO_RECEBIVEL + NU_DOCUMENTO + DATA_VENCIMENTO_ORIGINAL`) que reconhece parcelas legítimas e previne duplicidade contra todo o estoque histórico da base (`DUPLICIDADE_HISTORICA`) e intra-lote (`DUPLICIDADE_LOTE`).
+- **Controle de Concentração:** Monitoramento determinístico de exposição por raiz de CNPJ do sacado (limite de 10,0% onde $\le 10{,}0\%$ é aceito e $> 10{,}0\%$ é recusado), respeitando o excesso histórico documentado.
+- **Processamento Streaming Unix:** Ingestão de alta vazão com baixo uso de memória (pico amostrado < 100 MB em 500k linhas no motor e throughput > 10.000 linhas/s; throughput HTTP de ~3.000 a 3.200 linhas/s com worker real).
+- **Interface Web Acessível:** Frontend em React 19 + TypeScript + Vite 8 (porta 3000) com mensagens de recusa explicativas orientadas às diretrizes WCAG 2.2 AA.
+- **Ambiente de Execução Local:** Aplicação 100% autossuficiente e testada localmente em SQLite 3; Docker e PostgreSQL não foram executados na máquina host por indisponibilidade de daemon Docker.
+- **Separação de Dados:** Arquivo de estoque real privado (`estoque_antecipe.csv`) e arquivo de gabarito externo (`resultado_esperado_100k.json`) mantidos fora do controle de versão do Git, com regras regulamentares (`validadores_antecipe.json`) versionadas como especificação pública.
 
-## Instalação rápida
+Para inicializar a aplicação, consulte: **[Guia Completo de Execução (Codex/antecipe/README.md)](Codex/antecipe/README.md)**.
 
-Requisitos: Git, Python 3.11+ (para executar também os testes incluídos) e Codex CLI **ou** Claude Code. Node/npm é opcional, apenas para instalar skills públicas adicionais. Os scripts principais usam somente a biblioteca padrão Python e os hooks usam `fcntl` (macOS/Linux/WSL; Windows puro requer adaptação).
+---
 
-1. Extraia a pasta e copie **todo o conteúdo interno**, incluindo os diretórios ocultos `.codex`, `.claude` e `.agents`, para a raiz do **novo repositório** do hackathon. Não sobrescreva arquivos preexistentes sem revisar o diff.
-2. Se houver `.gitignore`, `AGENTS.md`, `CLAUDE.md` ou configurações de hooks anteriores, faça merge manual. Não substitua hooks de terceiros inadvertidamente.
-3. Abra Codex CLI ou Claude Code na raiz do projeto. Em Codex, execute `/hooks` e **revise/autorize** os hooks do projeto; eles não rodam em projetos não confiáveis. Em Claude Code, confira as configurações do projeto e a confiança no workspace.
-4. Peça ao coordenador: `Analise os critérios de docs/CRITERIOS.md, leia o enunciado e distribua tarefas entre os agentes. Comece pelo processamento de 100 mil e 500 mil linhas.`
-5. Registre as regras oficiais em `docs/ESPECIFICACAO.md` e os critérios de cada recusa em `docs/MATRIZ_RECUSAS.md` **antes** de implementar.
+# Hackathon Agent Kit — Guia de Infraestrutura e Governança
 
-## Uso dos agentes
+Pacote de governança, governança de prompts, auditoria estrutural e perfis de agentes preparado para o desafio.
 
+## O que está pronto no Kit
+- 9 perfis de agentes em formato nativo Codex (`.codex/agents/*.toml`) e Claude Code (`.claude/agents/*.md`).
+- 5 skills locais por competência, disponíveis em `.agents/skills/`.
+- Dois hooks de captura de prompts: `UserPromptSubmit` e `Stop`.
+- Scripts de auditoria, benchmark e reconciliação contínua de prompts (`scripts/prompt_ledger.py`, `scripts/check_submission.py`).
+- Matrizes oficiais de evidências, decisões técnicas e recusas em `docs/`.
+
+## Uso dos Agentes
 | Agente | Quando chamar | Principal saída |
-| --- | --- | --- |
-| `coordenador` | Início, mudança de escopo, antes da entrega | Plano e mapa de evidências |
-| `performance` | Pipeline CSV, throughput, memória, latência | Benchmarks de 100k/500k e gargalos |
-| `ux_ui` | Interface, feedback de processamento, recusas | Fluxo, estados e testes de clareza |
-| `unix_arch` | Interfaces de módulos, CLI, código limpo | Estrutura e contratos de componentes |
-| `observabilidade` | Logs, métricas, rastreabilidade | JSON logs sem conteúdo do CSV |
-| `credenciais` | Segredos, .env, histórico Git, sanitização | Auditoria de vazamentos e correções |
-| `prompt_registry` | Cada interação e auditoria do histórico | `docs/REGISTRO_PROMPTS.md` reconciliado |
-| `qa_criterios` | A cada marco e antes da submissão | Matriz de pontuação com evidências |
-| `demo_entrega` | Reta final | Roteiro de demonstração verificável |
+| :--- | :--- | :--- |
+| `coordenador` | Início, orquestração, integração de frentes | Plano de execução e mapa de evidências |
+| `performance` | Pipeline CSV, throughput, memória, latência | Benchmarks de 100k e 500k com oráculo |
+| `ux_ui` | Interface web, mensagens de recusa, acessibilidade | Telas React, componentes e WCAG |
+| `unix_arch` | Contratos de domínio, CLI Unix, código limpo | Motor modular Strategy + Registry |
+| `observabilidade` | Logs estruturados, métricas | Safe JSON logs sem vazamento de CSV/PII |
+| `credenciais` | Varredura de segredos, sanitização de ambiente | Auditoria de segurança e .env |
+| `prompt_registry`| Rastreamento contínuo de IA | `docs/REGISTRO_PROMPTS_CARLOS.md` reconciliado |
+| `qa_criterios` | Validação contra critérios de pontuação | Matriz de testes de negócio e suíte R3 |
+| `demo_entrega` | Roteiro de banca e apresentação | Roteiro de 5 minutos e checklist |
 
-Você pode invocar os agentes nominalmente na conversa; são perfis disponíveis para **delegação pelo agente principal**, e não processos que iniciam sozinhos. Múltiplos agentes escrevendo o mesmo arquivo simultaneamente causam conflito. O coordenador atribui propriedade de arquivos e integra os resultados.
-
-## Registro de prompts — obrigatório
-
-Em Codex ou Claude Code, os hooks tentam registrar toda submissão interativa e a última resposta. Os eventos sanitizados ficam em `docs/prompts-events.jsonl` (fonte de verdade, versionável) e geram `docs/REGISTRO_PROMPTS.md` com horário, origem, texto do prompt sanitizado e hash SHA-256 do texto original. A ação efetivamente tomada fica `PENDENTE` até reconciliação. Isso é intencional: uma resposta do modelo **não prova** que um arquivo foi alterado.
-
-```bash
-python3 scripts/prompt_ledger.py status
-python3 scripts/prompt_ledger.py close --id P0001 --action "Criado parser streaming e testado" --files "src/processor.py,tests/test_processor.py" --verification "pytest: 12 testes passaram"
-python3 scripts/prompt_ledger.py audit
-```
-
-Para ChatGPT, IDEs ou agentes sem hook, use captura manual com arquivo local, **não texto sensível na linha de comando**:
-
-```bash
-python3 scripts/prompt_ledger.py manual --source chatgpt --prompt-file pedido.txt
-python3 scripts/prompt_ledger.py close --id P0002 --action "Ação executada" --verification "Comando/evidência"
-```
-
-Os prompts podem ser sanitizados (segredos, dados pessoais e linhas de CSV). O hash mantém vínculo com o texto de entrada sem salvar a versão sigilosa. **Não informe dados sensíveis em prompts.** Os hooks dependem de confiança e do cliente; confira `status` a cada sessão e faça a entrada manual se um deles não disparar. Não presumir captura retroativa. Revise e versiona **ambos** os arquivos de `docs/` após cada sessão; sincronize o repositório antes de trabalhar em outra máquina.
-
-Subprompts trocados entre agentes podem não acionar `UserPromptSubmit`; o coordenador deve registrá-los manualmente se fizerem parte do histórico exigido pelo regulamento. O histórico publicado exige revisão humana antes do commit, pois nenhuma sanitização automática é infalível.
-
-Se o relatório mostrar `Eventos órfãos` (uma resposta foi capturada sem o prompt correspondente), registre o prompt faltante com `manual`, feche-o com `close` e explique a reconciliação com `python3 scripts/prompt_ledger.py resolve-orphan --id O0001 --reason "Prompt recuperado em P0005"`. Não descarte o evento silenciosamente.
-
-## Benchmark
-
-```bash
-python3 scripts/generate_fixture.py --rows 100000 --output .hackathon/datasets/teste-100k.csv
-python3 scripts/generate_fixture.py --rows 500000 --output .hackathon/datasets/teste-500k.csv
-python3 scripts/benchmark.py --help
-```
-
-Quando existir um processador com CLI, um exemplo de integração **a adaptar** é:
-
-```bash
-python3 scripts/benchmark.py --rows 100000 500000 --runs 3 --command "python3 -m app.cli --input {input} --output {output}"
-```
-
-Esse comando de exemplo não funcionará até existir `app.cli`. O benchmark mede tempo e taxa, mas não prova sozinho que cada regra de negócio foi aplicada. Testes de correção e inspeção dos relatórios são indispensáveis.
-
-Para testar vazamento em logs, inclua uma sentinela **fictícia** de `generate_fixture.py` num arquivo de teste, rode o processamento e inspecione os logs JSONL gerados pelo projeto:
-
-```bash
-python3 scripts/check_logs.py caminho/dos/logs.jsonl --sentinel FAKE_ONLY_00000001
-```
-
-O verificador exige `timestamp`, `level` e `event`, checa uma allowlist de campos e falha se a sentinela aparecer. O schema pode ser estendido após revisão. Rode também `gitleaks dir .` e `gitleaks git .` **se o Gitleaks estiver instalado**, além de revisar os achados e rotacionar qualquer credencial efetivamente comprometida.
-
-## Checklist de entrega
-
-1. 100k e 500k concluídos em máquina e ambiente documentados; três execuções, p50 e p95 ou medições individuais, e contagem validada.
-2. Para cada recusa, código e texto compreensível, ação possível e teste de acessibilidade.
-3. Módulos pequenos, responsabilidades separadas, contratos estáveis, testes unitários e de integração.
-4. Logs JSON em formato consistente sem valores/linhas do CSV; verificação de tokens e segredos, incluindo histórico Git.
-5. Registro de todos os prompts realmente usados, em sequência, com ação, arquivos e verificação por resposta.
-6. Evidência em `docs/EVIDENCIAS.md` e rubric em `docs/CRITERIOS.md` sem notas autoconcedidas.
-
-Auditoria estrutural local: `python3 scripts/check_submission.py`. Auditoria final mais rigorosa: `python3 scripts/check_submission.py --final` (falhará até preencher a especificação e registrar as interações).
-
-Veja `research/REFERENCIAS.md` para projetos públicos pesquisados, vantagens, ressalvas e instalação opcional. Consulte a licença de cada projeto e leia os scripts antes de habilitar terceiros.
+## Registro de Prompts e Auditoria Estrutural
+- Visualização e status do ledger:
+  ```bash
+  python scripts/prompt_ledger.py status
+  python scripts/prompt_ledger.py audit
+  ```
+- Auditoria do kit:
+  ```bash
+  python scripts/check_submission.py
+  ```
+- Suíte de testes do kit:
+  ```bash
+  python tests/test_kit.py
+  ```

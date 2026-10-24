@@ -11,3 +11,12 @@ __pycache__/
 .venv/
 node_modules/
 .DS_Store
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+test_antecipe.db
+estoque_antecipe_100k/
+.hackathon/datasets/
+resultado_esperado_100k.json
+.vercel/
