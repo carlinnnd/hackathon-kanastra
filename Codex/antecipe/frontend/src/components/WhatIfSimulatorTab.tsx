@@ -616,73 +616,58 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({
 
       {/* Resultado Comparativo Lado a Lado */}
       {whatIfResult && (
-        <>
-          <div
-            className="summary-grid"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', marginBottom: '12px' }}
-          >
-            <div className="metric-card" style={{ borderLeft: '4px solid var(--border-subtle)' }}>
-              <div className="metric-title">Política selecionada atual</div>
-              <div className="metric-value" style={{ color: 'var(--text-primary)' }}>
-                {whatIfResult.baseline.aprovados} / {whatIfResult.baseline.total_itens} aprovados
-              </div>
-              <div className="metric-sub">
-                Taxa de aprovação: {whatIfResult.baseline.taxa_aprovacao_pct}% | Líquido:{' '}
-                <strong>{formatarMoedaBRL(whatIfResult.baseline.total_liquido)}</strong>
-              </div>
+        <div
+          className="summary-grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', marginBottom: '24px' }}
+        >
+          <div className="metric-card" style={{ borderLeft: '4px solid var(--border-subtle)' }}>
+            <div className="metric-title">Política selecionada atual</div>
+            <div className="metric-value" style={{ color: 'var(--text-primary)' }}>
+              {whatIfResult.baseline.aprovados} / {whatIfResult.baseline.total_itens} aprovados
             </div>
-
-            <div className="metric-card" style={{ borderLeft: '4px solid #34d399' }}>
-              <div className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <ArrowRight size={14} color="#34d399" />
-                <span>Cenário Simulado &ldquo;What-If&rdquo;</span>
-              </div>
-              <div className="metric-value" style={{ color: '#34d399' }}>
-                {whatIfResult.what_if.aprovados} / {whatIfResult.what_if.total_itens} aprovados
-              </div>
-              <div className="metric-sub">
-                Taxa de aprovação: {whatIfResult.what_if.taxa_aprovacao_pct}% | Líquido:{' '}
-                <strong>{formatarMoedaBRL(whatIfResult.what_if.total_liquido)}</strong>
-              </div>
-            </div>
-
-            <div
-              className="metric-card"
-              style={{
-                borderLeft:
-                  whatIfResult.delta.aprovados_delta >= 0 ? '4px solid #10b981' : '4px solid #ef4444',
-              }}
-            >
-              <div className="metric-title">Impacto Líquido (Delta What-If vs Ativa)</div>
-              <div
-                className="metric-value"
-                style={{
-                  color: whatIfResult.delta.aprovados_delta >= 0 ? '#10b981' : '#ef4444',
-                }}
-              >
-                {whatIfResult.delta.aprovados_delta >= 0 ? '+' : ''}
-                {whatIfResult.delta.aprovados_delta} títulos
-              </div>
-              <div className="metric-sub">
-                Diferença de Desembolso Líquido:{' '}
-                <strong>{formatarMoedaBRL(whatIfResult.delta.liquido_delta_brl)}</strong>
-              </div>
+            <div className="metric-sub">
+              Taxa de aprovação: {whatIfResult.baseline.taxa_aprovacao_pct}% | Líquido:{' '}
+              <strong>{formatarMoedaBRL(whatIfResult.baseline.total_liquido)}</strong>
             </div>
           </div>
 
-          {whatIfResult.fonte_dados !== 'remessa_atual' && (
-            <p
+          <div className="metric-card" style={{ borderLeft: '4px solid #34d399' }}>
+            <div className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ArrowRight size={14} color="#34d399" />
+              <span>Cenário Simulado &ldquo;What-If&rdquo;</span>
+            </div>
+            <div className="metric-value" style={{ color: '#34d399' }}>
+              {whatIfResult.what_if.aprovados} / {whatIfResult.what_if.total_itens} aprovados
+            </div>
+            <div className="metric-sub">
+              Taxa de aprovação: {whatIfResult.what_if.taxa_aprovacao_pct}% | Líquido:{' '}
+              <strong>{formatarMoedaBRL(whatIfResult.what_if.total_liquido)}</strong>
+            </div>
+          </div>
+
+          <div
+            className="metric-card"
+            style={{
+              borderLeft:
+                whatIfResult.delta.aprovados_delta >= 0 ? '4px solid #10b981' : '4px solid #ef4444',
+            }}
+          >
+            <div className="metric-title">Impacto Líquido (Delta What-If vs Ativa)</div>
+            <div
+              className="metric-value"
               style={{
-                fontSize: '0.8125rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '24px',
-                textAlign: 'center',
+                color: whatIfResult.delta.aprovados_delta >= 0 ? '#10b981' : '#ef4444',
               }}
             >
-              dados sintéticos, suba um csv para simulação real
-            </p>
-          )}
-        </>
+              {whatIfResult.delta.aprovados_delta >= 0 ? '+' : ''}
+              {whatIfResult.delta.aprovados_delta} títulos
+            </div>
+            <div className="metric-sub">
+              Diferença de Desembolso Líquido:{' '}
+              <strong>{formatarMoedaBRL(whatIfResult.delta.liquido_delta_brl)}</strong>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Governança: Lista Oficial dos 9 Validadores com chaveamento direto e Histórico de Versões */}
