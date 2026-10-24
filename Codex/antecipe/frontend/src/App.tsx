@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   ShieldAlert,
   AlertTriangle,
-  RefreshCw,
   Info,
   Layers,
   Calculator,
@@ -257,34 +256,6 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleSimulateSampleBatch = async (rows: 100 | 1000 | 10000 | 100000) => {
-    if (bulkSessionRef.current) {
-      bulkSessionRef.current.close();
-      bulkSessionRef.current = null;
-      setIsWsSessionActive(false);
-    }
-
-    setIsLoading(true);
-    setLoadingFileLabel(`Lote Sintético de Homologação (${rows.toLocaleString('pt-BR')} títulos)`);
-    setErrorMessage(null);
-    setWsSessionExpiredNotice(null);
-    setStreamProgress(null);
-
-    try {
-      const response = await fetch(api.getSampleCsvUrl(rows));
-      if (!response.ok) throw new Error('Não foi possível carregar o lote de demonstração.');
-      await handleFileSelected(new File([await response.blob()], `lote-${rows}.csv`, { type: 'text/csv' }));
-    } catch (err: unknown) {
-      snapshotOriginalRef.current = null;
-      setSimulation(null);
-      if (err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage('Erro ao simular lote sintético.');
-      }
-      setIsLoading(false);
-    }
-  };
 
   const handlePageChange = async (newPage: number) => {
     if (!simulation) return;
@@ -542,29 +513,6 @@ export const App: React.FC = () => {
           </div>
 
           <div className="kanastra-user-area">
-            <div
-              className="status-pill"
-              aria-live="polite"
-              aria-label={`Status do motor: ${backendOnline ? 'Online' : 'Offline'}`}
-            >
-              <span
-                className={`status-indicator ${backendOnline ? 'online' : 'offline'}`}
-                aria-hidden="true"
-              />
-              <span>{backendOnline ? 'Motor Ativo' : 'Offline'}</span>
-            </div>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={checkBackendState}
-              aria-label="Sincronizar estado do motor"
-              title="Sincronizar estado do motor"
-              style={{ padding: '6px 9px' }}
-            >
-              <RefreshCw size={13} aria-hidden="true" />
-            </button>
-
             <div className="kanastra-user-badge" title={`${authUser.email} • ${authUser.cargo}`}>
               <div className="kanastra-user-avatar" aria-hidden="true">
                 {userInitials || 'KN'}
@@ -800,7 +748,6 @@ export const App: React.FC = () => {
 
               <FileUpload
                 onFileSelected={handleFileSelected}
-                onSimulateSampleBatch={handleSimulateSampleBatch}
                 isLoading={isLoading}
                 disabled={!uploadHabilitado || isExporting}
               />

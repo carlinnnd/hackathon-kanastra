@@ -273,3 +273,20 @@ Por autorização explícita posterior do usuário, a integração foi enviada �
 - Deploy explícito de produção: dpl_BNuMdSCHGeZ73nheEL4X1KkoXffR, READY, Python3.12, build remoto9s. URL imutável https://hackathon-kanastra-izzgt1qc9-carlos-s-projects-198e4b14.vercel.app; domínio https://hackathon-kanastra.vercel.app/.
 - Verificação no navegador público: bundle index-CR7wFVxy.js; tela final única e botão Google presentes; sem script antecipe-auth-gate sobreposto. health200/data2026-10-24, auth/config200/configuredtrue/clientIdpresente/useServerExchangetrue, callback200. A simulação HTTP de nove notas retornou1aprovada/8recusadas/R$4706,67 e data24/10; What-if100 notas HTTP200 com a mesma data. Nenhum erro de console observado. A consulta CLI de erros desde10min retornou nenhum log encontrado; não equivale a auditoria exaustiva.
 - Limite: o fluxo completo com conta real no tenant não foi executado. A existência das variáveis não comprova rotação do segredo compartilhado nem habilitação de todos os grants/conexões. O modo público continua sendo demonstração, como configurado no projeto.
+
+## Portal operacional e upload — 24/10/2026
+
+Interface: removidos valores fictícios de login/título, presets de teste individual, homologação, Motor Ativo/reload e destaque verde do CSV completo. What-if sinaliza sucesso/erro e limpa comparação anterior; políticas pessoais nomeadas, listáveis e selecionáveis, com isolamento no servidor e aplicação em CSV/JSON/WS/What-if. PDF corporativo de4páginas inspecionado por renderização. ADR e limites em Codex/antecipe/docs/INTEGRACAO_FRONT_AUTH.md.
+
+Verificação:88testes backend passaram em11,46s (um aviso de depreciação do TestClient); lint TypeScript, suíte frontend, teste PKCE e build Vite aprovados. Build controlado com árvore de dependências já disponível em .data/frontend-clean-verify; não equivale a npm install limpo. No navegador local com provedor sintético: logout vazio; formulário individual vazio; sem controles removidos; sucesso/erro What-if, ausência de sucesso antigo na falha; criar/alternar política e recuperar após reload; sem erro de console observado. Gestão real no Auth0 não exercitada; CLI env run expôs nomes mas entregou todos os valores Auth0 vazios, portanto sondagem de permissões inconclusiva.
+
+Upload: frames768KiB e janela12MiB, três vezes os valores anteriores, mantendo ACK e fila16chunks. Leitor usa cursor, eliminando cópia do restante do frame a cada linha. Regressões incluem frame acima do limite antigo, rejeição acima do limite novo, UTF-8/multilinha e desconexão.
+
+Benchmark local (Python3.11.15/Windows10.0.26300; baseGit70b8bb3 + mudanças deste ticket; início2026-10-24T21:39:46UTC). Comandos: python Codex/antecipe/benchmarks/run_upload_comparison.py; repetição100k com --rows100000 --profiles fast --output upload-cursor-final (parâmetros separados por espaço na CLI). Arquivos sintéticos18722546 e93612508bytes; hashes e valores exatos no relatório, que prevalece sobre esta descrição.
+
+| Linhas | Upload anterior até ACK total | Upload otimizado | Ganho | Processamento completo anterior / otimizado |
+| --- | --- | --- | --- | --- |
+|100000|19,4551s|8,1714s|2,381x|25,5089s /26,6354s|
+|500000|223,7202s|106,0859s|2,109x|229,8893s /123,4845s|
+
+Resultados coincidiram:1802aprovados em ambos;98198/498198recusados; líquido3470325,06. SHA-256 linha a linha de status, primeiro motivo e valores idêntico entre variantes. Não compara todos os motivos. Uma execução por variante, sem p95/garantia de3x, com checks locais coexistindo em parte da medição.100k repetido após cursor;500k compara leitor anterior/frame256KiB com cursor/frame768KiB. RSS inicial descartado por medir launcher Windows;100k final mediu485,06MB no processo real; pico real500k não mensurado. Relatório:Codex/antecipe/benchmarks/relatorio_upload_20261024.json. Ganho de capacidade3x não equivale a ganho garantido de velocidade3x. As regras de negócio e limites totais do arquivo/registros foram preservados.

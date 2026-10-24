@@ -57,6 +57,7 @@ class SimulationService:
         max_records: Optional[int] = None,
         cancel_check: Optional[Callable[[], bool]] = None,
         tipo_analise: str = "novas_operacoes",
+        configuration_override: Optional[dict] = None,
     ) -> Tuple[str, dict]:
         if tipo_analise not in {"novas_operacoes", "carteira"}:
             raise ValueError("Tipo de análise inválido. Use novas_operacoes ou carteira.")
@@ -72,7 +73,9 @@ class SimulationService:
         if not versao_ativa:
             raise ValueError(f"Nenhuma versão de regra ativa configurada para o fundo {fundo.nome}.")
 
-        raw_cfg = json.loads(versao_ativa.configuration_json, parse_float=Decimal)
+        raw_cfg = configuration_override if configuration_override is not None else json.loads(versao_ativa.configuration_json, parse_float=Decimal)
+        from ..infrastructure.repositories.rules_repository import calcular_hash_config
+        effective_hash = calcular_hash_config(raw_cfg) if configuration_override is not None else versao_ativa.configuration_hash
         dt_base = data_base_override or calendar.data_atual()
         # A data operacional nao pode ficar congelada numa versao antiga do JSON.
         config_motor = replace(carregar_configuracao(raw_cfg, dt_base), data_base=dt_base)
@@ -116,7 +119,7 @@ class SimulationService:
             data_base=data_base_efetiva,
             cadastro_fonte=fonte_cad,
             carteira_referencia=carteira_ref,
-            configuration_hash=versao_ativa.configuration_hash
+            configuration_hash=effective_hash
         )
 
         total_itens = 0
@@ -273,7 +276,7 @@ class SimulationService:
             "auditoria": {
                 "cadastro_fonte": fonte_cad,
                 "carteira_referencia": carteira_ref,
-                "configuration_hash": versao_ativa.configuration_hash
+                "configuration_hash": effective_hash
             },
             "avisos": avisos
         }
@@ -296,6 +299,7 @@ class SimulationService:
         self,
         custom_config: dict,
         itens_lista: List[Tuple[int, Optional[ReceivelInput], Optional[ResultadoAvaliacao]]],
+        baseline_override: Optional[dict] = None,
     ) -> dict:
         """
         Executa simulação comparativa 'What-If' puramente em memória (sem mutar o banco),
@@ -309,7 +313,7 @@ class SimulationService:
         if not versao_ativa:
             raise ValueError("Nenhuma regra ativa configurada.")
 
-        raw_ativa = json.loads(versao_ativa.configuration_json, parse_float=Decimal)
+        raw_ativa = baseline_override if baseline_override is not None else json.loads(versao_ativa.configuration_json, parse_float=Decimal)
         dt_base = calendar.data_atual()
 
         cfg_baseline = replace(carregar_configuracao(raw_ativa, dt_base), data_base=dt_base)

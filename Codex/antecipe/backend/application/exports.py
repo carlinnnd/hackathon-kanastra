@@ -74,17 +74,46 @@ def gerar_pdf(sim, analytics):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Flowable
     from reportlab.graphics.shapes import Drawing, Rect, String
 
     buffer = io.BytesIO()
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="Brand", fontName="Helvetica-Bold", fontSize=33, leading=42, textColor=colors.HexColor("#193e39")))
     styles["Title"].textColor = colors.HexColor("#193e39")
-    styles["BodyText"].leading = 15
+    navy = colors.HexColor("#122e39")
+    teal = colors.HexColor("#16786b")
+    muted = colors.HexColor("#617780")
+    styles["Title"].fontSize = 26
+    styles["Title"].leading = 32
+    styles["Title"].alignment = 0
+    styles["Title"].spaceAfter = 18
+    styles["Title"].textColor = navy
+    styles["Heading1"].textColor = navy
+    styles["Heading2"].textColor = teal
+    styles["BodyText"].fontSize = 9
+    styles["BodyText"].leading = 12
+    styles["BodyText"].textColor = navy
+    styles.add(ParagraphStyle(name="Eyebrow", fontSize=9, leading=14, textColor=teal, spaceAfter=10))
+    class MetricCards(Flowable):
+        def __init__(self, cards):
+            Flowable.__init__(self)
+            self.cards = cards
+            self.width, self.height = 500, 166
+        def draw(self):
+            c = self.canv
+            for i, (label, value) in enumerate(self.cards):
+                x, y = (i % 2) * 254, 86 if i < 2 else 4
+                c.setFillColor(colors.HexColor('#f1f6f6'))
+                c.roundRect(x, y, 242, 72, 7, fill=1, stroke=0)
+                c.setFillColor(teal); c.rect(x, y+14, 3, 44, fill=1, stroke=0)
+                c.setFillColor(muted); c.setFont('Helvetica', 9)
+                c.drawString(x+15, y+49, label)
+                c.setFillColor(navy); c.setFont('Helvetica-Bold', 17)
+                c.drawString(x+15, y+20, str(value))
     story = []
     def p(text, style="BodyText"):
-        story.append(Paragraph(escape(str(text)), styles[style])); story.append(Spacer(1, 10))
+        story.append(Paragraph(escape(str(text)), styles[style])); story.append(Spacer(1, 7))
     def brl(value):
         return "R$ " + f"{Decimal(str(value)):,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
     def table(rows, widths=None):
@@ -92,7 +121,9 @@ def gerar_pdf(sim, analytics):
         t = Table(rows, colWidths=widths or [255, 245], repeatRows=1, hAlign="LEFT")
         t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e3eee9")),
             ("LINEBELOW", (0, 0), (-1, 0), .6, colors.HexColor("#193e39")),
-            ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f8f9")]),
+            ("LINEBELOW", (0, 1), (-1, -1), .25, colors.HexColor("#dce6e8")),
             ("VALIGN", (0, 0), (-1, -1), "TOP")]))
         story.append(t); story.append(Spacer(1, 16))
     def chart(items):
@@ -108,11 +139,18 @@ def gerar_pdf(sim, analytics):
         story.append(d)
     counts = analytics["status_counts"]
     historical = analytics["tipo_analise"] == "carteira"
-    p("antecipe.", "Brand")
-    p("RELATÓRIO EXECUTIVO", "Title")
+    p("ANTECIPE FIDC  /  INTELIGÊNCIA EM RECEBÍVEIS", "Eyebrow")
+    story.append(Spacer(1, 12))
+    p("Seu resultado, em perspectiva.", "Title")
     p("Análise de carteira histórica" if historical else "Análise de elegibilidade de recebíveis", "Heading1")
     p(f"ANTECIPE FIDC - Data-base: {sim.data_base.strftime('%d/%m/%Y')}")
-    p("Ambiente de simulação. Cadastro mock, sem consulta oficial e sem desembolso financeiro.")
+    p(f"Relatório executivo • Emissão {sim.created_at.strftime('%d/%m/%Y')} • Referência {sim.id[:8].upper()}", "Eyebrow")
+    story.append(MetricCards([
+        ("Volume nominal analisado", brl(analytics['valor_nominal_total'])),
+        ("Total a receber" if not historical else "Títulos na carteira", brl(analytics['valor_liquido']) if not historical else sim.total_itens),
+        ("Notas aprovadas" if not historical else "Modalidade", counts.get('APROVADA', 0) if not historical else "Carteira histórica"),
+        ("Notas recusadas" if not historical else "Data-base", counts.get('RECUSADA', 0) if not historical else sim.data_base.strftime('%d/%m/%Y'))]))
+    story.append(Spacer(1, 18))
     table([["Indicador", "Resultado"], ["Títulos analisados", sim.total_itens],
         ["Valor nominal analisado", brl(analytics["valor_nominal_total"])],
         ["Valor nominal elegível", "Não aplicável à carteira" if historical else brl(analytics["valor_nominal_elegivel"])],
@@ -145,7 +183,7 @@ def gerar_pdf(sim, analytics):
     p("Regras, metodologia e auditoria", "Title")
     table([["Validador", "Estado / parâmetros"]] + [[r["codigo"], ("Ativo" if r["ativo"] else "Inativo") + " / " + json.dumps(r["parametros"], ensure_ascii=False)] for r in analytics["regras"]["validadores"]])
     p("Precificação: desconto comercial simples com arredondamento HALF_UP por título, usando apenas notas aprovadas. Parâmetros: " + json.dumps(analytics["regras"]["precificacao"], ensure_ascii=False))
-    p(f"Simulação: {sim.id}. Versão de regras: {sim.rule_version.version_number}.")
+    p(f"Simulação: {sim.id}. Versão base do regulamento: {sim.rule_version.version_number}.")
     p(f"Hash da configuração: {sim.configuration_hash}")
     p(f"Cadastro: {sim.cadastro_fonte}")
     p(f"Carteira de referência: {sim.carteira_referencia}")
@@ -154,12 +192,20 @@ def gerar_pdf(sim, analytics):
         p(aviso)
     p("Próximos passos: revisar os motivos das recusas, corrigir os dados ou confirmar a situação cadastral e enviar novamente. O cadastro mock não constitui comprovação cadastral oficial.")
     def footer(canvas, doc):
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(colors.HexColor("#52635d"))
-        canvas.drawString(46, 28, "antecipe. | Simulação de recebíveis | Fonte cadastral simulada")
-        canvas.drawRightString(A4[0] - 46, 28, str(doc.page))
-    SimpleDocTemplate(buffer, pagesize=A4, rightMargin=46, leftMargin=46, topMargin=38, bottomMargin=45,
-        title="Antecipe - Relatório executivo", author="Antecipe").build(story, onFirstPage=footer, onLaterPages=footer)
+        canvas.saveState()
+        width, height = A4
+        canvas.setFillColor(navy)
+        canvas.rect(0, height-58, width, 58, fill=1, stroke=0)
+        canvas.setFillColor(colors.white); canvas.setFont('Helvetica-Bold', 17)
+        canvas.drawString(46, height-35, 'kanastra')
+        canvas.setFont('Helvetica', 9); canvas.drawRightString(width-46, height-33, 'ANTECIPE FIDC  |  RELATÓRIO EXECUTIVO')
+        canvas.setStrokeColor(colors.HexColor('#dce6e8')); canvas.line(46, 43, width-46, 43)
+        canvas.setFont('Helvetica', 8); canvas.setFillColor(muted)
+        canvas.drawString(46, 28, f'Antecipe • Ref. {sim.id[:8].upper()} • Uso gerencial')
+        canvas.drawRightString(width-46, 28, f'{doc.page:02d}')
+        canvas.restoreState()
+    SimpleDocTemplate(buffer, pagesize=A4, rightMargin=46, leftMargin=46, topMargin=82, bottomMargin=58,
+        title=f"Antecipe - Relatório {sim.id[:8]}", author="Antecipe | Kanastra").build(story, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()
 
 

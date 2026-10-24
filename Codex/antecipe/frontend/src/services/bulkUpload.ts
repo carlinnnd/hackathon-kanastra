@@ -3,7 +3,7 @@
  * Conforme contrato especificado em antecipe-bulk-upload/index.md:
  * - Frames binários de até 256 KiB
  * - Leitura via File.slice().arrayBuffer() (nunca o arquivo inteiro em memória)
- * - Janela deslizante de 4 MiB aguardando confirmação ACK
+ * - Janela deslizante negociada (padr?o: 12 MiB) aguardando confirmação ACK
  * - Envio de {type: "finish"} após confirmação de todos os bytes
  * - Recebimento de eventos de progresso {type: "progress", rows_processed}
  * - Recebimento do envelope final {type: "complete", simulation}
@@ -306,7 +306,7 @@ export class BulkUploadSession {
     let offset = 0;
 
     while (offset < totalSize && !this.isClosedManually) {
-      // Espera se a janela de 4 MiB estiver cheia
+      // Espera se a janela negociada estiver cheia
       await this.waitForWindow(offset, windowBytes);
 
       if (this.isClosedManually || !this.ws || this.ws.readyState !== 1 /* WebSocket.OPEN */) {

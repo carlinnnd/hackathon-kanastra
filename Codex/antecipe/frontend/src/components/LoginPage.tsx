@@ -20,8 +20,8 @@ interface LoginPageProps {
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('leandro.pina@kanastra.com.br');
-  const [password, setPassword] = useState<string>('kanastra2026');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [cargoSelect, setCargoSelect] = useState<string>('Analista de Risco FIDC');
   const [cargoOutro, setCargoOutro] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);

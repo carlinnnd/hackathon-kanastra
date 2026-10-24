@@ -1,7 +1,7 @@
 """
 Adaptador de streaming e leitor assíncrono com fila limitada (Bounded Queue Reader).
 Conecta frames binários WebSocket ao gerador síncrono iterar_csv_recebiveis:
-- Mantém fila limitada para controle de backpressure e memória (< 4 MiB buffers).
+- Mantém fila limitada para controle de backpressure e memória (fila limitada; capacidade negociada pelo servidor).
 - Tratamento incremental de decodificação UTF-8 seguro em fronteiras de chunks.
 - Aborta leitor em caso de desconexão ou cancelamento sem deadlock via loop.call_soon_threadsafe:
   drena fila ativamente e insere sentinela de forma não-bloqueante.
@@ -22,6 +22,7 @@ class BoundedStreamTextIO(io.TextIOBase):
         self.queue = queue
         self.loop = loop
         self.buffer = ""
+        self.position = 0
         self.closed_flag = False
         self.aborted = False
 
@@ -32,7 +33,7 @@ class BoundedStreamTextIO(io.TextIOBase):
         if self.aborted:
             raise RuntimeError("Streaming abortado devido a desconexão ou erro do cliente.")
 
-        while not self.buffer and not self.closed_flag and not self.aborted:
+        while self.position >= len(self.buffer) and not self.closed_flag and not self.aborted:
             future = asyncio.run_coroutine_threadsafe(self.queue.get(), self.loop)
             try:
                 chunk = future.result()
@@ -46,28 +47,25 @@ class BoundedStreamTextIO(io.TextIOBase):
             if chunk is None:  # Sinal de EOF (finish)
                 self.closed_flag = True
                 break
-            self.buffer += chunk
+            self.buffer = self.buffer[self.position:] + chunk
+            self.position = 0
 
         if self.aborted:
             raise RuntimeError("Streaming abortado devido a desconexão ou erro do cliente.")
 
-        if not self.buffer:
+        if self.position >= len(self.buffer):
             return ""
 
-        if size is None or size < 0 or size >= len(self.buffer):
-            data = self.buffer
-            self.buffer = ""
-            return data
-        else:
-            data = self.buffer[:size]
-            self.buffer = self.buffer[size:]
-            return data
+        end = len(self.buffer) if size is None or size < 0 else min(len(self.buffer), self.position + size)
+        data = self.buffer[self.position:end]
+        self.position = end
+        return data
 
     def readline(self, size: int = -1) -> str:
         if self.aborted:
             raise RuntimeError("Streaming abortado devido a desconexão ou erro do cliente.")
 
-        while "\n" not in self.buffer and not self.closed_flag and not self.aborted:
+        while self.buffer.find("\n", self.position) == -1 and not self.closed_flag and not self.aborted:
             future = asyncio.run_coroutine_threadsafe(self.queue.get(), self.loop)
             try:
                 chunk = future.result()
@@ -81,23 +79,22 @@ class BoundedStreamTextIO(io.TextIOBase):
             if chunk is None:
                 self.closed_flag = True
                 break
-            self.buffer += chunk
+            self.buffer = self.buffer[self.position:] + chunk
+            self.position = 0
 
         if self.aborted:
             raise RuntimeError("Streaming abortado devido a desconexão ou erro do cliente.")
 
-        if not self.buffer:
+        if self.position >= len(self.buffer):
             return ""
 
-        pos = self.buffer.find("\n")
-        if pos != -1:
-            line = self.buffer[:pos + 1]
-            self.buffer = self.buffer[pos + 1:]
-            return line
-        else:
-            line = self.buffer
-            self.buffer = ""
-            return line
+        pos = self.buffer.find("\n", self.position)
+        end = pos + 1 if pos != -1 else len(self.buffer)
+        if size is not None and size >= 0:
+            end = min(end, self.position + size)
+        line = self.buffer[self.position:end]
+        self.position = end
+        return line
 
     def abort(self):
         """

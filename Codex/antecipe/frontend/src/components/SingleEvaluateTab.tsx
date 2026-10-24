@@ -15,14 +15,14 @@ export const SingleEvaluateTab: React.FC = () => {
   const [form, setForm] = useState<SingleReceivableInput>({
     NOME_FUNDO: 'ANTECIPE FIDC',
     DOC_FUNDO: '92.234.400/0001-80',
-    NOME_CEDENTE: 'INDUSTRIA BRASIL SA',
-    DOC_CEDENTE: '11.222.333/0001-81',
-    NOME_SACADO: 'COMERCIAL ALPHA LTDA',
-    DOC_SACADO: '04.252.011/0001-10',
-    NU_DOCUMENTO: 'NF-ELEGIVEL-01',
-    TIPO_RECEBIVEL: 'Duplicata',
-    VALOR_NOMINAL: '5000,00',
-    DATA_VENCIMENTO_ORIGINAL: '20/01/2027',
+    NOME_CEDENTE: '',
+    DOC_CEDENTE: '',
+    NOME_SACADO: '',
+    DOC_SACADO: '',
+    NU_DOCUMENTO: '',
+    TIPO_RECEBIVEL: '',
+    VALOR_NOMINAL: '',
+    DATA_VENCIMENTO_ORIGINAL: '',
   });
 
   const [xmlNotice, setXmlNotice] = useState<string | null>(null);
@@ -35,15 +35,18 @@ export const SingleEvaluateTab: React.FC = () => {
   const handleXmlUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
+    setXmlNotice(null);
     try {
       const text = await file.text();
       const getTag = (tag: string): string => {
         const match = text.match(new RegExp(`<${tag}>([^<]+)</${tag}>`, 'i'));
         return match ? match[1].trim() : '';
       };
-      const nNF = getTag('nNF') || '9850';
-      const vNF = (getTag('vNF') || '4500.00').replace('.', ',');
-      const dVencIso = getTag('dVenc') || '2027-01-15';
+      const nNF = getTag('nNF');
+      const vNF = getTag('vNF').replace('.', ',');
+      const dVencIso = getTag('dVenc');
+      if (!nNF || !vNF || !dVencIso) throw new Error('XML incompleto');
       const dVencBr = dVencIso.includes('-')
         ? dVencIso.split('-').reverse().join('/')
         : dVencIso;
@@ -56,7 +59,7 @@ export const SingleEvaluateTab: React.FC = () => {
       }));
       setXmlNotice(`Arquivo XML (${file.name}) importado com sucesso.`);
     } catch {
-      setXmlNotice('Não foi possível extrair os dados do arquivo XML selecionado.');
+      setError('XML incompleto ou inválido. Confira número, valor e vencimento do título.');
     }
   };
 
@@ -66,20 +69,6 @@ export const SingleEvaluateTab: React.FC = () => {
     setError(null);
     try {
       const res = await api.evaluateSingleReceivable(form);
-      setResult(res);
-    } catch (err: unknown) {
-      if (err instanceof Error) setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const aplicarCenario = async (novoForm: SingleReceivableInput) => {
-    setForm(novoForm);
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.evaluateSingleReceivable(novoForm);
       setResult(res);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
@@ -160,116 +149,6 @@ export const SingleEvaluateTab: React.FC = () => {
             {xmlNotice}
           </div>
         )}
-
-        {/* Casos de Teste de Homologação */}
-        <div
-          style={{
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '0.78rem',
-              color: 'var(--text-secondary)',
-              fontWeight: 500,
-              marginRight: '4px',
-            }}
-          >
-            Casos de teste:
-          </span>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-            onClick={() =>
-              aplicarCenario({
-                NOME_FUNDO: 'ANTECIPE FIDC',
-                DOC_FUNDO: '92.234.400/0001-80',
-                NOME_CEDENTE: 'INDUSTRIA BRASIL SA',
-                DOC_CEDENTE: '11.222.333/0001-81',
-                NOME_SACADO: 'COMERCIAL ALPHA LTDA',
-                DOC_SACADO: '04.252.011/0001-10',
-                NU_DOCUMENTO: 'NF-ELEGIVEL-01',
-                TIPO_RECEBIVEL: 'Duplicata',
-                VALOR_NOMINAL: '5000,00',
-                DATA_VENCIMENTO_ORIGINAL: '20/01/2027',
-              })
-            }
-          >
-            Duplicata Elegível
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-            onClick={() =>
-              aplicarCenario({
-                NOME_FUNDO: 'ANTECIPE FIDC',
-                DOC_FUNDO: '92.234.400/0001-80',
-                NOME_CEDENTE: 'MARMORARIA CORAL S.A.',
-                DOC_CEDENTE: '11.222.333/0001-81',
-                NOME_SACADO: 'SERRALHERIA VIOLETA S.A. - FILIAL 02',
-                DOC_SACADO: '58.206.002/0002-00',
-                NU_DOCUMENTO: 'NF-VIOLETA-881',
-                TIPO_RECEBIVEL: 'Duplicata',
-                VALOR_NOMINAL: '12500,00',
-                DATA_VENCIMENTO_ORIGINAL: '15/01/2027',
-              })
-            }
-          >
-            Concentração Grupo Econômico
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-            onClick={() =>
-              aplicarCenario({
-                NOME_FUNDO: 'ANTECIPE FIDC',
-                DOC_FUNDO: '92.234.400/0001-80',
-                NOME_CEDENTE: 'INDUSTRIA BRASIL SA',
-                DOC_CEDENTE: '11.222.333/0001-81',
-                NOME_SACADO: 'EMPRESA INATIVA SA',
-                DOC_SACADO: '33.000.167/0001-01',
-                NU_DOCUMENTO: 'NF-INATIVA-404',
-                TIPO_RECEBIVEL: 'Duplicata',
-                VALOR_NOMINAL: '3200,00',
-                DATA_VENCIMENTO_ORIGINAL: '20/12/2026',
-              })
-            }
-          >
-            Sacado Inativo
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-            onClick={() =>
-              aplicarCenario({
-                NOME_FUNDO: 'ANTECIPE FIDC',
-                DOC_FUNDO: '92.234.400/0001-80',
-                NOME_CEDENTE: 'INDUSTRIA BRASIL SA',
-                DOC_CEDENTE: '11.222.333/0001-81',
-                NOME_SACADO: 'COMERCIAL ALPHA LTDA',
-                DOC_SACADO: '04.252.011/0001-10',
-                NU_DOCUMENTO: 'NF-VENCIDA-10',
-                TIPO_RECEBIVEL: 'Duplicata',
-                VALOR_NOMINAL: '2500,00',
-                DATA_VENCIMENTO_ORIGINAL: '10/10/2026',
-              })
-            }
-          >
-            Título Vencido
-          </button>
-        </div>
 
         {error && (
           <div className="error-toast" role="alert">
@@ -414,6 +293,7 @@ export const SingleEvaluateTab: React.FC = () => {
                 value={form.TIPO_RECEBIVEL}
                 onChange={(e) => setForm({ ...form, TIPO_RECEBIVEL: e.target.value })}
               >
+                <option value="" disabled>Selecione a modalidade</option>
                 <option value="Duplicata">Duplicata</option>
                 <option value="Duplicata de Serviço">Duplicata de Serviço</option>
                 <option value="Cheque">Cheque</option>

@@ -22,7 +22,7 @@ export const ResultAnalytics: React.FC<{
     <div className="analysis-heading"><div><h2 id="analysis-title">{historical ? 'Leitura da carteira' : 'Resultado financeiro e elegibilidade'}</h2>
       <p>{a.metodologia}</p></div>
       <div className="export-actions" aria-label="Exportar resultados">
-        <button className="btn-primary" onClick={() => onExport('csv')} disabled={exportDisabled}>CSV completo</button>
+        <button className="btn-secondary" onClick={() => onExport('csv')} disabled={exportDisabled}>CSV completo</button>
         <button className="btn-secondary" onClick={() => onExport('pdf')} disabled={exportDisabled}>PDF executivo</button>
         <button className="btn-secondary" onClick={() => onExport('violacoes')} disabled={exportDisabled}>CSV de violações</button>
       </div>

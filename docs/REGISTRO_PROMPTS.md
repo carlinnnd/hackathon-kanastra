@@ -1500,3 +1500,43 @@ Integracao corrigida na branchlocalfix/integracao-auth-20261024, preservando JSX
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0030 — 2026-10-24T21:35:57+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `e9a7fd353af55ae9196477a55f20b0112299e71d65bf09380754e1c378b1fa27`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Ajustes de portal operacional, PDF e políticas por conta; identidade verificada e isolamento de opções.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0031 — 2026-10-24T21:41:47+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `0086b3623919238f2474da09c393e424f008393c61ca1a42721e9d26add88f5a`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Triplicar a velocidade de upload; o WebSocket provavelmente suporta mais capacidade. Manter os ajustes de apresentação, PDF e políticas pessoais solicitados anteriormente.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+

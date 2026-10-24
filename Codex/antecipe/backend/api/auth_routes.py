@@ -104,7 +104,8 @@ def public_config(response: Response):
     response.headers['Cache-Control'] = 'no-store'
     enabled = bool(cfg['domain'] and cfg['client_id'])
     return {'configured': enabled, 'enabled': enabled, 'domain': cfg['domain'] if enabled else None,
-            'clientId': cfg['client_id'] if enabled else None, 'useServerExchange': True}
+            'clientId': cfg['client_id'] if enabled else None, 'useServerExchange': True,
+            'personalPoliciesConfigured': bool(os.environ.get('AUTH0_MANAGEMENT_API_CLIENT_ID') and os.environ.get('AUTH0_MANAGEMENT_API_CLIENT_SECRET'))}
 
 
 class LoginRequest(BaseModel):

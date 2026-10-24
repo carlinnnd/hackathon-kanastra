@@ -4,21 +4,13 @@ import { api } from '../services/api';
 
 interface FileUploadProps {
   onFileSelected: (file: File) => void;
-  onSimulateSampleBatch?: (rows: 100 | 1000 | 10000 | 100000) => void;
   isLoading: boolean;
   disabled?: boolean;
 }
 
-const LOTES_HOMOLOGACAO: Array<{ rows: 100 | 1000 | 10000 | 100000; label: string; slug: string }> = [
-  { rows: 100, label: 'Remessa Compacta', slug: 'lote_compacto.csv' },
-  { rows: 1000, label: 'Remessa Padrão', slug: 'lote_padrao.csv' },
-  { rows: 10000, label: 'Remessa Corporativa', slug: 'lote_corporativo.csv' },
-  { rows: 100000, label: 'Remessa Massiva', slug: 'lote_massivo.csv' },
-];
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   onFileSelected,
-  onSimulateSampleBatch,
   isLoading,
   disabled = false,
 }) => {
@@ -170,38 +162,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           </a>
         </div>
 
-        {onSimulateSampleBatch && (
-          <div className="upload-homologation-bar">
-            <span className="upload-homologation-label">Bases de homologação:</span>
 
-            <div className="upload-homologation-actions">
-              {LOTES_HOMOLOGACAO.map((item) => (
-                <div key={item.rows} className="upload-homologation-item">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-                    disabled={disabled || isLoading}
-                    onClick={() => {
-                      setSelectedFileName(item.slug);
-                      onSimulateSampleBatch(item.rows);
-                    }}
-                  >
-                    <span>{item.label}</span>
-                  </button>
-                  <a
-                    href={api.getSampleCsvUrl(item.rows)}
-                    download={item.slug}
-                    className="upload-homologation-dl"
-                    title={`Baixar ${item.slug}`}
-                  >
-                    CSV
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

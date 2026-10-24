@@ -7,7 +7,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, File, Response, status as http_status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, File, Response, Request, status as http_status
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -26,6 +26,7 @@ from ..application.simulation_service import SimulationService, TotalExcedeCapac
 from ..application.cadastral_service import carregar_cadastro
 from ..application.result_reporting import obter_analytics, serializar_pagina
 from ..application.exports import exportar
+from .policy_routes import active_configuration
 
 
 def _gerador_sintetico():
@@ -122,6 +123,7 @@ class LimitedRawIO(io.RawIOBase):
 
 @router.post("/simulations", response_model=SimulationResponseSchema)
 async def post_simulation_csv(
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     tipo_analise: str = Query("novas_operacoes", pattern="^(novas_operacoes|carteira)$"),
@@ -139,7 +141,7 @@ async def post_simulation_csv(
         itens_iter = iterar_csv_recebiveis(text_stream, delimitador=";")
         
         service = SimulationService(db)
-        sim_id, envelope = service.executar_simulacao_lote(itens_iter, tipo_analise=tipo_analise)
+        sim_id, envelope = service.executar_simulacao_lote(itens_iter, tipo_analise=tipo_analise, configuration_override=active_configuration(request))
         return envelope
     except UnicodeDecodeError:
         raise HTTPException(
@@ -252,6 +254,7 @@ def get_simulation_export(simulation_id: str, format: str = Query("csv", pattern
 @router.post("/receivables/evaluate", response_model=SimulationResponseSchema)
 def post_receivables_evaluate(
     payload: ReceivablesEvaluateRequestSchema,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     if not payload.recebiveis:
@@ -307,7 +310,8 @@ def post_receivables_evaluate(
     try:
         sim_id, envelope = service.executar_simulacao_lote(
             itens_iter,
-            data_base_override=dt_base
+            data_base_override=dt_base,
+            configuration_override=active_configuration(request)
         )
         return envelope
     except TotalExcedeCapacidadeError as e:
@@ -323,7 +327,11 @@ def post_receivables_evaluate(
 
 
 @router.get("/rules")
-def get_active_rules(db: Session = Depends(get_db)):
+def get_active_rules(request: Request, response: Response, db: Session = Depends(get_db)):
+    response.headers['Cache-Control'] = 'no-store'
+    personal = active_configuration(request)
+    if personal is not None:
+        return personal
     fundo = db.query(FundModel).filter(FundModel.nome.ilike("%ANTECIPE%")).first()
     rules_repo = RulesRepository(db)
     versao = rules_repo.obter_versao_ativa(fundo.id) if fundo else None
@@ -624,6 +632,7 @@ def post_simulate_sample_batch(rows: int, db: Session = Depends(get_db)):
 
 @router.post("/simulations/what-if")
 def post_simulation_what_if(
+    request: Request,
     payload: WhatIfSimulationRequestSchema,
     db: Session = Depends(get_db)
 ):
@@ -632,7 +641,7 @@ def post_simulation_what_if(
         buf = io.StringIO("".join(iterar_linhas_lote_sintetico(payload.sample_rows, seed_tag=f"WHATIF{payload.sample_rows}")))
         itens_lista = list(iterar_csv_recebiveis(buf, delimitador=";"))
         service = SimulationService(db)
-        return service.executar_simulacao_what_if(payload.configuration, itens_lista)
+        return service.executar_simulacao_what_if(payload.configuration, itens_lista, baseline_override=active_configuration(request))
     except (ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,

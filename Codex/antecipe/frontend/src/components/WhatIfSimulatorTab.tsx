@@ -5,11 +5,11 @@ import {
   RotateCcw,
   ArrowRight,
   CheckCircle2,
-  History,
+  XCircle,
   ShieldCheck,
   Save,
 } from 'lucide-react';
-import { RuleConfiguration, RuleVersion, WhatIfResult } from '../types';
+import { RuleConfiguration, PersonalPolicy, WhatIfResult } from '../types';
 import { api } from '../services/api';
 import { formatarMoedaBRL } from '../services/currency';
 
@@ -29,7 +29,9 @@ const TIPOS_RECEBIVEIS_OPCOES = [
 
 export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesUpdated }) => {
   const [baseRules, setBaseRules] = useState<RuleConfiguration | null>(null);
-  const [versions, setVersions] = useState<RuleVersion[]>([]);
+  const [policies, setPolicies] = useState<PersonalPolicy[]>([]);
+  const [activePolicy, setActivePolicy] = useState("default");
+  const [policiesReady, setPoliciesReady] = useState(false);
   const [whatIfResult, setWhatIfResult] = useState<WhatIfResult | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -49,9 +51,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
     'Duplicata de Servico',
   ]);
   const [validatorActiveMap, setValidatorActiveMap] = useState<Record<string, boolean>>({});
-  const [changeReason, setChangeReason] = useState<string>(
-    'Ajuste de parâmetros de elegibilidade pelo Portal Backoffice'
-  );
+  const [changeReason, setChangeReason] = useState<string>('');
   const [sampleRows, setSampleRows] = useState<number>(100);
 
   const syncFormFromConfig = (cfg: RuleConfiguration) => {
@@ -81,18 +81,24 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
   };
 
   const loadRules = async () => {
+    setPoliciesReady(false);
     try {
-      const [cfg, vers] = await Promise.all([api.getActiveRules(), api.getRuleVersions()]);
+      const cfg = await api.getActiveRules();
       setBaseRules(cfg);
-      setVersions(vers);
+
       syncFormFromConfig(cfg);
+      const saved = await api.getPersonalPolicies();
+      setPolicies(saved);
+      setActivePolicy(saved.find(p => p.is_active)?.id || 'default');
+      setPoliciesReady(true);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
+      throw err;
     }
   };
 
   useEffect(() => {
-    loadRules();
+    loadRules().catch(() => undefined);
   }, []);
 
   const buildCurrentConfiguration = (): RuleConfiguration | null => {
@@ -142,12 +148,14 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
   const handleRunWhatIf = async () => {
     const cfg = buildCurrentConfiguration();
     if (!cfg) return;
+    setWhatIfResult(null);
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
     try {
       const res = await api.runWhatIfSimulation(cfg, sampleRows);
       setWhatIfResult(res);
+      setSuccessMsg('OK: impacto simulado com sucesso. Confira os resultados abaixo.');
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
     } finally {
@@ -162,17 +170,14 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
     setError(null);
     setSuccessMsg(null);
     try {
-      const res = await api.updateActiveRules(
-        cfg,
-        changeReason.trim() || 'Atualização de parâmetros pelo Portal Frontend'
-      );
-      setBaseRules(res.configuration);
-      syncFormFromConfig(res.configuration);
-      const vers = await api.getRuleVersions();
-      setVersions(vers);
-      setSuccessMsg(
-        `Política salva e ativada no motor (Versão v${res.version_number})! Os próximos lotes CSV já serão avaliados com estes parâmetros.`
-      );
+      const saved = await api.savePersonalPolicy(changeReason.trim(), cfg);
+      setBaseRules(saved.configuration);
+      syncFormFromConfig(saved.configuration);
+      setPolicies(previous => [saved, ...previous.map(p => ({...p, is_active: false}))]);
+      setActivePolicy(saved.id);
+      setChangeReason('');
+      setWhatIfResult(null);
+      setSuccessMsg('Política salva na sua conta e selecionada para as próximas análises.');
       if (onRulesUpdated) onRulesUpdated();
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
@@ -186,15 +191,10 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
     setError(null);
     setSuccessMsg(null);
     try {
-      const res = await api.resetDefaultRules();
-      setBaseRules(res.configuration);
-      syncFormFromConfig(res.configuration);
-      const vers = await api.getRuleVersions();
-      setVersions(vers);
+      await api.activatePersonalPolicy('default');
+      await loadRules();
       setWhatIfResult(null);
-      setSuccessMsg(
-        `Parâmetros originais do regulamento ANTECIPE FIDC restaurados e ativados (Versão v${res.version_number}).`
-      );
+      setSuccessMsg('Política padrão selecionada. Suas opções salvas foram preservadas.');
       if (onRulesUpdated) onRulesUpdated();
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
@@ -226,7 +226,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
             </h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4 }}>
               Altere qualquer parâmetro das regras de negócio ou precificação diretamente por esta interface. Você pode{' '}
-              <strong>simular o impacto</strong> antes ou <strong>salvar como política ativa do motor</strong> sem editar arquivos JSON.
+              <strong>simular o impacto</strong> antes ou <strong>salvar e selecionar uma política da sua conta</strong> sem editar arquivos JSON.
             </p>
           </div>
 
@@ -235,7 +235,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
               type="button"
               className="btn-secondary"
               onClick={handleRestoreDefaults}
-              disabled={loading || saving}
+              disabled={loading || saving || !policiesReady}
             >
               <RotateCcw size={15} aria-hidden="true" />
               <span>Restaurar Padrão do Regulamento</span>
@@ -253,17 +253,17 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
               type="button"
               className="btn-primary"
               onClick={handleSaveAndApplyRules}
-              disabled={loading || saving || !baseRules}
+              disabled={loading || saving || !baseRules || !policiesReady || !changeReason.trim()}
             >
               <Save size={15} aria-hidden="true" />
-              <span>{saving ? 'Salvando Política...' : 'Salvar e Aplicar Política no Motor'}</span>
+              <span>{saving ? 'Salvando Política...' : 'Salvar como nova política'}</span>
             </button>
           </div>
         </div>
 
         {error && (
           <div className="error-toast" role="alert" style={{ marginBottom: '16px' }}>
-            <span>{error}</span>
+            <XCircle size={16} aria-hidden="true" /><span>Erro: {error}</span>
           </div>
         )}
 
@@ -566,16 +566,17 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
               htmlFor="wi-change-reason"
               style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}
             >
-              Justificativa de Auditoria (para histórico de versões):
+              Nome da nova política:
             </label>
             <input
               id="wi-change-reason"
+              maxLength={100}
               type="text"
               className="select-control"
               style={{ width: '100%' }}
               value={changeReason}
               onChange={(e) => setChangeReason(e.target.value)}
-              placeholder="Descreva o motivo da alteração dos parâmetros..."
+              placeholder="Ex.: Política comercial de outubro"
             />
           </div>
         </div>
@@ -644,7 +645,7 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
           style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', marginBottom: '24px' }}
         >
           <div className="metric-card" style={{ borderLeft: '4px solid var(--border-subtle)' }}>
-            <div className="metric-title">Política Ativa Atual (V{whatIfResult.baseline_version})</div>
+            <div className="metric-title">Política selecionada atual</div>
             <div className="metric-value" style={{ color: 'var(--text-primary)' }}>
               {whatIfResult.baseline.aprovados} / {whatIfResult.baseline.total_itens} aprovados
             </div>
@@ -753,43 +754,26 @@ export const WhatIfSimulatorTab: React.FC<WhatIfSimulatorTabProps> = ({ onRulesU
             </table>
           </div>
 
-          {versions.length > 0 && (
-            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-              <h4
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  marginBottom: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <History size={15} color="var(--text-secondary)" aria-hidden="true" />
-                <span>Trilha de Auditoria de Versões Imutáveis (SHA-256)</span>
-              </h4>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {versions.map((ver) => (
-                  <div
-                    key={ver.id}
-                    style={{
-                      backgroundColor: 'var(--bg-surface-elevated)',
-                      border: ver.is_active ? '1px solid #10b981' : '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '8px 12px',
-                      fontSize: '0.75rem',
-                    }}
-                  >
-                    <strong>Versão V{ver.version_number}</strong>{' '}
-                    {ver.is_active && <span className="badge approved">ATIVA</span>}
-                    <div style={{ color: 'var(--text-secondary)', marginTop: 2 }}>
-                      {ver.change_reason || 'Carga inicial'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+            <label htmlFor="saved-policy" style={{ display: 'block', marginBottom: 8 }}>Minhas políticas salvas</label>
+            <select id="saved-policy" className="select-control" value={activePolicy}
+              disabled={loading || saving || !policiesReady}
+              onChange={async (event) => {
+                const id = event.target.value;
+                setSaving(true); setError(null); setSuccessMsg(null); setWhatIfResult(null);
+                try {
+                  await api.activatePersonalPolicy(id);
+                  await loadRules();
+                  setSuccessMsg('OK: política selecionada para as próximas análises.');
+                  onRulesUpdated?.();
+                } catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível selecionar a política.'); }
+                finally { setSaving(false); }
+              }}>
+              <option value="default">Padrão do regulamento</option>
+              {policies.map(policy => <option key={policy.id} value={policy.id}>{policy.name}</option>)}
+            </select>
+            <p className="metric-sub">As opções ficam vinculadas à sua conta. Alterações salvas criam uma nova opção; análises concluídas mantêm as regras utilizadas.</p>
+          </div>
         </div>
       )}
     </section>

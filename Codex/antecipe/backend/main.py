@@ -16,6 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .api.routes import router
 from .api.bulk_routes import bulk_router
+from .api.policy_routes import router as policy_router
 from .infrastructure.database.session import Base, engine, SessionLocal
 from .application.importer import inicializar_fundos_e_regras, importar_estoque_csv, seed_carteira_base_sintetica
 from .config import settings
@@ -209,3 +210,5 @@ app.include_router(router)
 app.include_router(bulk_router)
 if auth_router is not None:
     app.include_router(auth_router)
+
+app.include_router(policy_router)

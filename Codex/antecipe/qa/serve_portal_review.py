@@ -30,6 +30,16 @@ def main():
                     auth_routes.fail('AUTH0_AUTENTICACAO_RECUSADA', 'Credenciais de teste inválidas.')
                 return {'access_token': 'review-opaque-token', 'expires_in': 600}
             auth_routes.provider = synthetic_provider
+            from backend.api import policy_routes
+            import copy
+            os.environ['AUTH0_MANAGEMENT_API_CLIENT_ID'] = 'synthetic-review'
+            metadata = {}
+            def synthetic_management(subject, patch=None):
+                current = metadata.setdefault(subject, {})
+                if patch is not None:
+                    current.update(copy.deepcopy(patch))
+                return copy.deepcopy(current)
+            policy_routes.management = synthetic_management
         from fastapi.staticfiles import StaticFiles
         import mimetypes
         mimetypes.add_type('application/javascript', '.js')

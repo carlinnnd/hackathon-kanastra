@@ -8,7 +8,9 @@ Gerado a partir dos hooks e de inclusões manuais. Horários em UTC. Texto sanit
 > - [Registro de Pina (Leandro)](REGISTRO_PROMPTS_PINA.md)
 
 > *Nota de integridade documental:* O texto integral fiel dos prompts oficiais encontra-se preservado sob `.hackathon/prompts/` (ex: `p0002_user.txt`). Na visualização sanitizada acima, sentenças com mais de duas vírgulas ou ponto-e-vírgula são marcadas como `[LINHA_TABULAR_OMITIDA]` pela rotina de proteção estrita contra vazamento de dados tabulares/CSV.
+
 ## Link do Chat utilizado no gpt : https://chatgpt.com/share/6add11ef-1b68-83e9-a251-183b83577dc5
+
 ## P0001 — 2026-10-24T12:45:02+00:00 — user
 
 - Sessão: `session-01`
@@ -1268,6 +1270,266 @@ suba no git
 
 ```text
 [LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0019 — 2026-10-24T18:42:55+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `2574dd82f598df2b2e8e13e74ce1c19d14d513ed07f15df7dbf19a70c5fe2174`
+- Texto do prompt (sanitizado):
+
+```text
+﻿lembre que o arquivo em C:\hackathon_kanastra\cnpj_situacao_mock.csv vem com os cnpjs que contem a situacao cadastral ATIVA
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Confirmada a referencia cadastral: copia identica ao CSV da raiz, com 2999 ATIVA e 42 outras situacoes. ATIVA satisfaz a regra cadastral; demais regras continuam aplicaveis. Sem alteracao de codigo.
+```
+
+- **O que foi feito com a resposta:** Conferida a fonte cadastral existente; nenhuma alteracao de runtime necessaria.
+- Arquivos/artefatos: docs/REGISTRO_PROMPTS.md, docs/prompts-events.jsonl
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0020 — 2026-10-24T19:16:22+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `6ccfadde860ee180cc8385ca1f3100ec1b4914d4bc516b4d3bfc05bd3eae3daf`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Criado diagnostico reproduzivel das duas datas e da projecao do gabarito, sem alterar runtime ou regras.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0021 — 2026-10-24T19:26:15+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `c5cd771f6828233d1a2bd8baf5e9c1e7e6a272c31dd088ce8e467f156efdde5d`
+- Texto do prompt (sanitizado):
+
+```text
+﻿atualizei o mock, rode novamente
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Reexecutado diagnostico completo com leitura direta da raiz, conferidos hashes e procuradas outras copias; nenhuma alteracao de runtime ou deploy.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0022 — 2026-10-24T19:29:03+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `ec7dccc8b1166c90dcdc55c318b01180a40982592470f54a64a82cbacd5945e1`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Salvei o mock atualizado em C:\hackathon_kanastra\cnpj_situacao_mock.csv. Rode novamente.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0023 — 2026-10-24T19:32:07+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `ac67b32f326d34bb6dbfe09b7cef7cc24292a327968f822228f698a6a5492b7c`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Publique o mock atualizado no Git e na Vercel.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Publicado mock atualizado e auditorias agregadas no Git e em pacote isolado na Vercel; verificada fonte cadastral real e simulacao sintetica apos deploy.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0024 — 2026-10-24T19:43:55+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `04085d4e42fde1eda1419b0b96a1447b82bfdb32c1949debaa3f5b732e7690f7`
+- Texto do prompt (sanitizado):
+
+```text
+﻿O programa deve usar sempre a data do dia atual, atualizada automaticamente a cada dia.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0025 — 2026-10-24T20:11:52+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `e0b4fa8730cf339139630c395af86328c2226aa72ce0117ceb2e8c81f5bb22c8`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Pedido de validacao_historica cancelado pelo usuario antes da entrega. Trabalho experimental reproduziu o gabarito100554/100554 mas foi retirado do runtime e arquivado em .data/cancelled-historical-20261024. Nenhum commit, push ou deploy deste pedido. Mantida versao publicada com data atual.
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0026 — 2026-10-24T20:12:39+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `1d14afdded3464cbfce244867bf245de270b15b4d40729058536587fa0457c3e`
+- Texto do prompt (sanitizado):
+
+```text
+﻿A organizacao confirmou que as validacoes devem considerar a data atual da simulacao, nao a data historica de aquisicao nem obrigatoriamente22/10/2026. Ignore o ultimo prompt.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Confirmado: ultimo pedido desconsiderado. Alteracoes historicas retiradas; permanece a data atual da simulacao em Brasilia.4testes de data atual passaram. Nenhum deploy realizado.
+```
+
+- **O que foi feito com a resposta:** Atendida a correcao de escopo: cancelado trabalho historico e preservado contrato operacional de data atual. Nenhuma alteracao na publicacao.
+- Arquivos/artefatos: docs/REGISTRO_PROMPTS.md, docs/prompts-events.jsonl
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0027 — 2026-10-24T20:51:21+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `2d254895bef2c5b0f10fc6ac03eca913af0ad20b71bff874f5454cefd1ad9a40`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Integrar o frontend final e sistema de login existentes ao backend Antecipe. Configuracao Auth0 fornecida pelo usuario; segredo omitido deste registro por seguranca. Fazer a juncao dos componentes existentes.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0028 — 2026-10-24T20:51:22+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `bdd48a6088615915f0af096d219884a31a83a92b3fd7b8bd436967eb71bad22f`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Nao mudar o conteudo visual do frontend. Considerar o aplicativo na versao pronta para o cliente final; alterar somente integracao.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+Integracao corrigida na branchlocalfix/integracao-auth-20261024, preservando JSXvisual do login e CSS.82testespassaram;frontendvalidado e fluxolocalcomAuth0simulado funcionando. Sem deploy. SSOrealrequersegredorotacionadoeconfiguracaodotenant.
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0029 — 2026-10-24T21:14:28+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `7b4efc6247fe50257260a5fefebf83198b59222d40304ffc75953dbf7904a5f6`
+- Texto do prompt (sanitizado):
+
+```text
+﻿sobe main e vercel
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0030 — 2026-10-24T21:35:57+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `e9a7fd353af55ae9196477a55f20b0112299e71d65bf09380754e1c378b1fa27`
+- Texto do prompt (sanitizado):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** Ajustes de portal operacional, PDF e políticas por conta; identidade verificada e isolamento de opções.
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
+## P0031 — 2026-10-24T21:41:47+00:00 — codex
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `0086b3623919238f2474da09c393e424f008393c61ca1a42721e9d26add88f5a`
+- Texto do prompt (sanitizado):
+
+```text
+﻿Triplicar a velocidade de upload; o WebSocket provavelmente suporta mais capacidade. Manter os ajustes de apresentação, PDF e políticas pessoais solicitados anteriormente.
 ```
 
 - Última mensagem do assistente (prévia, não prova execução):

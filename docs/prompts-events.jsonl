@@ -90,3 +90,9 @@
 {"kind": "prompt", "id": "P0029", "at": "2026-10-24T21:14:28+00:00", "source": "traycer", "session": "manual", "turn": "", "digest": "7b4efc6247fe50257260a5fefebf83198b59222d40304ffc75953dbf7904a5f6", "prompt": "﻿sobe main e vercel"}
 {"kind": "stop", "id": "P0029", "at": "2026-10-24T21:17:57+00:00", "response": "[LINHA_TABULAR_OMITIDA]"}
 {"kind": "close", "id": "P0029", "at": "2026-10-24T21:17:58+00:00", "action": "[LINHA_TABULAR_OMITIDA]", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "prompt", "id": "P0030", "at": "2026-10-24T21:35:57+00:00", "source": "codex", "session": "manual", "turn": "", "digest": "e9a7fd353af55ae9196477a55f20b0112299e71d65bf09380754e1c378b1fa27", "prompt": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "prompt", "id": "P0031", "at": "2026-10-24T21:41:47+00:00", "source": "codex", "session": "manual", "turn": "", "digest": "0086b3623919238f2474da09c393e424f008393c61ca1a42721e9d26add88f5a", "prompt": "﻿Triplicar a velocidade de upload; o WebSocket provavelmente suporta mais capacidade. Manter os ajustes de apresentação, PDF e políticas pessoais solicitados anteriormente."}
+{"kind": "stop", "id": "P0031", "at": "2026-10-24T21:49:44+00:00", "response": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "stop", "id": "P0030", "at": "2026-10-24T21:49:44+00:00", "response": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "close", "id": "P0030", "at": "2026-10-24T21:49:44+00:00", "action": "Ajustes de portal operacional, PDF e políticas por conta; identidade verificada e isolamento de opções.", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}
+{"kind": "close", "id": "P0031", "at": "2026-10-24T21:49:44+00:00", "action": "[LINHA_TABULAR_OMITIDA]", "files": "[LINHA_TABULAR_OMITIDA]", "verification": "[LINHA_TABULAR_OMITIDA]"}

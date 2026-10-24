@@ -187,6 +187,12 @@ async def websocket_simulation_stream(websocket: WebSocket):
     except HTTPException:
         await websocket.close(code=1008)
         return
+    from .policy_routes import active_configuration
+    try:
+        personal_configuration = await run_in_threadpool(active_configuration, websocket)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
     await websocket.accept()
 
     try:
@@ -342,6 +348,7 @@ async def websocket_simulation_stream(websocket: WebSocket):
                 max_records=settings.MAX_STREAM_RECORDS,
                 cancel_check=cancel_check_fn,
                 tipo_analise=tipo_analise,
+                configuration_override=personal_configuration,
             )
 
         worker_task = asyncio.create_task(asyncio.to_thread(run_worker))

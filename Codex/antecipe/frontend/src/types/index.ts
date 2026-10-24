@@ -228,3 +228,5 @@ export interface LoginPayload {
   name?: string;
   mode?: 'login' | 'signup';
 }
+
+export interface PersonalPolicy { id: string; name: string; configuration: RuleConfiguration; configuration_hash: string; created_at: string; is_active: boolean; }

@@ -9,6 +9,7 @@ import {
   HealthResponse,
   PortfolioSummary,
   RuleVersion,
+  PersonalPolicy,
   ApiErrorResponse,
   EconomicGroupXRay,
   RuleConfiguration,
@@ -69,6 +70,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export const api = {
+  async getPersonalPolicies(): Promise<PersonalPolicy[]> {
+    return handleResponse<PersonalPolicy[]>(await fetch(`${API_BASE}/policies`));
+  },
+  async savePersonalPolicy(name: string, configuration: RuleConfiguration): Promise<PersonalPolicy> {
+    return handleResponse<PersonalPolicy>(await fetch(`${API_BASE}/policies`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({name, configuration}),
+    }));
+  },
+  async activatePersonalPolicy(id: string): Promise<void> {
+    await handleResponse(await fetch(`${API_BASE}/policies/${encodeURIComponent(id)}/activate`, {method: 'POST'}));
+  },
   getAuthSession(): AuthUser | null { return null; },
   restoreAuthSession,
   beginGoogleLogin,

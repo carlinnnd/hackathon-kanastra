@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     # Parâmetros de transporte WebSocket Stream
     MAX_STREAM_FILE_BYTES: int = 512 * 1024 * 1024  # 512 MiB
     MAX_STREAM_RECORDS: int = 1_000_000
-    STREAM_CHUNK_BYTES: int = 256 * 1024  # 256 KiB
-    STREAM_WINDOW_BYTES: int = 4 * 1024 * 1024  # 4 MiB
+    STREAM_CHUNK_BYTES: int = 768 * 1024  # 768 KiB; 3x por frame, negociado no ready
+    STREAM_WINDOW_BYTES: int = 12 * 1024 * 1024  # 12 MiB; ACK e fila limitada preservados
 
     ESTOQUE_CSV_PATH: str = "estoque_antecipe_100k/estoque_antecipe.csv"
     VALIDADORES_JSON_PATH: str = "validadores_antecipe.json"
