@@ -83,7 +83,7 @@ def comparar():
         'motivos_motor_atual':dict(motives), 'cadastro_fonte':fonte,
         'escopo': 'Motor de novas operações contra seed público de 5 títulos, data-base JSON/22-10-2026. Não é reclassificação do histórico nem comparação de valores financeiros ausentes no gabarito.',
         'criterio_recusa': 'Toda nota não aprovada é recusada com motivos; cadastro ausente/inconclusivo gera SITUACAO_CADASTRAL_SACADO, sem terceiro estado.',
-        'reconciliacao': 'Gabarito e mock têm contradições verificadas. Os rótulos não são usados para inferir cadastro ou alterar regras. Correspondência integral exige resolver esses conflitos e alinhar cenário/carteira/data-base.',
+        'reconciliacao': 'Conflitos cadastrais são contabilizados em conflitos_fontes; objeto vazio indica nenhum conflito cadastral detectado. Os rótulos não são usados para inferir cadastro ou alterar regras. Correspondência integral exige alinhar cenário/carteira/data-base.',
         'detalhamento_privado': str(output/'divergencias.csv'),
     }
     (PROJECT/'qa/relatorio_gabarito_mock.json').write_text(json.dumps(result,indent=2,ensure_ascii=False),encoding='utf-8')

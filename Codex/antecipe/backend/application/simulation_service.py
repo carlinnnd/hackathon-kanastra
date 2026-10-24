@@ -20,6 +20,8 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..domain.engine import MotorAvaliacao, carregar_configuracao
+from ..domain import calendar
+from dataclasses import replace
 from ..domain.ingestion import iterar_csv_recebiveis, parse_data_br, parse_decimal_br, normalizar_documento
 from ..domain.limits import VALOR_MAXIMO_PERMITIDO, TOTAL_MAXIMO_PERMITIDO
 from ..domain.models import ReceivelInput, ResultadoAvaliacao, SnapshotCarteira, EstadoProjetadoLote
@@ -71,8 +73,9 @@ class SimulationService:
             raise ValueError(f"Nenhuma versão de regra ativa configurada para o fundo {fundo.nome}.")
 
         raw_cfg = json.loads(versao_ativa.configuration_json, parse_float=Decimal)
-        dt_base = data_base_override or parse_data_br(settings.DATA_BASE) or date(2026, 10, 22)
-        config_motor = carregar_configuracao(raw_cfg, dt_base)
+        dt_base = data_base_override or calendar.data_atual()
+        # A data operacional nao pode ficar congelada numa versao antiga do JSON.
+        config_motor = replace(carregar_configuracao(raw_cfg, dt_base), data_base=dt_base)
         motor = MotorAvaliacao(config_motor)
         
         data_base_efetiva = config_motor.data_base

@@ -142,3 +142,9 @@ O usuário exige processamento de CSV com até **1.000.000 de registros** e repo
 Na Vercel, o corpo de uma requisição HTTP tem limite próprio de 4,5 MB. A correção em homologação separa limite do transporte HTTP de capacidade do processamento: arquivos grandes são enviados em frames por uma única conexão WebSocket FastAPI, reutilizando o motor e a transação. O teto técnico configurado é 1.000.000 de registros e 512 MiB, sem alterar regras financeiras. Na demonstração pública, o banco da sessão é isolado e efêmero; não há promessa de persistência entre conexões.
 
 O caminho HTTP `POST /api/simulations` permanece para lotes menores. Abrir esse caminho por GET deve responder 405 com `Allow: POST`, não ser interpretado como falha de avaliação de um CSV. O suporte efetivo de 100 mil, 500 mil e 1 milhão exige medição real no mesmo ambiente, verificação das decisões persistidas, contagens e totais; não deve ser declarado concluído apenas pela configuração desses limites.
+
+## Data operacional automática — requisito atualizado em 24/10/2026
+
+Novas simulações usam sempre a data atual em `America/Sao_Paulo`, capturada uma vez no início do processamento. A antiga referência fixa de 22/10/2026 permanece somente nas auditorias e fixtures históricas. A configuração DATA_BASE foi removida; uma data antiga em configuração JSON não congela novas operações. A API JSON aceita data_base omitida ou igual ao dia atual e rejeita outra data com DATA_BASE_INVALIDA. CSV, JSON e WebSocket usam a mesma decisão operacional.
+
+O endpoint health informa data_base_atual e fuso_horario, com Cache-Control no-store. A tela consulta novamente a cada minuto; resultados já processados exibem a data persistida da respectiva simulação. CSV e PDF antigos mantêm sua base original. tzdata 2026.5 foi fixado nos dois requirements para disponibilizar a base IANA no Windows; fonte primária: https://pypi.org/project/tzdata/.

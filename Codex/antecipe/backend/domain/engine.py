@@ -9,6 +9,7 @@ Composição Unix-style:
 - Gera resultados iteráveis e agregados sem N+1.
 """
 import copy
+from . import calendar
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -83,7 +84,7 @@ def carregar_configuracao(
     elif data_base_default:
         dt_base = data_base_default
     else:
-        dt_base = date(2026, 10, 22)
+        dt_base = calendar.data_atual()
 
     # Precificação estrita
     prec_raw = config_dict.get("precificacao")

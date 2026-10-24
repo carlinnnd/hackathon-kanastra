@@ -77,7 +77,7 @@ class ReceivelRawInputSchema(BaseModel):
 
 class ReceivablesEvaluateRequestSchema(BaseModel):
     recebiveis: List[ReceivelRawInputSchema]
-    data_base: Optional[str] = "2026-10-22"
+    data_base: Optional[str] = None
 
 
 # Versões de regras

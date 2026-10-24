@@ -164,6 +164,8 @@ export interface SingleReceivableInput {
 }
 
 export interface HealthResponse {
+  data_base_atual?: string;
+  fuso_horario?: string;
   status: string;
   estoque_carregado: boolean;
   fundo: string;

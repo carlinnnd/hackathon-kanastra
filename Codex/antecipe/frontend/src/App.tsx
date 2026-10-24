@@ -130,6 +130,10 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     checkBackendState();
+    const timer = window.setInterval(() => {
+      api.getHealth().then(setHealth).catch(() => setHealth(null));
+    }, 60_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const isModoPublico = Boolean(health?.aviso_demo_publica);
@@ -599,6 +603,28 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {/* Alerta de Sessão WebSocket Expirada */}
+        {wsSessionExpiredNotice && (
+          <div
+            className="alert-banner"
+            style={{ borderLeftColor: 'var(--status-warning-border)', marginBottom: '20px' }}
+            role="region"
+            aria-label="Aviso de sessão expirada"
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <AlertTriangle size={18} color="var(--status-warning-text)" aria-hidden="true" />
+              <div>
+                <strong style={{ color: 'var(--status-warning-text)', fontSize: '0.875rem' }}>
+                  Sessão Interativa Encerrada
+                </strong>
+                <p style={{ marginTop: 4, fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                  {wsSessionExpiredNotice}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Faixa de Contexto do Fundo */}
         <section className="kanastra-subheader" aria-label="Fundo sob gestão">
           <div className="kanastra-subheader-meta">
@@ -606,7 +632,7 @@ export const App: React.FC = () => {
             <span className="kanastra-meta-sep">•</span>
             <span>CNPJ 92.234.400/0001-80</span>
             <span className="kanastra-meta-sep">•</span>
-            <span>Data-base: 22/10/2026</span>
+            <span>Data-base: {(simulation?.data_base || health?.data_base_atual)?.split('-').reverse().join('/') || '22/10/2026'}</span>
             <span className="kanastra-meta-sep">•</span>
             <span>Regra {versaoRegraReal}</span>
             <span className="kanastra-meta-sep">•</span>

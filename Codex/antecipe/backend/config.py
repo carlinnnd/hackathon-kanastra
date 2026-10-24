@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     )
 
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
-    DATA_BASE: str = "2026-10-22"
     
     # Sem segredo default; mutações administrativas retornam 503 se não configurado
     ADMIN_TOKEN: Optional[str] = None
