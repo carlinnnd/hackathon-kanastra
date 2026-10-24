@@ -217,5 +217,3 @@ def gerar_arquivos_lotes_padrao(diretorio_destino: Path) -> Dict[int, Path]:
         salvar_lote_csv(arq, tam, seed_tag=f"L{tam}")
         gerados[tam] = arq
     return gerados
-
-
