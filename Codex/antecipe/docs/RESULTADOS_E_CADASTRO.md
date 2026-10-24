@@ -57,7 +57,7 @@ O JSON agregado está em `qa/relatorio_gabarito_mock.json`. Divergências por li
 
 ## Verificações
 
-- Correção binária: 71 testes de backend aprovados em 3,67 s, cobrindo domínio, API, WebSocket e regressões.
+- Correção binária: 73 testes de backend aprovados em 7,02 s na cópia preparada para o Git, incluindo dois testes independentes de paridade CSV/JSON e leitura de registros legados, além de domínio, API e WebSocket.
 - Frontend: typecheck, helpers e quatro cenários de resiliência passaram na árvore controlada; build Vite 8.1.5/React 19.2.8 em 1,43 s gerou o bundle `index-DsYjQTxp.js`. Não comprova `npm ci` limpo do manifesto final.
 - PDF sintético de 63 notas: quatro páginas renderizadas e inspecionadas, incluindo líquido conferido de R$ 18.800,00. Exemplo em `output/pdf/relatorio-executivo-demo.pdf`.
 - Verificação anterior: CSV completo, PDF e CSV de violações baixados, modo histórico e tela de 390 px sem overflow externo. O filtro de pendências daquela versão foi removido na correção binária.
