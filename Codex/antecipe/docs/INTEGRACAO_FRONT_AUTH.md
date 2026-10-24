@@ -1,6 +1,6 @@
 # Integração do frontend final com o backend
 
-Base: `origin/main` em `35579f7`. A interface do cliente foi preservada: CSS inalterado e JSX visual do login idêntico. Foram corrigidos os vínculos de sessão, API e pacote estático; não houve deploy.
+Base: `origin/main` em `35579f7`. A interface do cliente foi preservada: CSS inalterado e JSX visual do login idêntico. Foram corrigidos os vínculos de sessão, API e pacote estático; a publicação foi autorizada posteriormente e consta abaixo.
 
 O frontend React é a única tela de entrada. O bundle anterior com `antecipe-auth-gate.js` sobreposto não é mais carregado pelo HTML gerado. Login e cadastro por e-mail usam `/api/auth/login`; Google usa PKCE, `state` aleatório e `/auth/callback`, concluído por `/api/auth/exchange`. O servidor confirma o perfil no Auth0 e mantém o token em cookie HttpOnly (Secure em HTTPS, SameSite=Lax), sem token ou senha em localStorage. Falhas do provedor não criam login local. Restauração e logout usam `/api/auth/session` e `/api/auth/logout`.
 
@@ -23,3 +23,7 @@ Os testes de integração estão em `backend/tests/test_portal_integration.py` e
 Para inspecionar a interface local com dados e provedor sintéticos isolados, execute a partir da raiz do repositório: `python Codex/antecipe/qa/serve_portal_review.py --stub-auth --port 8015`. Esse stub existe somente no servidor de revisão, exige flag explícita e escuta apenas loopback; não é carregado no aplicativo nem incluído no pacote de publicação.
 
 O build foi conferido na árvore de dependências controlada já existente, sem novas dependências de runtime. A instalação limpa das versões do manifesto não foi revalidada nesta integração.
+
+## Publicação autorizada
+
+Em24/10/2026, a pedido do usuário, a integração foi enviada à main (25c2761) e à Vercel (dpl_BNuMdSCHGeZ73nheEL4X1KkoXffR, READY). Frontend final, auth/config, callback e APIs foram conferidos no domínio público. Credenciais e tenant não foram alterados; login com conta real ainda não foi concluído na verificação.
