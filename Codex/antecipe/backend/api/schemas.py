@@ -89,6 +89,7 @@ class RuleVersionCreateSchema(BaseModel):
 class WhatIfSimulationRequestSchema(BaseModel):
     configuration: Dict[str, Any]
     sample_rows: int = Field(default=100, ge=10, le=10000)
+    simulation_id: Optional[str] = None
 
 
 class RuleVersionItemSchema(BaseModel):

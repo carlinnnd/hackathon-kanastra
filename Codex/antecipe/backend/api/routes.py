@@ -18,7 +18,7 @@ from ..domain.ingestion import iterar_csv_recebiveis, parse_data_br, parse_decim
 from ..domain.engine import carregar_configuracao
 from ..domain.models import ReceivelInput, ResultadoAvaliacao, MotivoRecusa
 from ..infrastructure.database.session import get_db
-from ..infrastructure.database.models import FundModel, RuleVersionModel
+from ..infrastructure.database.models import FundModel, RuleVersionModel, SimulationItemDetailModel
 from ..infrastructure.repositories.rules_repository import RulesRepository
 from ..infrastructure.repositories.receivables_repository import ReceivablesRepository
 from ..infrastructure.repositories.simulations_repository import SimulationsRepository
@@ -630,6 +630,55 @@ def post_simulate_sample_batch(rows: int, db: Session = Depends(get_db)):
     return envelope
 
 
+def _carregar_itens_simulacao_atual(db: Session, simulation_id: str):
+    rows = (
+        db.query(SimulationItemDetailModel.linha, SimulationItemDetailModel.payload_json)
+        .filter(SimulationItemDetailModel.simulation_id == simulation_id)
+        .order_by(SimulationItemDetailModel.linha.asc())
+        .all()
+    )
+    if not rows:
+        return None
+    itens_lista = []
+    for linha, payload_str in rows:
+        p = json.loads(payload_str)
+        orig = p.get("originais")
+        dt_venc = parse_data_br(p.get("data_vencimento") or (orig or {}).get("DATA_VENCIMENTO_ORIGINAL", ""))
+        if orig is not None and p.get("valor_nominal") is not None and dt_venc is not None:
+            dt_aq = parse_data_br(orig.get("DATA_AQUISICAO", "")) if orig.get("DATA_AQUISICAO") else None
+            item = ReceivelInput(
+                linha=int(linha),
+                nome_fundo=orig.get("NOME_FUNDO", "ANTECIPE FIDC"),
+                doc_fundo=p.get("doc_fundo") or normalizar_documento(orig.get("DOC_FUNDO", "")),
+                nome_cedente=orig.get("NOME_CEDENTE", ""),
+                doc_cedente=p.get("doc_cedente") or normalizar_documento(orig.get("DOC_CEDENTE", "")),
+                nome_sacado=p.get("sacado") or orig.get("NOME_SACADO", ""),
+                doc_sacado=p.get("doc_sacado") or normalizar_documento(orig.get("DOC_SACADO", "")),
+                nu_documento=p.get("nu_documento") or p.get("documento", ""),
+                tipo_recebivel=p.get("tipo_recebivel") or orig.get("TIPO_RECEBIVEL", ""),
+                valor_nominal=Decimal(str(p["valor_nominal"])),
+                data_vencimento=dt_venc,
+                data_aquisicao=dt_aq,
+                originais=orig,
+            )
+            itens_lista.append((int(linha), item, None))
+        else:
+            erro = ResultadoAvaliacao(
+                linha=int(linha),
+                documento=str(p.get("documento") or "N/A"),
+                sacado=str(p.get("sacado") or "N/A"),
+                aprovado=False,
+                valor_nominal=Decimal(str(p["valor_nominal"])) if p.get("valor_nominal") is not None else None,
+                valor_liquido=None,
+                motivos=[
+                    MotivoRecusa(m["codigo"], m["mensagem"], m.get("dados", {}))
+                    for m in (p.get("motivos") or [])
+                ],
+            )
+            itens_lista.append((int(linha), None, erro))
+    return itens_lista
+
+
 @router.post("/simulations/what-if")
 def post_simulation_what_if(
     request: Request,
@@ -637,11 +686,28 @@ def post_simulation_what_if(
     db: Session = Depends(get_db)
 ):
     try:
-        iterar_linhas_lote_sintetico, _ = _gerador_sintetico()
-        buf = io.StringIO("".join(iterar_linhas_lote_sintetico(payload.sample_rows, seed_tag=f"WHATIF{payload.sample_rows}")))
-        itens_lista = list(iterar_csv_recebiveis(buf, delimitador=";"))
+        itens_lista = None
+        fonte_dados = "sintetico"
+        if payload.simulation_id:
+            itens_lista = _carregar_itens_simulacao_atual(db, payload.simulation_id)
+            if itens_lista:
+                fonte_dados = "remessa_atual"
+
+        if not itens_lista:
+            iterar_linhas_lote_sintetico, _ = _gerador_sintetico()
+            buf = io.StringIO("".join(iterar_linhas_lote_sintetico(payload.sample_rows, seed_tag=f"WHATIF{payload.sample_rows}")))
+            itens_lista = list(iterar_csv_recebiveis(buf, delimitador=";"))
+            fonte_dados = "sintetico"
+
         service = SimulationService(db)
-        return service.executar_simulacao_what_if(payload.configuration, itens_lista, baseline_override=active_configuration(request))
+        resultado = service.executar_simulacao_what_if(
+            payload.configuration,
+            itens_lista,
+            baseline_override=active_configuration(request),
+        )
+        resultado["fonte_dados"] = fonte_dados
+        resultado["simulation_id"] = payload.simulation_id if fonte_dados == "remessa_atual" else None
+        return resultado
     except (ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,

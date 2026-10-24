@@ -141,6 +141,8 @@ export interface WhatIfScenarioSummary {
 export interface WhatIfResult {
   baseline_version: number;
   data_base: string;
+  fonte_dados?: 'remessa_atual' | 'sintetico';
+  simulation_id?: string | null;
   baseline: WhatIfScenarioSummary;
   what_if: WhatIfScenarioSummary;
   delta: {

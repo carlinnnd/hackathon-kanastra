@@ -192,7 +192,8 @@ export const api = {
 
   async runWhatIfSimulation(
     configuration: RuleConfiguration,
-    sampleRows: number = 100
+    sampleRows: number = 100,
+    simulationId?: string | null
   ): Promise<WhatIfResult> {
     const res = await fetch(`${API_BASE}/simulations/what-if`, {
       method: 'POST',
@@ -200,6 +201,7 @@ export const api = {
       body: JSON.stringify({
         configuration,
         sample_rows: sampleRows,
+        ...(simulationId ? { simulation_id: simulationId } : {}),
       }),
     });
     return handleResponse<WhatIfResult>(res);

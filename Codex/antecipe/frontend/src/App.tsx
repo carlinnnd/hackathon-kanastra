@@ -641,7 +641,10 @@ export const App: React.FC = () => {
           {activeTab === 'individual' && <SingleEvaluateTab />}
 
           {activeTab === 'what-if' && (
-            <WhatIfSimulatorTab onRulesUpdated={checkBackendState} />
+            <WhatIfSimulatorTab
+              onRulesUpdated={checkBackendState}
+              simulationId={simulation?.simulation_id ?? null}
+            />
           )}
 
           {activeTab === 'lote' && (
