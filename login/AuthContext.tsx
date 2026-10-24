@@ -171,7 +171,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (code && currentConfig) {
           const verifier = window.sessionStorage.getItem(PKCE_VERIFIER_KEY);
           window.sessionStorage.removeItem(PKCE_VERIFIER_KEY);
-          const cleanRedirectUri = window.location.origin + window.location.pathname;
+          const cleanRedirectUri =
+            window.sessionStorage.getItem('antecipe_auth0_last_redirect_uri') ||
+            window.location.origin + '/auth/callback';
           window.history.replaceState({}, document.title, window.location.pathname);
 
           // 1. Tenta trocar o código via endpoint de servidor (/api/auth/exchange) caso instalado via Vercel Marketplace
@@ -311,7 +313,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { verifier, challenge } = await generatePkcePair();
     window.sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
 
-    const redirectUri = window.location.origin + window.location.pathname;
+    const redirectUri = window.location.origin + '/auth/callback';
+    window.sessionStorage.setItem('antecipe_auth0_last_redirect_uri', redirectUri);
     const authorizeUrl = new URL(`https://${activeConfig.domain}/authorize`);
     authorizeUrl.searchParams.set('response_type', 'code');
     authorizeUrl.searchParams.set('client_id', activeConfig.clientId);

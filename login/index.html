@@ -510,7 +510,8 @@
         const { verifier, challenge } = await generatePkcePair();
         window.sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
 
-        const returnUrl = window.location.origin + window.location.pathname;
+        const returnUrl = window.location.origin + '/auth/callback';
+        window.sessionStorage.setItem('antecipe_auth0_last_redirect_uri', returnUrl);
         const url = new URL('https://' + cfg.domain + '/authorize');
         url.searchParams.set('response_type', 'code');
         url.searchParams.set('client_id', cfg.clientId);
@@ -673,7 +674,9 @@
         } else if (code && cfg) {
           const verifier = window.sessionStorage.getItem(PKCE_VERIFIER_KEY);
           window.sessionStorage.removeItem(PKCE_VERIFIER_KEY);
-          const returnUrl = window.location.origin + window.location.pathname;
+          const returnUrl =
+            window.sessionStorage.getItem('antecipe_auth0_last_redirect_uri') ||
+            window.location.origin + '/auth/callback';
           window.history.replaceState({}, document.title, window.location.pathname);
 
           if (verifier) {

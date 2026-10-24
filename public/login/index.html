@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Módulo de Login & Auth0 Vercel — Antecipe FIDC</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .lab-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .lab-card {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 28px;
+      }
+      .lab-input {
+        width: 100%;
+        padding: 10px 12px;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-family: var(--font-sans);
+      }
+      .lab-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .tab-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        background-color: var(--bg-primary);
+        padding: 4px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        margin-bottom: 20px;
+      }
+      .tab-btn {
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        border: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        background: transparent;
+        color: var(--text-secondary);
+      }
+      .tab-btn.active {
+        background-color: var(--accent-blue);
+        color: #ffffff;
+      }
+      .google-btn {
+        width: 100%;
+        padding: 11px 16px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        background-color: #ffffff;
+        color: #111827;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .google-btn:hover {
+        background-color: #f3f4f6;
+      }
+      .code-box {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: #93c5fd;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 260px;
+        overflow-y: auto;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Cabeçalho -->
+      <header class="header" role="banner">
+        <div class="header-title-group">
+          <h1>
+            <span>Antecipe</span>
+            <span class="header-badge">Diretório Isolado de Login (Auth0 Vercel + E-mail)</span>
+          </h1>
+          <p class="header-subtitle">
+            Portal de Autenticação do Empresário (Cedente) — Pronto para integrar com o Frontend do Pina.
+          </p>
+        </div>
+
+        <div class="header-meta" id="header-session-container"></div>
+      </header>
+
+      <!-- Alerta de Feedback -->
+      <div id="feedback-banner" class="error-toast hidden" role="alert" style="margin-bottom: 24px">
+        <span id="feedback-text"></span>
+        <button type="button" class="btn-secondary" onclick="hideFeedback()" style="padding: 4px 10px; font-size: 0.75rem">
+          Fechar
+        </button>
+      </div>
+
+      <!-- VISÃO 1: TELA DE LOGIN DO EMPRESÁRIO -->
+      <div id="auth-gate-view" class="lab-grid">
+        <!-- Coluna Esquerda -->
+        <section class="lab-card" style="display: flex; flex-direction: column; justify-content: space-between">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px">
+              <span style="font-size: 1.4rem; font-weight: 800">Portal do Empresário</span>
+              <span class="badge-tag">ANTECIPE FIDC</span>
+            </div>
+            <h2 style="font-size: 1.35rem; margin-bottom: 12px; line-height: 1.3">
+              Transforme suas vendas a prazo em caixa imediato com transparência.
+            </h2>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px">
+              Acesse sua conta pelo <strong>Google (Gmail via Auth0 Vercel)</strong> ou crie sua conta de empresário para simular e antecipar suas duplicatas com taxa de <strong>2,00% a.m.</strong>
+            </p>
+
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 0.84rem; color: var(--text-secondary)">
+              <li>🔹 <strong>Login Normal (E-mail e Senha):</strong> Cria conta com hash criptográfico <code>SHA-256</code> e exige cadastro prévio para entrar.</li>
+              <li>🔹 <strong>Login com Google (Gmail):</strong> Usa OAuth 2.0 com PKCE oficial do <strong>Auth0 Marketplace da Vercel</strong> (abre a tela oficial <code>accounts.google.com</code>).</li>
+              <li>🔹 <strong>Persistência de Sessão:</strong> Salva o usuário autenticado em <code>sessionStorage["antecipe_entrepreneur_session_v1"]</code>.</li>
+            </ul>
+          </div>
+
+          <div style="margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--border-subtle)">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px">
+              Atalho de 1 clique para demonstração rápida aos jurados:
+            </div>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="loginAsDemoEntrepreneur()"
+              style="width: 100%; justify-content: center; padding: 10px 16px; border-color: var(--status-info-border); background-color: var(--status-info-bg); color: var(--status-info-text); font-weight: 600"
+            >
+              ⚡ Acesso Rápido — Empresário Demo (Indústria Brasil S.A.)
+            </button>
+          </div>
+        </section>
+
+        <!-- Coluna Direita: Card de Autenticação -->
+        <section class="lab-card">
+          <div class="tab-bar" role="tablist">
+            <button type="button" id="tab-login" class="tab-btn active" onclick="switchTab('login')">
+              Entrar na Conta
+            </button>
+            <button type="button" id="tab-signup" class="tab-btn" onclick="switchTab('signup')">
+              Criar Conta
+            </button>
+          </div>
+
+          <!-- Botão Google (Gmail) via Auth0 Vercel -->
+          <button type="button" class="google-btn" onclick="handleGoogleClick()">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.4 14.6 2.5 12 2.5 6.8 2.5 2.5 6.8 2.5 12s4.3 9.5 9.5 9.5c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.6H12z"/>
+              <path fill="#34A853" d="M3.6 7.4l3.2 2.4C7.7 7.6 9.7 6 12 6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.4 14.6 2.5 12 2.5 8.3 2.5 5.1 4.6 3.6 7.4z"/>
+              <path fill="#FBBC05" d="M12 21.5c2.5 0 4.7-.8 6.3-2.3l-3-2.4c-.8.6-1.9 1-3.3 1-3.8 0-5.2-2.5-5.5-3.8l-3.2 2.5c1.5 3 4.8 5 8.7 5z"/>
+              <path fill="#4285F4" d="M21.1 12.2c0-.6-.1-1.1-.2-1.6H12v3.9h5.5c-.3 1.3-1.1 2.4-2.2 3.1l3 2.4c1.7-1.6 2.8-4 2.8-7.8z"/>
+            </svg>
+            <span>Continuar com Google (Gmail)</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-auth0-universal"
+            class="btn-secondary hidden"
+            onclick="loginWithAuth0Redirect(currentTab)"
+            style="width: 100%; justify-content: center; padding: 10px 14px; margin-bottom: 12px"
+          >
+            🔒 Autenticar via Auth0 Universal Login (OAuth2 PKCE)
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase">
+            <div style="flex: 1; height: 1px; background-color: var(--border-subtle)"></div>
+            <span>ou use seu e-mail empresarial</span>
+            <div style="flex: 1; height: 1px; background-color: var(--border-subtle)"></div>
+          </div>
+
+          <!-- Formulário Principal E-mail / Senha -->
+          <form id="email-auth-form" onsubmit="submitEmailForm(event)" style="display: flex; flex-direction: column; gap: 14px">
+            <div id="signup-extra-fields" class="hidden" style="display: flex; flex-direction: column; gap: 14px">
+              <div>
+                <label class="lab-label" for="f-name">Seu Nome Completo *</label>
+                <input id="f-name" type="text" class="lab-input" placeholder="Ex: Leandro Elias" />
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+                <div>
+                  <label class="lab-label" for="f-company">Razão Social / Empresa</label>
+                  <input id="f-company" type="text" class="lab-input" placeholder="Indústria Brasil S.A." />
+                </div>
+                <div>
+                  <label class="lab-label" for="f-cnpj">CNPJ Cedente</label>
+                  <input id="f-cnpj" type="text" class="lab-input" placeholder="11.222.333/0001-81" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="lab-label" for="f-email">E-mail *</label>
+              <input id="f-email" type="email" class="lab-input" required placeholder="voce@suaempresa.com.br" />
+            </div>
+
+            <div>
+              <label class="lab-label" for="f-password">Senha * (Mínimo 6 caracteres)</label>
+              <input id="f-password" type="password" class="lab-input" required minlength="6" placeholder="••••••" />
+            </div>
+
+            <button type="submit" id="btn-submit-email" class="btn-primary" style="width: 100%; justify-content: center; padding: 11px 16px; margin-top: 4px">
+              Entrar no Portal Antecipe
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <!-- VISÃO 2: ÁREA LOGADA DO EMPRESÁRIO -->
+      <section id="logged-in-view" class="lab-card hidden" style="margin-bottom: 32px; border-color: var(--status-success-border)">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px">
+          <div style="display: flex; align-items: center; gap: 14px">
+            <img id="welcome-avatar" src="" alt="" class="hidden" style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--status-success-border)" />
+            <div>
+              <span class="badge-tag" style="background: var(--status-success-bg); color: var(--status-success-text); border-color: var(--status-success-border)">
+                ● SESSÃO ATIVA & SALVA NO STORAGE
+              </span>
+              <h2 style="font-size: 1.4rem; margin-top: 8px" id="welcome-title">Bem-vindo!</h2>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px" id="welcome-subtitle"></p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <button type="button" class="btn-secondary" onclick="window.location.reload()">
+              🔄 Recarregar Página (Testar F5)
+            </button>
+            <button type="button" class="btn-primary" onclick="logout()" style="background-color: var(--status-danger-border)">
+              🚪 Sair (Logout)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAINEL DE CONFIGURAÇÃO AUTH0 VERCEL + RAIO-X STORAGE -->
+      <div class="lab-grid">
+        <!-- Card 1: Configurar Auth0 via Vercel Marketplace -->
+        <section class="lab-card" style="border-color: var(--status-info-border)">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
+            <h3 style="font-size: 1rem">🔑 1. Conectar Auth0 via Vercel Marketplace</h3>
+            <span id="auth0-status-badge" class="badge-tag">AGUARDANDO CHAVES</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px">
+            Como instalar e pegar as chaves direto pela <strong>Vercel</strong> (<a href="https://vercel.com/marketplace/auth0" target="_blank" rel="noreferrer" style="color: var(--status-info-text)">vercel.com/marketplace/auth0</a>):
+          </p>
+          <ol style="font-size: 0.8rem; color: var(--text-secondary); padding-left: 18px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px">
+            <li>Abra <a href="https://vercel.com/marketplace/auth0" target="_blank" rel="noreferrer" style="color: var(--status-info-text)">vercel.com/marketplace/auth0</a> e clique no botão <strong>"Install"</strong> (canto superior direito).</li>
+            <li>Selecione a sua conta da Vercel e o projeto onde deseja instalar (ou crie um projeto importando seu GitHub) e finalize a autorização na janela que abrir.</li>
+            <li>Na Vercel, vá no seu Projeto &rarr; aba <strong>Settings</strong> &rarr; <strong>Environment Variables</strong>. Você verá que a Vercel criou automaticamente as variáveis do Auth0!</li>
+            <li>Clique no ícone do "olho" (mostrar valor) lá na Vercel e cole abaixo o <strong>AUTH0_DOMAIN</strong> (ou <strong>AUTH0_ISSUER_BASE_URL</strong>) e o <strong>AUTH0_CLIENT_ID</strong>:<br/>
+              <span style="font-size: 0.74rem; color: var(--status-warning-text)">
+                (Dica: se estiver testando em <code><span id="current-origin-url">http://localhost:8090</span></code> fora da URL da Vercel, adicione essa URL em <em>Allowed Callback URLs</em> e <em>Allowed Web Origins</em> quando clicar em "Open in Auth0" dentro da Vercel).
+              </span>
+            </li>
+          </ol>
+
+          <form onsubmit="saveAuth0Config(event)" style="display: flex; flex-direction: column; gap: 10px">
+            <div>
+              <label class="lab-label" for="cfg-domain">AUTH0_DOMAIN ou AUTH0_ISSUER_BASE_URL *</label>
+              <input id="cfg-domain" type="text" class="lab-input" placeholder="ex: dev-abc123xyz.us.auth0.com" />
+            </div>
+            <div>
+              <label class="lab-label" for="cfg-client-id">AUTH0_CLIENT_ID *</label>
+              <input id="cfg-client-id" type="text" class="lab-input" placeholder="ex: K8mN2pQrStUvWxYz1234567890abcdef" />
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 4px">
+              <button type="submit" class="btn-primary" style="flex: 1; justify-content: center">
+                💾 Salvar Chaves da Vercel e Ativar Login Google
+              </button>
+              <button type="button" class="btn-secondary" onclick="clearAuth0Config()">
+                Limpar
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Card 2: Raio-X do Storage -->
+        <section class="lab-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+            <h3 style="font-size: 1rem">🔍 2. Raio-X: <code>sessionStorage</code> (Usuário Logado)</h3>
+            <span class="badge-tag">antecipe_entrepreneur_session_v1</span>
+          </div>
+          <pre id="session-storage-dump" class="code-box">null (Nenhum usuário logado)</pre>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px">
+            <h3 style="font-size: 1rem">🗄️ Raio-X: <code>localStorage</code> (Contas Criadas c/ SHA-256)</h3>
+            <button type="button" class="btn-secondary" onclick="clearAccountsStorage()" style="padding: 4px 8px; font-size: 0.72rem">
+              Limpar Contas
+            </button>
+          </div>
+          <pre id="accounts-storage-dump" class="code-box">[]</pre>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const SESSION_STORAGE_KEY = 'antecipe_entrepreneur_session_v1';
+      const ACCOUNTS_STORAGE_KEY = 'antecipe_entrepreneur_accounts_v1';
+      const PKCE_VERIFIER_KEY = 'antecipe_auth0_pkce_verifier';
+      const AUTH0_CONFIG_STORAGE_KEY = 'antecipe_auth0_config_v1';
+
+      let currentTab = 'login';
+
+      function showFeedback(msg, isSuccess = false) {
+        const banner = document.getElementById('feedback-banner');
+        const text = document.getElementById('feedback-text');
+        text.textContent = msg;
+        banner.style.backgroundColor = isSuccess ? 'var(--status-success-bg)' : 'var(--status-danger-bg)';
+        banner.style.borderColor = isSuccess ? 'var(--status-success-border)' : 'var(--status-danger-border)';
+        banner.style.color = isSuccess ? 'var(--status-success-text)' : 'var(--status-danger-text)';
+        banner.classList.remove('hidden');
+      }
+
+      function hideFeedback() {
+        document.getElementById('feedback-banner').classList.add('hidden');
+      }
+
+      let serverAuth0Config = null;
+
+      function getAuth0Config() {
+        try {
+          const raw = window.localStorage.getItem(AUTH0_CONFIG_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const domain = (parsed.domain || '').trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const clientId = (parsed.clientId || '').trim();
+            if (domain && clientId) return { domain, clientId, useServerExchange: Boolean(parsed.useServerExchange) };
+          }
+        } catch (e) {}
+        if (serverAuth0Config && serverAuth0Config.domain && serverAuth0Config.clientId) {
+          return serverAuth0Config;
+        }
+        return null;
+      }
+
+      function base64UrlEncode(buffer) {
+        let binary = '';
+        for (let i = 0; i < buffer.byteLength; i += 1) {
+          binary += String.fromCharCode(buffer[i]);
+        }
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
+      async function sha256Hex(input) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+
+      async function generatePkcePair() {
+        const randomBytes = new Uint8Array(32);
+        window.crypto.getRandomValues(randomBytes);
+        const verifier = base64UrlEncode(randomBytes);
+        const encoder = new TextEncoder();
+        const digest = await window.crypto.subtle.digest('SHA-256', encoder.encode(verifier));
+        const challenge = base64UrlEncode(new Uint8Array(digest));
+        return { verifier, challenge };
+      }
+
+      function switchTab(tab) {
+        currentTab = tab;
+        hideFeedback();
+        document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+        document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+        document.getElementById('signup-extra-fields').classList.toggle('hidden', tab !== 'signup');
+        document.getElementById('btn-submit-email').textContent =
+          tab === 'signup' ? 'Criar Conta e Acessar Plataforma' : 'Entrar no Portal Antecipe';
+      }
+
+      function handleGoogleClick() {
+        hideFeedback();
+        const cfg = getAuth0Config();
+        if (cfg) {
+          loginWithAuth0Redirect('login', 'google-oauth2');
+        } else {
+          showFeedback(
+            'Para abrir a tela oficial de login da Google (accounts.google.com), preencha primeiro o Auth0 Domain e Client ID no Card 1 abaixo e clique em Salvar!'
+          );
+          document.getElementById('cfg-domain').focus();
+        }
+      }
+
+      function saveSession(userObj) {
+        window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(userObj));
+        renderState();
+      }
+
+      async function submitEmailForm(e) {
+        e.preventDefault();
+        hideFeedback();
+        const email = document.getElementById('f-email').value.trim().toLowerCase();
+        const password = document.getElementById('f-password').value;
+        const name = document.getElementById('f-name').value.trim();
+        const companyName = document.getElementById('f-company').value.trim() || 'Indústria Brasil S.A.';
+        const cnpj = document.getElementById('f-cnpj').value.trim() || '11.222.333/0001-81';
+
+        const passwordDigest = await sha256Hex(email + '::' + password);
+        let accounts = [];
+        try {
+          accounts = JSON.parse(window.localStorage.getItem(ACCOUNTS_STORAGE_KEY) || '[]');
+        } catch (err) {
+          accounts = [];
+        }
+
+        const existing = accounts.find((a) => a.email === email);
+
+        if (currentTab === 'signup') {
+          if (existing) {
+            showFeedback('Já existe uma conta cadastrada com este e-mail. Mude para a aba "Entrar na Conta".');
+            return;
+          }
+          if (!name) {
+            showFeedback('Informe seu nome completo para criar a conta.');
+            return;
+          }
+          const newAcc = {
+            id: 'usr-' + Date.now(),
+            name,
+            email,
+            companyName,
+            cnpj,
+            passwordDigest,
+          };
+          accounts.push(newAcc);
+          window.localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+
+          saveSession({
+            id: newAcc.id,
+            name: newAcc.name,
+            email: newAcc.email,
+            companyName: newAcc.companyName,
+            cnpj: newAcc.cnpj,
+            provider: 'email',
+            authenticatedAt: new Date().toISOString(),
+          });
+          showFeedback('Conta criada com sucesso! Veja o hash SHA-256 no localStorage e a sessão no sessionStorage.', true);
+        } else {
+          if (!existing) {
+            showFeedback('Conta não encontrada para este e-mail. Clique na aba "Criar Conta" para se cadastrar primeiro.');
+            return;
+          }
+          if (existing.passwordDigest !== passwordDigest) {
+            showFeedback('Senha incorreta para esta conta cadastrada.');
+            return;
+          }
+          saveSession({
+            id: existing.id,
+            name: existing.name,
+            email: existing.email,
+            companyName: existing.companyName,
+            cnpj: existing.cnpj,
+            provider: 'email',
+            authenticatedAt: new Date().toISOString(),
+          });
+          showFeedback('Login realizado com sucesso validando o hash SHA-256!', true);
+        }
+      }
+
+      function loginAsDemoEntrepreneur() {
+        hideFeedback();
+        saveSession({
+          id: 'demo-cedente-01',
+          name: 'Empresário Cedente (Demo)',
+          email: 'financeiro@industriabrasil.com.br',
+          companyName: 'Indústria Brasil S.A.',
+          cnpj: '11.222.333/0001-81',
+          provider: 'demo',
+          authenticatedAt: new Date().toISOString(),
+        });
+        showFeedback('Sessão de Empresário Demo iniciada e gravada no sessionStorage!', true);
+      }
+
+      async function loginWithAuth0Redirect(screenHint, connection) {
+        const cfg = getAuth0Config();
+        if (!cfg) {
+          showFeedback('Preencha o Auth0 Domain e Client ID no Card 1 abaixo primeiro.');
+          return;
+        }
+        const { verifier, challenge } = await generatePkcePair();
+        window.sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+
+        const returnUrl = window.location.origin + '/auth/callback';
+        window.sessionStorage.setItem('antecipe_auth0_last_redirect_uri', returnUrl);
+        const url = new URL('https://' + cfg.domain + '/authorize');
+        url.searchParams.set('response_type', 'code');
+        url.searchParams.set('client_id', cfg.clientId);
+        url.searchParams.set('redirect_uri', returnUrl);
+        url.searchParams.set('scope', 'openid profile email');
+        url.searchParams.set('code_challenge', challenge);
+        url.searchParams.set('code_challenge_method', 'S256');
+        if (screenHint === 'signup') url.searchParams.set('screen_hint', 'signup');
+        if (connection) url.searchParams.set('connection', connection);
+
+        window.location.assign(url.toString());
+      }
+
+      function logout() {
+        const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+        window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        renderState();
+        showFeedback('Sessão encerrada! O sessionStorage foi limpo.', true);
+
+        try {
+          const user = raw ? JSON.parse(raw) : null;
+          const cfg = getAuth0Config();
+          if (user && (user.provider === 'auth0' || user.provider === 'google') && cfg) {
+            const logoutUrl = new URL('https://' + cfg.domain + '/v2/logout');
+            logoutUrl.searchParams.set('client_id', cfg.clientId);
+            logoutUrl.searchParams.set('returnTo', window.location.origin + window.location.pathname);
+            window.location.assign(logoutUrl.toString());
+          }
+        } catch (e) {}
+      }
+
+      function clearAccountsStorage() {
+        window.localStorage.removeItem(ACCOUNTS_STORAGE_KEY);
+        renderState();
+        showFeedback('Lista de contas do localStorage limpa!', true);
+      }
+
+      function saveAuth0Config(e) {
+        e.preventDefault();
+        const domain = document.getElementById('cfg-domain').value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const clientId = document.getElementById('cfg-client-id').value.trim();
+        if (!domain || !clientId) {
+          showFeedback('Informe tanto o Domain quanto o Client ID do Auth0.');
+          return;
+        }
+        window.localStorage.setItem(AUTH0_CONFIG_STORAGE_KEY, JSON.stringify({ domain, clientId }));
+        renderState();
+        showFeedback('Chaves do Auth0 salvas! Agora clique em "Continuar com Google (Gmail)" para abrir o login real da Google!', true);
+      }
+
+      function clearAuth0Config() {
+        window.localStorage.removeItem(AUTH0_CONFIG_STORAGE_KEY);
+        document.getElementById('cfg-domain').value = '';
+        document.getElementById('cfg-client-id').value = '';
+        renderState();
+        showFeedback('Chaves do Auth0 removidas do navegador.', true);
+      }
+
+      function renderState() {
+        const cleanUrl = window.location.origin + (window.location.pathname === '/' ? '' : window.location.pathname);
+        document.getElementById('current-origin-url').textContent = cleanUrl;
+
+        const rawSession = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+        const rawAccounts = window.localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+        const cfg = getAuth0Config();
+
+        document.getElementById('session-storage-dump').textContent = rawSession
+          ? JSON.stringify(JSON.parse(rawSession), null, 2)
+          : 'null (Nenhum usuário logado)';
+
+        document.getElementById('accounts-storage-dump').textContent = rawAccounts
+          ? JSON.stringify(JSON.parse(rawAccounts), null, 2)
+          : '[] (Nenhuma conta criada ainda)';
+
+        const badge = document.getElementById('auth0-status-badge');
+        const btnAuth0 = document.getElementById('btn-auth0-universal');
+        if (cfg) {
+          badge.textContent = '● AUTH0 ATIVO (' + cfg.domain + ')';
+          badge.style.backgroundColor = 'var(--status-success-bg)';
+          badge.style.color = 'var(--status-success-text)';
+          badge.style.borderColor = 'var(--status-success-border)';
+          btnAuth0.classList.remove('hidden');
+          document.getElementById('cfg-domain').value = cfg.domain;
+          document.getElementById('cfg-client-id').value = cfg.clientId;
+        } else {
+          badge.textContent = 'AGUARDANDO CHAVES AUTH0';
+          badge.style.backgroundColor = '';
+          badge.style.color = '';
+          badge.style.borderColor = '';
+          btnAuth0.classList.add('hidden');
+        }
+
+        const headerContainer = document.getElementById('header-session-container');
+        const authGateView = document.getElementById('auth-gate-view');
+        const loggedInView = document.getElementById('logged-in-view');
+        const avatarImg = document.getElementById('welcome-avatar');
+
+        if (rawSession) {
+          const user = JSON.parse(rawSession);
+          authGateView.classList.add('hidden');
+          loggedInView.classList.remove('hidden');
+
+          if (user.pictureUrl) {
+            avatarImg.src = user.pictureUrl;
+            avatarImg.classList.remove('hidden');
+          } else {
+            avatarImg.classList.add('hidden');
+          }
+
+          document.getElementById('welcome-title').textContent = 'Olá, ' + user.name + '!';
+          document.getElementById('welcome-subtitle').textContent =
+            'Empresa: ' + user.companyName + ' (CNPJ ' + user.cnpj + ') • E-mail: ' + user.email + ' • Autenticado via: ' + user.provider.toUpperCase();
+
+          headerContainer.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
+              ${
+                user.pictureUrl
+                  ? `<img src="${user.pictureUrl}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover" />`
+                  : `<div style="width:28px;height:28px;border-radius:50%;background:var(--status-info-bg);border:1px solid var(--status-info-border);color:var(--status-info-text);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700">${(user.name || 'EC').slice(0, 2).toUpperCase()}</div>`
+              }
+              <div style="display:flex;flex-direction:column;line-height:1.2">
+                <span style="font-size:0.8125rem;font-weight:600;color:var(--text-primary)">${user.name}</span>
+                <span style="font-size:0.6875rem;color:var(--text-secondary)">${user.companyName} • ${user.provider}</span>
+              </div>
+              <button type="button" class="btn-secondary" onclick="logout()" style="padding:4px 8px;font-size:0.75rem;margin-left:4px">
+                Sair
+              </button>
+            </div>
+          `;
+        } else {
+          authGateView.classList.remove('hidden');
+          loggedInView.classList.add('hidden');
+          headerContainer.innerHTML = `<span class="badge-tag">Deslogado</span>`;
+        }
+      }
+
+      async function checkAuth0Callback() {
+        try {
+          const cfgRes = await fetch('/api/auth/config');
+          if (cfgRes.ok) {
+            const data = await cfgRes.json();
+            if (data && data.enabled && data.domain && data.clientId) {
+              serverAuth0Config = {
+                domain: data.domain,
+                clientId: data.clientId,
+                useServerExchange: Boolean(data.useServerExchange),
+              };
+            }
+          }
+        } catch (e) {}
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const errorParam = params.get('error_description') || params.get('error');
+        const cfg = getAuth0Config();
+
+        if (errorParam) {
+          showFeedback('Erro retornado pelo Auth0: ' + errorParam);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (code && cfg) {
+          const verifier = window.sessionStorage.getItem(PKCE_VERIFIER_KEY);
+          window.sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+          const returnUrl =
+            window.sessionStorage.getItem('antecipe_auth0_last_redirect_uri') ||
+            window.location.origin + '/auth/callback';
+          window.history.replaceState({}, document.title, window.location.pathname);
+
+          if (verifier) {
+            try {
+              if (cfg.useServerExchange) {
+                const exRes = await fetch('/api/auth/exchange', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    code,
+                    codeVerifier: verifier,
+                    redirectUri: returnUrl,
+                  }),
+                });
+                if (exRes.ok) {
+                  const data = await exRes.json();
+                  if (data && data.ok && data.user) {
+                    saveSession({
+                      id: data.user.id || 'auth0-' + Date.now(),
+                      name: data.user.name || data.user.email || 'Empresário Cedente',
+                      email: data.user.email || 'cedente@empresa.com.br',
+                      companyName: 'Indústria Brasil S.A.',
+                      cnpj: '11.222.333/0001-81',
+                      provider: data.user.provider || 'google',
+                      pictureUrl: data.user.pictureUrl,
+                      authenticatedAt: new Date().toISOString(),
+                    });
+                    showFeedback('Login oficial com Google (via Vercel Marketplace Auth0) concluído com sucesso!', true);
+                    renderState();
+                    return;
+                  }
+                }
+              }
+
+              const tokenRes = await fetch('https://' + cfg.domain + '/oauth/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  grant_type: 'authorization_code',
+                  client_id: cfg.clientId,
+                  code_verifier: verifier,
+                  code,
+                  redirect_uri: returnUrl,
+                }),
+              });
+              if (tokenRes.ok) {
+                const tokenData = await tokenRes.json();
+                const userRes = await fetch('https://' + cfg.domain + '/userinfo', {
+                  headers: { Authorization: 'Bearer ' + tokenData.access_token },
+                });
+                if (userRes.ok) {
+                  const profile = await userRes.json();
+                  saveSession({
+                    id: profile.sub || 'auth0-' + Date.now(),
+                    name: profile.name || profile.email || 'Empresário Cedente',
+                    email: profile.email || 'cedente@empresa.com.br',
+                    companyName: 'Indústria Brasil S.A.',
+                    cnpj: '11.222.333/0001-81',
+                    provider: (profile.sub || '').includes('google') ? 'google' : 'auth0',
+                    pictureUrl: profile.picture,
+                    authenticatedAt: new Date().toISOString(),
+                  });
+                  showFeedback('Login oficial com Google (via Auth0) concluído com sucesso! Veja seus dados e foto do Gmail salvos no sessionStorage.', true);
+                }
+              } else {
+                const errText = await tokenRes.text();
+                showFeedback('Aviso: Para troca de código direto no navegador em localhost (sem o backend da Vercel), no painel da integração Auth0 clique em "Open in Auth0" -> aba Settings da aplicação -> mude "Token Endpoint Authentication Method" para "None" e adicione ' + returnUrl + ' em Allowed Callback URLs e Allowed Web Origins. (' + errText + ')');
+              }
+            } catch (err) {
+              showFeedback('Erro de CORS/Rede ao conectar ao Auth0 em localhost: no painel da Vercel (Integrations -> Auth0 -> Open in Auth0), adicione ' + returnUrl + ' em "Allowed Web Origins" e "Allowed Callback URLs".');
+            }
+          }
+        }
+        renderState();
+      }
+
+      checkAuth0Callback();
+    </script>
+  </body>
+</html>
+

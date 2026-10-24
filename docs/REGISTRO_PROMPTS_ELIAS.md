@@ -360,3 +360,102 @@ fiz o fork e não tem a minha branch (ou é impressão minha). como eu faço par
 - **O que foi feito com a resposta:** Adicionado o remote `meu-fork` (`https://github.com/leandro-elias-fontes/hackathon-kanastra.git`), commitado o registro `ELIAS-0014` na branch `login` e fornecido o passo a passo guiado para atualizar com a `main` do Carlos, enviar para os dois repositórios e importar na Vercel.
 - **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** Inspeção de `git remote -v`, `git branch -a` e `git status -sb`.
+---
+
+## ELIAS-0015 — 2026-10-24T15:34:26-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+me guie aqui o que eu preciso fazer, estou na etapa 3 
+```
+
+- **Resumo da resposta e análise técnica:**
+  Orientação para a tela *"Install Integration — Auth0 — Configuration and Plan"* da Vercel Marketplace e sincronização automática da rota `/auth/callback` no módulo `login/`:
+  1. **Preenchimento dos campos na janela da Vercel:**
+     - **Localhost URL:** Trocar de `http://localhost:3000` para **`http://localhost:8090`** (porta onde roda o servidor local `python3 -m http.server 8090 --directory login`).
+     - **Callback Endpoint:** Manter **`/auth/callback`** (como já veio preenchido por padrão).
+     - **Installation Plans:** Manter marcado **`Free`** (*Up to 25,000 Monthly Active Users*) e rolar até o final da janela para clicar no botão de confirmação (**"Continue" / "Install"**).
+  2. **Suporte nativo a `/auth/callback` no módulo `login/`:** Criado `login/auth/callback/index.html` e atualizados `login/index.html` e `login/AuthContext.tsx` para enviar `redirect_uri = window.location.origin + '/auth/callback'`, casando exatamente com o `Callback Endpoint: /auth/callback` configurado na Vercel sem necessitar de ajustes manuais extras nas Callback URLs.
+
+- **O que foi feito com a resposta:** Criado `login/auth/callback/index.html`, atualizados `login/index.html` e `login/AuthContext.tsx` para suportar `/auth/callback` nativamente e registrado o prompt `ELIAS-0015` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `login/auth/callback/index.html`, `login/index.html`, `login/AuthContext.tsx`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Inspeção da imagem enviada da tela *Install Integration* da Vercel e conferência dos arquivos em `login/`.
+---
+
+## ELIAS-0016 — 2026-10-24T15:38:10-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+mas eu quero subir o site, não to entendendo porque tem que ser localhost
+```
+
+- **Resumo da resposta e análise técnica:**
+  Esclarecimento sobre o campo *"Localhost URL"* na instalação do Auth0 na Vercel e disponibilização da página de login diretamente no site online da Vercel (`/login/`):
+  1. **Por que a janela da Vercel mostra `Localhost URL`:** O endereço online do site na Vercel (`https://seu-projeto.vercel.app`) **já é configurado 100% no automático pela própria Vercel** nos bastidores — você não precisa digitar a URL da Vercel ali. Aquele campo `Localhost URL` é apenas um bônus opcional que a Vercel pergunta caso você *também* queira testar no computador local. Portanto, na janela da Vercel basta manter como está e clicar em **Continue / Install** para finalizar.
+  2. **Publicação da página de Login no link online da Vercel (`/login/`):** Como a Vercel serve arquivos estáticos a partir da pasta `public/` (sem alterar o `public/index.html` do Carlos/Pina), foram adicionadas as subpastas exclusivas `public/login/index.html`, `public/login/styles.css` e `public/auth/callback/index.html`. Assim, ao fazer o push da branch `login`, a página de login fica acessível ao vivo na internet em `https://<seu-projeto>.vercel.app/login/`.
+
+- **O que foi feito com a resposta:** Adicionados `public/login/index.html`, `public/login/styles.css` e `public/auth/callback/index.html` (sem tocar em nenhum arquivo pré-existente de `public/`) para que o login rode diretamente na URL pública da Vercel (`/login/`), e registrado o prompt `ELIAS-0016` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `public/login/index.html`, `public/login/styles.css`, `public/auth/callback/index.html`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Conferência via `git status -s` garantindo que nenhum arquivo existente de Carlos ou Pina foi modificado.
+---
+
+## ELIAS-0016 — 2026-10-24T15:38:10-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+mas eu quero subir o site, não to entendendo porque tem que ser localhost
+```
+
+- **Resumo da resposta e análise técnica:**
+  Esclarecimento sobre o campo *"Localhost URL"* na instalação do Auth0 na Vercel e disponibilização da página de login diretamente no site online da Vercel (`/login/`):
+  1. **Por que a janela da Vercel mostra `Localhost URL`:** O endereço online do site na Vercel (`https://seu-projeto.vercel.app`) **já é configurado 100% no automático pela própria Vercel** nos bastidores — você não precisa digitar a URL da Vercel ali. Aquele campo `Localhost URL` é apenas um bônus opcional que a Vercel pergunta caso você *também* queira testar no computador local. Portanto, na janela da Vercel basta manter como está e clicar em **Continue / Install** para finalizar.
+  2. **Publicação da página de Login no link online da Vercel (`/login/`):** Como a Vercel serve arquivos estáticos a partir da pasta `public/` (sem alterar o `public/index.html` do Carlos/Pina), foram adicionadas as subpastas exclusivas `public/login/index.html`, `public/login/styles.css` e `public/auth/callback/index.html`. Assim, ao fazer o push da branch `login`, a página de login fica acessível ao vivo na internet em `https://<seu-projeto>.vercel.app/login/`.
+
+- **O que foi feito com a resposta:** Adicionados `public/login/index.html`, `public/login/styles.css` e `public/auth/callback/index.html` (sem tocar em nenhum arquivo pré-existente de `public/`) para que o login rode diretamente na URL pública da Vercel (`/login/`), e registrado o prompt `ELIAS-0016` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `public/login/index.html`, `public/login/styles.css`, `public/auth/callback/index.html`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Conferência via `git status -s` garantindo que nenhum arquivo existente de Carlos ou Pina foi modificado.
+
+---
+
+## ELIAS-0017 — 2026-10-24T15:44:45-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+não fiz ainda os passos finais, estou meio perdido, me dá um direcionamento
+```
+
+- **Resumo da resposta e análise técnica:**
+  Análise das 3 capturas de tela enviadas pelo usuário (`client-antecipe` criado na integração Auth0 da Vercel e tela *New Project* de importação do `leandro-elias-fontes/hackathon-kanastra`) e roteiro direto em 3 passos simples a partir das telas abertas:
+  1. **Na tela do 3º print (*New Project*):** Clicar apenas no botão branco **"Deploy"** (mantendo `Root Directory: ./` e `Application Preset: FastAPI`).
+  2. **Na tela do 1º print (*client-antecipe*):** Clicar no botão **"Connect to Project"** (canto superior direito) para vincular o `client-antecipe` ao projeto `hackathon-kanastra` recém-criado, e clicar em **"Show secret 👁️"** na caixa `.env.local` para visualizar o `AUTH0_DOMAIN` e o `AUTH0_CLIENT_ID`.
+  3. **No terminal local:** Executar o bloco único de comandos Git para atualizar a branch `login` (no repositório do Carlos e no Fork conectado à Vercel), publicando a página `/login/` no ar.
+
+- **O que foi feito com a resposta:** Guia direto de 3 cliques baseado exatamente nas 3 telas enviadas pelo usuário e registro do prompt `ELIAS-0017` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Leitura visual das 3 capturas de tela anexadas e atualização do registro cronológico.
+---
+
+## ELIAS-0018 — 2026-10-24T15:47:20-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+tem um detalhe, o carlos colocou coisa nova na main, e esse deploy ta apontando para a main, eu queria testar direto na login, ou eu posso subir a login já para a main e testar por lá
+```
+
+- **Resumo da resposta e análise técnica:**
+  Esclarecimento sobre a diferença entre a `main` do repositório do Carlos (`origin`: `carlinnnd/hackathon-kanastra`) e a `main` do Fork pessoal do Elias (`meu-fork`: `leandro-elias-fontes/hackathon-kanastra`) mostrada na tela da Vercel:
+  1. **Por que é 100% seguro:** Na tela da Vercel está escrito `leandro-elias-fontes/hackathon-kanastra (main)` — ou seja, ela aponta para o **seu Fork pessoal**, e **não** para o repositório do Carlos (`carlinnnd`).
+  2. **O que os comandos de terminal fazem:**
+     - `git pull origin main --no-edit`: traz todas as coisas novas que o Carlos colocou na `main` dele para dentro da sua branch `login`.
+     - `git push origin login`: no repositório oficial do **Carlos**, sobe **somente** para a branch separada `login` (sem tocar na `main` do Carlos!).
+     - `git push meu-fork login:main --force`: no **seu Fork pessoal** (`leandro-elias-fontes`), coloca a sua branch `login` (que já tem tudo da `main` nova do Carlos + o seu login) na `main` do seu Fork para a Vercel fazer o deploy direto dela!
+  3. **Ordem recomendada:** Rodar primeiro os comandos no terminal e, logo em seguida, clicar no botão branco **"Deploy"** na Vercel.
+
+- **O que foi feito com a resposta:** Explicação da separação entre o repositório do Carlos (`origin/login`) e o Fork pessoal conectado à Vercel (`meu-fork/main`), orientando a rodar primeiro os comandos no terminal e depois clicar em **Deploy**. Registrado o prompt `ELIAS-0018` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** Análise da captura de tela (`leandro-elias-fontes/hackathon-kanastra -> main`) e atualização do registro cronológico.

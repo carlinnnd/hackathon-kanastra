@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Autenticando com Google (Auth0 Vercel)...</title>
+    <script>
+      // Preserva a redirect_uri exata configurada na Vercel (/auth/callback) e repassa o ?code= para a raiz
+      try {
+        window.sessionStorage.setItem(
+          'antecipe_auth0_last_redirect_uri',
+          window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '')
+        );
+      } catch (e) {}
+      window.location.replace('/' + window.location.search + window.location.hash);
+    </script>
+  </head>
+  <body style="background:#0a0e17;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+    <p>Concluindo autenticação segura com Google...</p>
+  </body>
+</html>
+
