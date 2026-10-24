@@ -34,6 +34,7 @@ async function beginLogin(connection?: string, email?: string, mode: 'login' | '
     redirect_uri: redirectUri, scope: 'openid profile email read:current_user update:current_user_metadata create:current_user_metadata',
     audience: `https://${cfg.domain}/api/v2/`,
     state, code_challenge: challenge, code_challenge_method: 'S256' })) url.searchParams.set(key, value);
+  url.searchParams.set('prompt', 'login');
   if (connection) url.searchParams.set('connection', connection);
   if (email) url.searchParams.set('login_hint', email);
   if (mode === 'signup') url.searchParams.set('screen_hint', 'signup');
@@ -68,9 +69,24 @@ export function restoreAuthSession(): Promise<AuthUser | null> {
 }
 
 export async function endAuthSession(): Promise<void> {
-  await json(await fetch('/api/auth/logout', { method: 'POST' }));
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch {}
   initialization = null;
   sessionStorage.removeItem(TRANSACTION);
   localStorage.removeItem('kanastra_antecipe_auth_session_v1');
   sessionStorage.removeItem('antecipe_entrepreneur_session_v1');
+
+  // Encerra também a sessão no Auth0 para que o próximo login não reutilize o usuário anterior
+  try {
+    const res = await fetch('/api/auth/config', { cache: 'no-store' });
+    if (res.ok) {
+      const cfg = (await res.json()) as Config;
+      if (cfg && cfg.configured && cfg.domain && cfg.clientId) {
+        const returnTo = encodeURIComponent(window.location.origin);
+        window.location.assign(`https://${cfg.domain}/v2/logout?client_id=${encodeURIComponent(cfg.clientId)}&returnTo=${returnTo}`);
+        return;
+      }
+    }
+  } catch {}
 }

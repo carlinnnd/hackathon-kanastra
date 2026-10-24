@@ -197,7 +197,7 @@ def gerar_pdf(sim, analytics):
         canvas.setFillColor(navy)
         canvas.rect(0, height-58, width, 58, fill=1, stroke=0)
         canvas.setFillColor(colors.white); canvas.setFont('Helvetica-Bold', 17)
-        canvas.drawString(46, height-35, 'kanastra')
+        canvas.drawString(46, height-35, 'Antecipe')
         canvas.setFont('Helvetica', 9); canvas.drawRightString(width-46, height-33, 'ANTECIPE FIDC  |  RELATÓRIO EXECUTIVO')
         canvas.setStrokeColor(colors.HexColor('#dce6e8')); canvas.line(46, 43, width-46, 43)
         canvas.setFont('Helvetica', 8); canvas.setFillColor(muted)
@@ -205,7 +205,7 @@ def gerar_pdf(sim, analytics):
         canvas.drawRightString(width-46, 28, f'{doc.page:02d}')
         canvas.restoreState()
     SimpleDocTemplate(buffer, pagesize=A4, rightMargin=46, leftMargin=46, topMargin=82, bottomMargin=58,
-        title=f"Antecipe - Relatório {sim.id[:8]}", author="Antecipe | Kanastra").build(story, onFirstPage=footer, onLaterPages=footer)
+        title=f"Antecipe - Relatório {sim.id[:8]}", author="Antecipe").build(story, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()
 
 

@@ -42,8 +42,19 @@ def fail(code, message, status=401):
 
 def same_origin(request):
     origin = request.headers.get('origin')
-    expected = f'{request.url.scheme}://{request.url.netloc}'
-    if origin and origin.rstrip('/') != expected:
+    if not origin:
+        return
+    origin_clean = origin.rstrip('/')
+    scheme = request.headers.get('x-forwarded-proto') or request.url.scheme
+    expected = f"{scheme}://{request.url.netloc}"
+    direct = f"{request.url.scheme}://{request.url.netloc}"
+    if origin_clean != expected and origin_clean != direct:
+        try:
+            origin_netloc = urllib.parse.urlsplit(origin).netloc
+            if origin_netloc and origin_netloc == request.url.netloc:
+                return
+        except Exception:
+            pass
         fail('ORIGEM_INVALIDA', 'Origem da solicitação inválida.', 403)
 
 
@@ -249,8 +260,13 @@ def session(request: Request, response: Response):
 
 
 @router.post('/logout')
+@router.get('/logout')
 def logout(request: Request, response: Response):
     same_origin(request)
-    response.delete_cookie(COOKIE, path='/api')
-    response.headers['Cache-Control'] = 'no-store'
+    scheme = request.headers.get('x-forwarded-proto') or request.url.scheme
+    is_secure = scheme == 'https'
+    for p in ('/api', '/', ''):
+        response.delete_cookie(COOKIE, path=p, samesite='lax', secure=is_secure, httponly=True)
+        response.set_cookie(COOKIE, '', max_age=0, expires='Thu, 01 Jan 1970 00:00:00 GMT', path=p, samesite='lax', secure=is_secure, httponly=True)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return {'ok': True}
