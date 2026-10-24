@@ -8,7 +8,7 @@ Gerado a partir dos hooks e de inclusões manuais. Horários em UTC. Texto sanit
 > - [Registro de Pina (Leandro)](REGISTRO_PROMPTS_PINA.md)
 
 > *Nota de integridade documental:* O texto integral fiel dos prompts oficiais encontra-se preservado sob `.hackathon/prompts/` (ex: `p0002_user.txt`). Na visualização sanitizada acima, sentenças com mais de duas vírgulas ou ponto-e-vírgula são marcadas como `[LINHA_TABULAR_OMITIDA]` pela rotina de proteção estrita contra vazamento de dados tabulares/CSV.
-
+## Link do Chat utilizado no gpt : https://chatgpt.com/share/6add11ef-1b68-83e9-a251-183b83577dc5
 ## P0001 — 2026-10-24T12:45:02+00:00 — user
 
 - Sessão: `session-01`
