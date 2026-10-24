@@ -7,11 +7,9 @@ Lê as variáveis de ambiente da Vercel (ou do arquivo local `login/.env` / `.en
 - AUTH0_CLIENT_ID
 - AUTH0_CLIENT_SECRET
 """
-import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -21,8 +19,6 @@ from pydantic import BaseModel
 
 auth_router = APIRouter(prefix="/api/auth", tags=["Auth0 Vercel Login"])
 router = auth_router
-
-EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$")
 
 
 class AuthCodeExchangeRequest(BaseModel):
@@ -61,57 +57,6 @@ def _load_local_env_file() -> dict:
 
 def _get_env_var(name: str, local_env: dict) -> str:
     return (os.environ.get(name) or local_env.get(name) or "").strip().strip('"').strip("'")
-
-
-class CredentialsLoginRequest(BaseModel):
-    email: str
-    password: str
-    cargo: Optional[str] = "Analista de Risco FIDC"
-    name: Optional[str] = None
-    mode: Optional[str] = "login"
-
-
-@auth_router.post("/login")
-def login_with_credentials(payload: CredentialsLoginRequest):
-    """
-    Autentica usuário por e-mail válido e senha (sem registrar PII em logs),
-    gerando digest SHA-256 determinístico para sessão autenticada no portal.
-    Aceita qualquer endereço de e-mail válido conforme especificação.
-    """
-    clean_email = (payload.email or "").strip().lower()
-    if not EMAIL_REGEX.match(clean_email):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "codigo": "EMAIL_INVALIDO",
-                "mensagem": "Informe um endereço de e-mail válido (ex.: nome@dominio.com).",
-            },
-        )
-    if not payload.password or len(payload.password.strip()) < 4:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "codigo": "SENHA_INVALIDA",
-                "mensagem": "A senha deve conter pelo menos 4 caracteres.",
-            },
-        )
-
-    digest = hashlib.sha256(f"{clean_email}:{payload.password}".encode("utf-8")).hexdigest()
-    local_part = clean_email.split("@")[0].replace(".", " ").replace("_", " ").replace("-", " ")
-    derived_name = (payload.name or "").strip() or " ".join(
-        p.capitalize() for p in local_part.split() if p
-    ) or "Operador FIDC"
-
-    return {
-        "id": f"usr-{digest[:12]}",
-        "nome": derived_name,
-        "name": derived_name,
-        "email": clean_email,
-        "cargo": (payload.cargo or "Analista de Risco FIDC").strip(),
-        "organizacao": "Kanastra • ANTECIPE FIDC",
-        "token": f"kanastra-sha256-{digest[:32]}",
-        "provider": "credentials",
-    }
 
 
 def _get_vercel_auth0_settings() -> dict:
