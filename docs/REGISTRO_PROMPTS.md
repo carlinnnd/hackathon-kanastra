@@ -1380,3 +1380,23 @@ Confirmada a referencia cadastral: copia identica ao CSV da raiz, com 2999 ATIVA
 - Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
 - Verificação: [LINHA_TABULAR_OMITIDA]
 
+## P0024 — 2026-10-24T19:43:55+00:00 — traycer
+
+- Sessão: `manual`
+- SHA-256 do prompt original: `04085d4e42fde1eda1419b0b96a1447b82bfdb32c1949debaa3f5b732e7690f7`
+- Texto do prompt (sanitizado):
+
+```text
+﻿O programa deve usar sempre a data do dia atual, atualizada automaticamente a cada dia.
+```
+
+- Última mensagem do assistente (prévia, não prova execução):
+
+```text
+[LINHA_TABULAR_OMITIDA]
+```
+
+- **O que foi feito com a resposta:** [LINHA_TABULAR_OMITIDA]
+- Arquivos/artefatos: [LINHA_TABULAR_OMITIDA]
+- Verificação: [LINHA_TABULAR_OMITIDA]
+
