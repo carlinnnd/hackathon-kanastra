@@ -62,3 +62,12 @@ Esta atualização substitui os estados de trabalho anteriores: o usuário prior
 - Pull até `e0c5349` realizado em cópia separada e fontes permitidas integradas sem commit. Índice original e registros remotos de Elias/Pina preservados. Sem push ou deploy externo.
 - `P0011` registra a redução de testes. `P0002` fechado como entrega de base local com limitações explícitas. Auditoria: 11 prompts, nenhuma pendência de reconciliação e nenhum evento órfão.
 - Próximo ciclo: instalação limpa e testes manuais incrementais antes de selecionar diferenciais. PostgreSQL/Compose e Gitleaks continuam sem verificação neste ambiente.
+
+## Publicação posterior autorizada
+
+- O usuário autorizou commit/push e atualização Vercel; `P0012` registra o pedido. `main` recebeu a base e a adaptação de deploy, com pull antes do envio e merge da atualização de Elias. Índice original preservado.
+- Site: `https://hackathon-kanastra.vercel.app`; GitHub: `https://github.com/carlinnnd/hackathon-kanastra`.
+- Demo pública em Python 3.12 com cinco títulos sintéticos e SQLite temporário, sem dados reais ou banco persistente. Bundle pré-compilado validado em árvore controlada; instalação npm limpa continua sem comprovação.
+- A primeira build não resolveu o manifesto `-r`; corrigido para pins planos de runtime. O primeiro filtro público encontrou outra instância sem a simulação; corrigida a visualização em memória somente para respostas completas. Respostas parciais avisam e bloqueiam consultas adicionais. API GET entre instâncias continua sem garantia de persistência.
+- Deploy final `dpl_Cj1UA5ksJt3pAgFLGT3uM8CasH27` confirmado READY. Smoke final: nove notas, uma aprovação, oito recusas e líquido `4700.00`; filtro oito e restauração nove sem GET por ID ou alerta de erro. Aviso sintético/temporário visível.
+- Sem novas rodadas de escala. Próximo ciclo continua sendo testes manuais incrementais e decisão explícita sobre persistência antes de uso com dados reais.

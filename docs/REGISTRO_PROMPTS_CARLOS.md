@@ -1153,10 +1153,10 @@ pode subir no github e atualizar no vercel
 - Última mensagem do assistente (prévia, não prova execução):
 
 ```text
-NÃO CAPTURADA
+Base publicada em https://github.com/carlinnnd/hackathon-kanastra e https://hackathon-kanastra.vercel.app. Vercel READY em Python 3.12. Demo publica usa cinco titulos sinteticos e resultados temporarios. Navegador confirmou nove notas com uma aprovada e oito recusadas. Liquido 4700.00. Filtro mostrou oito linhas e restaurou nove sem GET por ID. Dados reais e banco local nao publicados. Persistencia entre instancias nao foi implementada.
 ```
 
-- **O que foi feito com a resposta:** PENDENTE — reconciliar com o que foi feito
-- Arquivos/artefatos: PENDENTE
-- Verificação: PENDENTE
+- **O que foi feito com a resposta:** Executados pulls antes dos pushes em worktree separado. Publicada base na main e preservada atualizacao remota de Elias por merge. Criados entrada ASGI e manifesto Vercel com demo sintetica isolada. Primeira build falhou no include requirements e foi corrigida com pins planos existentes. Corrigido filtro da demo com snapshot em memoria sem alterar regras financeiras. Publicacao final pronta e verificada. Nenhum servico de banco pago criado. Staging original preservado.
+- Arquivos/artefatos: app.py requirements.txt .python-version vercel.json .vercelignore .gitignore public Codex/antecipe/backend/vercel_app.py Codex/antecipe/backend/config.py Codex/antecipe/backend/api/routes.py Codex/antecipe/backend/tests/test_vercel_demo.py Codex/antecipe/frontend Codex/antecipe/README.md README.md docs/EVIDENCIAS.md docs/prompts-events.jsonl
+- Verificação: Wrapper smoke dirigido aprovado em 2.26s. Guard recusou banco fora de TMP sem cria-lo. Kit 8 testes aprovado em 1.207s. Frontend test lint build aprovado com build 2.42s apos corrigir carregamento de helper no runner. Deploy dpl_Cj1UA5ksJt3pAgFLGT3uM8CasH27 READY. HTTP publico health e carteira OK. Arquivos privados .env.local e antecipe.db retornaram404. Navegador bundle index-CnKj22BH.js exibiu9notas1aprovado8recusados nominal30050.00 liquido4700.00. Filtro8restauracao9 semalertas e semGETporID. Instalacao limpa npm e persistencia entre instancias continuam limitacoes documentadas.
 
