@@ -6,7 +6,6 @@ import {
   Layers,
   Calculator,
   Sliders,
-  Building2,
   LogOut,
   Wifi,
   Loader2,
@@ -17,7 +16,6 @@ import { ReceivablesTable } from './components/ReceivablesTable';
 import { RejectionChart } from './components/RejectionChart';
 import { SingleEvaluateTab } from './components/SingleEvaluateTab';
 import { WhatIfSimulatorTab } from './components/WhatIfSimulatorTab';
-import { EconomicGroupCard } from './components/EconomicGroupCard';
 import { KanastraLogo } from './components/KanastraLogo';
 import { LoginPage } from './components/LoginPage';
 import { ResultAnalytics } from './components/ResultAnalytics';
@@ -39,7 +37,6 @@ import { BulkUploadSession } from './services/bulkUpload';
 export const App: React.FC = () => {
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => api.getAuthSession());
   const [activeTab, setActiveTab] = useState<'lote' | 'individual' | 'what-if'>('lote');
-  const [showGlobalXRay, setShowGlobalXRay] = useState<boolean>(false);
 
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
@@ -571,37 +568,9 @@ export const App: React.FC = () => {
           <div className="kanastra-subheader-meta">
             <span className="kanastra-fund-title">ANTECIPE FIDC</span>
             <span className="kanastra-meta-sep">•</span>
-            <span>CNPJ 92.234.400/0001-80</span>
-            <span className="kanastra-meta-sep">•</span>
             <span>Data-base: {(simulation?.data_base || health?.data_base_atual)?.split('-').reverse().join('/') || new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date())}</span>
-            <span className="kanastra-meta-sep">•</span>
-            <span>Regra {versaoRegraReal}</span>
-            <span className="kanastra-meta-sep">•</span>
-            <span>Carteira: {estoqueStatusReal}</span>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{ padding: '5px 11px', fontSize: '0.76rem' }}
-              onClick={() => setShowGlobalXRay((prev) => !prev)}
-            >
-              <Building2 size={13} aria-hidden="true" />
-              <span>
-                {showGlobalXRay
-                  ? 'Ocultar Exposição Societária'
-                  : 'Exposição por Grupo Econômico'}
-              </span>
-            </button>
           </div>
         </section>
-
-        {showGlobalXRay && (
-          <div style={{ marginBottom: '20px' }}>
-            <EconomicGroupCard raizCnpj="58206002" />
-          </div>
-        )}
 
         {/* Alerta de Sessão WebSocket Expirada */}
         {wsSessionExpiredNotice && (
