@@ -7,12 +7,13 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, File, status as http_status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, UploadFile, File, Response, status as http_status
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from ..config import settings
+from ..domain import calendar
 from ..domain.ingestion import iterar_csv_recebiveis, parse_data_br, parse_decimal_br, normalizar_documento
 from ..domain.engine import carregar_configuracao
 from ..domain.models import ReceivelInput, ResultadoAvaliacao, MotivoRecusa
@@ -52,7 +53,8 @@ def verificar_admin_token(x_admin_token: Optional[str] = Header(None)) -> str:
 
 
 @router.get("/health")
-def get_health(db: Session = Depends(get_db)):
+def get_health(response: Response, db: Session = Depends(get_db)):
+    response.headers["Cache-Control"] = "no-store"
     fundo = db.query(FundModel).filter(FundModel.nome.ilike("%ANTECIPE%")).first()
     receivables_repo = ReceivablesRepository(db)
     rules_repo = RulesRepository(db)
@@ -63,6 +65,8 @@ def get_health(db: Session = Depends(get_db)):
     total_reg = resumo.get("total_recebiveis", 0)
     health_resp = {
         "status": "ok",
+        "data_base_atual": calendar.data_atual().isoformat(),
+        "fuso_horario": "America/Sao_Paulo",
         "estoque_carregado": total_reg > 0,
         "fundo": fundo.nome if fundo else "ANTECIPE FIDC",
         "total_registros_estoque": total_reg,
@@ -245,7 +249,8 @@ def post_receivables_evaluate(
             detail={"codigo": "PAYLOAD_VAZIO", "mensagem": "A lista de recebíveis não pode estar vazia."}
         )
 
-    dt_base = None
+    hoje = calendar.data_atual()
+    dt_base = hoje
     if payload.data_base:
         dt_base = parse_data_br(payload.data_base)
         if not dt_base:
@@ -256,8 +261,11 @@ def post_receivables_evaluate(
                     status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail={"codigo": "DATA_BASE_INVALIDA", "mensagem": f"Data-base '{payload.data_base}' informada no payload é inválida."}
                 )
-    else:
-        dt_base = date(2026, 10, 22)
+        if dt_base != hoje:
+            raise HTTPException(status_code=422, detail={
+                "codigo": "DATA_BASE_INVALIDA",
+                "mensagem": "Novas simulações usam a data atual de Brasília. Omita data_base para atualização automática."
+            })
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_MINIMAL)
@@ -348,7 +356,7 @@ def post_create_rule_version(
         raise HTTPException(status_code=404, detail="Fundo principal não encontrado.")
 
     try:
-        carregar_configuracao(cfg, date(2026, 10, 22))
+        carregar_configuracao(cfg, calendar.data_atual())
     except (ValueError, TypeError) as exc:
         raise HTTPException(
             status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,

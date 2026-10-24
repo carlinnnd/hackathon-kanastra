@@ -77,6 +77,10 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     checkBackendState();
+    const timer = window.setInterval(() => {
+      api.getHealth().then(setHealth).catch(() => setHealth(null));
+    }, 60_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const isModoPublico = Boolean(health?.aviso_demo_publica);
@@ -450,7 +454,7 @@ export const App: React.FC = () => {
         </div>
 
         <div className="alert-banner-badges">
-          <span className="badge-tag">DATA-BASE: 2026-10-22</span>
+          <span className="badge-tag">DATA-BASE: {(simulation?.data_base || health?.data_base_atual)?.split('-').reverse().join('/') || 'Consultando…'}</span>
           <span className="badge-tag">REGRA ATIVA: {versaoRegraReal}</span>
           <span className="badge-tag">ESTOQUE: {estoqueStatusReal}</span>
         </div>
