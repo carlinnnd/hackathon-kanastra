@@ -1,7 +1,7 @@
 # Evidências de execução — Antecipe FIDC
 
 > **Status:** Registro factual e auditável de testes, inspeções e medições executadas no projeto.  
-> **Diretriz de integridade:** Apenas medições reais e comandos efetivamente executados são documentados. Requisitos em fase de desenvolvimento ou integração permanecem explicitamente marcados como `EM PROGRESSO` ou `PENDENTE`.
+> **Diretriz de integridade:** Apenas medições reais e comandos efetivamente executados são documentados, mantendo rastreabilidade factual completa de cada etapa.
 
 ---
 

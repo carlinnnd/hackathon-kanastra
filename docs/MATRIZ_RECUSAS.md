@@ -41,16 +41,14 @@
 | **`FORMATO_INVALIDO_VALOR`** | - | Valor nominal com caracteres inválidos ou frações além de centavos | Formato do Valor Nominal Inválido | Informe valores com separador decimal correto e precisão máxima de 2 casas decimais (ex: 1500,00). Frações adicionais são rejeitadas (ADR-008). |
 | **`CAMPOS_OBRIGATORIOS_VAZIOS`** | - | Linha com campos essenciais em branco | Campos Obrigatórios em Branco | Preencha todas as colunas obrigatórias da planilha antes do envio. |
 | **`LINHA_MALFORMADA_COLUNAS`** | - | Quantidade de colunas da linha difere de 11 | Linha com Número Divergente de Colunas | Verifique se não há delimitadores de ponto e vírgula extras ou aspas não fechadas na linha. |
-# Revisão cadastral — 24/10/2026
+| **`VALOR_EXCEDE_CAPACIDADE`** | - | Valor nominal acima do teto técnico `Numeric(15,2)` (`R$ 9.999.999.999.999,99`) | Valor Nominal Acima da Capacidade Técnica | O valor nominal excede a capacidade máxima de precisão centesimal exata suportada pelo sistema. |
+| **`SESSAO_EXPIRADA`** | - | Sessão autenticada expirada ou inválida na conexão WebSocket/HTTP | Sessão Expirada ou Não Autenticada | Saia e realize login novamente para renovar sua sessão antes de enviar o arquivo. |
 
-| Código / situação | Condição | Mensagem e próximo passo | Evidência |
-| --- | --- | --- | --- |
-| PENDENTE_VERIFICACAO | Validador cadastral ativo, CNPJ sem confirmação; nenhuma outra violação confirmada | Situação cadastral não confirmada. Consulte uma fonte cadastral antes de aprovar este título. | `backend/tests/test_result_reporting.py`; filtro e contador conferidos no navegador. |
-| RECUSADA com pendência cadastral entre motivos | Outra regra tem violação confirmada | Exibir todos os motivos; corrigir a violação e confirmar cadastro antes de nova avaliação. | Teste de cheque/prazo com cadastro ausente e teste HTTP de CNPJ inválido. |
-| ERRO_DADOS | Campo ausente, parsing inválido ou capacidade excedida | Indicar o campo e corrigir o arquivo; não precificar como zero. | Regressão de valor malformado e CSV com valores financeiros vazios. |
-| CARTEIRA_HISTORICA | Usuário escolheu análise de estoque | Estoque histórico; sem decisão de antecipação. | Navegador: nove títulos históricos, zero novas aprovações/recusas, líquido não aplicável. |
+---
 
-Esta revisão substitui qualquer tratamento anterior de cadastro indisponível como recusa definitiva por si só. Fontes divergentes e limites estão documentados em `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.
-# Correção vigente — somente aprovada ou recusada
+## 4. Contrato Binário Vigente (`APROVADA` ou `RECUSADA`) — 24/10/2026
 
-A instrução posterior do usuário substitui a proposta de estados separados: para novas notas, ausência de confirmação cadastral recusa por `SITUACAO_CADASTRAL_SACADO`; parsing ou dados insuficientes também recusam com o motivo específico. A mensagem cadastral explica que não foi possível confirmar que o sacado está ativo e orienta confirmar/atualizar o cadastro e reenviar. Não há estado ou filtro de pendência. As seções anteriores documentam versões históricas, não o contrato vigente.
+Para novas notas submetidas à simulação (via CSV, API JSON ou WebSocket), o sistema adota **exclusivamente decisão binária (`APROVADA` ou `RECUSADA`)**:
+- **Ausência de confirmação cadastral (`NAO_VERIFICADA`):** Recusa determinística pelo código canônico `SITUACAO_CADASTRAL_SACADO`, com mensagem explicando que não foi possível confirmar que o sacado está ativo e orientando confirmar/atualizar o cadastro antes de reenviar.
+- **Erros de formatação ou dados insuficientes:** Recusam o item preservando o código e motivo específico (`FORMATO_INVALIDO_VALOR`, `CAMPOS_OBRIGATORIOS_VAZIOS`, `VALOR_EXCEDE_CAPACIDADE`, etc.), sem precificar como zero.
+- **Análise descritiva da carteira histórica:** Exibida separadamente sem simular nova aquisição. Fontes e conferências detalhadas em `Codex/antecipe/docs/RESULTADOS_E_CADASTRO.md`.

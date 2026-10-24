@@ -270,7 +270,7 @@ Documentadas em [`docs/DECISOES_TECNICAS.md`](docs/DECISOES_TECNICAS.md):
 ### 3. O que Ficou de Fora (Escopo Consciente)
 - **Liquidação Bancária Externa (PIX/TED/CIP):** A aplicação realiza a simulação de elegibilidade, risco e precificação; não executa movimentação bancária real.
 - **Consulta Síncrona Externa à Receita Federal na Internet:** Para garantir processamento de 100k a 500k linhas sem bloqueio de rede/rate-limit, utiliza a base cadastral `cnpj_situacao_mock.csv` fornecida no desafio.
-- **Scanner OCR por Câmera:** A arquitetura foi desenhada e documentada em [`docs/ARQUITETURA_SCANNER_WEB.md`](docs/ARQUITETURA_SCANNER_WEB.md) como evolução futura, priorizando a robustez do pipeline CSV de alto volume e da plataforma web principal.
+- **Scanner OCR de Notas Fiscais por Câmera:** Descartado do escopo de entrega para priorizar 100% da estabilidade no pipeline CSV de 100k–500k linhas, motor de regras configurável e experiência web na Vercel.
 
 ---
 

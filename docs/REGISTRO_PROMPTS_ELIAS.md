@@ -1019,3 +1019,52 @@ veja se esse readme de um projeto passado do carlos pode ser útil para servir d
 - **O que foi feito com a resposta:** Inspecionado o `README.md` de `iwfet/cosmoex` e reestruturado o `README.md` da raiz adotando o mesmo padrão visual e organização de seções do projeto passado do Carlos (`Overview`, `Features`, `How It Works`, `Core Components`, `Quick Map`, `Requirements`, `Environment variables`, `Quickstart`, `Ports & URLs`), combinado com a Linha 1 da Vercel, prioridade para teste na Vercel e relatório técnico do edital. Registrado o prompt `ELIAS-0039` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
 - **Arquivos/artefatos:** `README.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`
 - **Verificação:** `python3 scripts/check_submission.py` (`Auditoria do kit: OK`) e `python3 -m unittest discover -s tests -p "test_*.py"` (`29 tests OK`).
+---
+
+## ELIAS-0040 — 2026-10-24T20:12:27-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+carlos colocou mais coisa, primeiro preciso dar o pull nas informações, mas sem perder o que eu ja fiz, também preciso que você preencha esses arquivos (ou se eles não forem necessários para pontuar no hackathon, exclua eles) esses da foto anexada (faça isso depois de dar o pull).
+[Anexo: captura de tela mostrando docs/ARQUITETURA_SCANNER_WEB.md, docs/CRITERIOS.md, docs/DECISOES_TECNICAS.md, docs/ESPECIFICACAO.md, docs/EVIDENCIAS.md e docs/MATRIZ_RECUSAS.md]
+```
+
+- **Resumo da resposta e análise técnica:**
+  1. **Sincronização (`git fetch` + `git rebase origin/main`) sem perder nada:**
+     - Commitadas as alterações locais do Elias (`README.md`, `Codex/antecipe/README.md`, `tests/test_antecipe_domain_suite.py` e `docs/REGISTRO_PROMPTS_ELIAS.md`) e executado `git rebase origin/main`, incorporando todos os 6 novos commits do Carlos até `54da2d2` (*"feat(ui): adiciona video de fundo no login com camadas z-index e remove CNPJ ficticio"*, *"feat(ui): remove marca Kanastra, ajusta barra upload por peso..."*, *"fix: autenticar politicas com a propria conta..."* e *"feat: portal operacional, politicas por usuario e upload ampliado"*).
+  2. **Análise e Ação sobre os 6 Arquivos da Captura de Tela (`docs/`):**
+     - **`docs/ARQUITETURA_SCANNER_WEB.md` $\rightarrow$ EXCLUÍDO:** Não é exigido pelo edital nem por `scripts/check_submission.py`, e referia-se a uma funcionalidade de câmera/OCR que ficou fora do escopo final. Removido para manter o repositório limpo e enxuto.
+     - **`docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/ESPECIFICACAO.md`, `docs/EVIDENCIAS.md` e `docs/MATRIZ_RECUSAS.md` $\rightarrow$ MANTIDOS E ATUALIZADOS:** São **obrigatórios** na lista `REQUIRED` de `scripts/check_submission.py` e nas regras de `AGENTS.md` / `CLAUDE.md` (se excluídos, a auditoria de submissão falha).
+       - `docs/CRITERIOS.md`: Preenchidos todos os 5 critérios (100 pontos) com os artefatos reais de prova e status `Verificado`.
+       - `docs/DECISOES_TECNICAS.md`: Adicionados **ADR-009** (Autenticação Auth0 + PKCE + Sessão HttpOnly e Vídeo de Fundo em Camadas) e **ADR-010** (Transporte de Upload em Streaming WebSocket com Leitor por Cursor e Janelas de 12 MiB).
+       - `docs/MATRIZ_RECUSAS.md` e `docs/EVIDENCIAS.md`: Consolidadas as recusas (`VALOR_EXCEDE_CAPACIDADE`, `SESSAO_EXPIRADA`) e o contrato binário vigente (`APROVADA` ou `RECUSADA`), fazendo `python3 scripts/check_submission.py --final` passar com **`Auditoria final: OK`**.
+
+- **O que foi feito com a resposta:** Realizado `git fetch origin` e `git rebase origin/main` preservando todo o trabalho local do Elias; removido `docs/ARQUITETURA_SCANNER_WEB.md`; preenchidos/atualizados `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md` e `docs/MATRIZ_RECUSAS.md`; validados `python3 scripts/check_submission.py --final` (`Auditoria final: OK`) e `unittest` (`29 tests OK`). Registrado o prompt `ELIAS-0040` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/ARQUITETURA_SCANNER_WEB.md` (removido), `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/MATRIZ_RECUSAS.md`, `README.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py --final` (`Auditoria final: OK`), `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`) e `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests in 0.11s - OK`).
+---
+
+## ELIAS-0040 — 2026-10-24T20:12:27-03:00 — antigravity
+
+- **Prompt enviado:**
+
+```text
+carlos colocou mais coisa, primeiro preciso dar o pull nas informações, mas sem perder o que eu ja fiz, também preciso que você preencha esses arquivos (ou se eles não forem necessários para pontuar no hackathon, exclua eles) esses da foto anexada (faça isso depois de dar o pull).
+[Anexo: captura de tela mostrando docs/ARQUITETURA_SCANNER_WEB.md, docs/CRITERIOS.md, docs/DECISOES_TECNICAS.md, docs/ESPECIFICACAO.md, docs/EVIDENCIAS.md e docs/MATRIZ_RECUSAS.md]
+```
+
+- **Resumo da resposta e análise técnica:**
+  1. **Sincronização (`git fetch` + `git rebase origin/main`) sem perder nada:**
+     - Commitadas as alterações locais do Elias (`README.md`, `Codex/antecipe/README.md`, `tests/test_antecipe_domain_suite.py` e `docs/REGISTRO_PROMPTS_ELIAS.md`) e executado `git rebase origin/main`, incorporando todos os 6 novos commits do Carlos até `54da2d2` (*"feat(ui): adiciona video de fundo no login com camadas z-index e remove CNPJ ficticio"*, *"feat(ui): remove marca Kanastra, ajusta barra upload por peso..."*, *"fix: autenticar politicas com a propria conta..."* e *"feat: portal operacional, politicas por usuario e upload ampliado"*).
+  2. **Análise e Ação sobre os 6 Arquivos da Captura de Tela (`docs/`):**
+     - **`docs/ARQUITETURA_SCANNER_WEB.md` $\rightarrow$ EXCLUÍDO:** Não é exigido pelo edital nem por `scripts/check_submission.py`, e referia-se a uma funcionalidade de câmera/OCR que ficou fora do escopo final. Removido para manter o repositório limpo e enxuto.
+     - **`docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/ESPECIFICACAO.md`, `docs/EVIDENCIAS.md` e `docs/MATRIZ_RECUSAS.md` $\rightarrow$ MANTIDOS E ATUALIZADOS:** São **obrigatórios** na lista `REQUIRED` de `scripts/check_submission.py` e nas regras de `AGENTS.md` / `CLAUDE.md` (se excluídos, a auditoria de submissão falha).
+       - `docs/CRITERIOS.md`: Preenchidos todos os 5 critérios (100 pontos) com os artefatos reais de prova e status `Verificado`.
+       - `docs/DECISOES_TECNICAS.md`: Adicionados **ADR-009** (Autenticação Auth0 + PKCE + Sessão HttpOnly e Vídeo de Fundo em Camadas) e **ADR-010** (Transporte de Upload em Streaming WebSocket com Leitor por Cursor e Janelas de 12 MiB).
+       - `docs/MATRIZ_RECUSAS.md` e `docs/EVIDENCIAS.md`: Consolidadas as recusas (`VALOR_EXCEDE_CAPACIDADE`, `SESSAO_EXPIRADA`) e o contrato binário vigente (`APROVADA` ou `RECUSADA`), fazendo `python3 scripts/check_submission.py --final` passar com **`Auditoria final: OK`**.
+
+- **O que foi feito com a resposta:** Realizado `git fetch origin` e `git rebase origin/main` preservando todo o trabalho local do Elias; removido `docs/ARQUITETURA_SCANNER_WEB.md`; preenchidos/atualizados `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md` e `docs/MATRIZ_RECUSAS.md`; validados `python3 scripts/check_submission.py --final` (`Auditoria final: OK`) e `unittest` (`29 tests OK`). Registrado o prompt `ELIAS-0040` em `docs/REGISTRO_PROMPTS_ELIAS.md`.
+- **Arquivos/artefatos:** `docs/ARQUITETURA_SCANNER_WEB.md` (removido), `docs/CRITERIOS.md`, `docs/DECISOES_TECNICAS.md`, `docs/EVIDENCIAS.md`, `docs/MATRIZ_RECUSAS.md`, `README.md`, `docs/REGISTRO_PROMPTS_ELIAS.md`
+- **Verificação:** `python3 scripts/check_submission.py --final` (`Auditoria final: OK`), `python3 scripts/prompt_ledger.py audit` (`Pendências: 0`) e `python3 -m unittest discover -s tests -p "test_*.py" -v` (`Ran 29 tests in 0.11s - OK`).
+

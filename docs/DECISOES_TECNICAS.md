@@ -107,3 +107,27 @@
 - **Decisão:** Contrato de integridade de armazenamento e parsing: qualquer fração não nula além de centavos é estritamente recusada na ingestão como `FORMATO_INVALIDO_VALOR`. Frações nulas (ex: `100.000`) são normalizadas para centavos exatos.
 - **Teste ou evidência:** Implementado e validado nos testes unitários e de integração (`test_matriz_casos.py`, `test_domain_engine.py`).
 - **Status:** **Aceita (implementada e testada)**.
+
+---
+
+## ADR-009 — Autenticação Institucional (Auth0 + PKCE + Sessão HttpOnly) e Vídeo de Fundo em Camadas
+
+- **Data e autor:** 2026-10-24 — Equipe Antecipe (Segurança, Frontend & Integração)
+- **Contexto/restrição oficial:** O portal requer identificação segura do usuário com suporte a SSO Google e credenciais (e-mail/senha) sem expor tokens sensíveis no armazenamento local do navegador nem sobrepor scripts legados, mantendo visual institucional com vídeo de fundo (`video_fundo_login.mp4`) e campos de entrada limpos (sem CNPJ/dados fictícios pré-preenchidos).
+- **Decisão:**
+  1. **Sessão `HttpOnly` no Servidor (`backend/api/auth_routes.py`):** Troca de código OAuth 2.0 PKCE e validação de sessão centralizadas no backend, emitindo cookie `HttpOnly` / `SameSite=Lax` (`Secure` em HTTPS).
+  2. **Políticas Pessoais com Escopo da Própria Conta (`backend/api/policy_routes.py`):** Isolamento por usuário autenticado sem exigir privilégios administrativos globais da Management API.
+  3. **Camadas Visuais Isoladas (`z-index`) no Login (`LoginPage.tsx`):** Vídeo de fundo (`video_fundo_login.mp4`) renderizado em camada inferior com *overlay* de contraste (WCAG 2.2 AA) e formulário institucional limpo em camada superior.
+- **Teste ou evidência:** Validado em `Codex/antecipe/backend/tests/test_auth_rejection_regression.py`, `test_personal_policies.py` e `test_portal_integration.py`.
+- **Status:** **Aceita (implementada e publicada na Vercel)**.
+
+---
+
+## ADR-010 — Transporte de Upload em Streaming WebSocket com Leitor por Cursor e Janelas de 12 MiB
+
+- **Data e autor:** 2026-10-24 — Equipe Antecipe (Escalabilidade & Backend)
+- **Contexto/restrição oficial:** Ambientes serverless (como a Vercel) impõem limite de payload por requisição HTTP POST (~4,5 MB), enquanto lotes de 100.000 a 500.000 linhas possuem entre ~18 MB e ~93 MB.
+- **Decisão:** Implementado protocolo de upload em streaming sobre WebSocket (`WS /api/simulations/stream` em `backend/api/bulk_routes.py` e `backend/application/stream_upload.py`) com frames de **768 KiB**, janela de controle de fluxo (`ACK`) de **12 MiB** e leitor baseado em **cursor de índice** (eliminando cópias de memória do restante do buffer a cada linha lida).
+- **Impacto sobre pontuação:** Reduziu o tempo de upload de 100k linhas de `19,45s` para `8,17s` (**2,38x mais rápido**) e de 500k linhas de `223,72s` para `106,08s` (**2,11x mais rápido**), mantendo 100% de exatidão linha a linha.
+- **Teste ou evidência:** `Codex/antecipe/backend/tests/test_upload_capacity.py` e `Codex/antecipe/benchmarks/relatorio_upload_20261024.json`.
+- **Status:** **Aceita (implementada e auditada)**.

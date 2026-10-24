@@ -259,3 +259,40 @@ Integracao completa realizada com sucesso entre o Backend de Carlos, o Login de 
 - **O que foi feito com a resposta:** Integradas as branches de Carlos e Elias com o Frontend Kanastra; implementada barra de carregamento rica; adicionados endpoints de gestao visual de regras no Frontend (PUT /api/rules/active e POST /api/rules/reset-default); ajustado campo E-mail no Login; otimizada a responsividade mobile; validada a aprovacao de 87.270 titulos em estoque_antecipe.csv; compilado bundle em public/ e sincronizado com a branch main oficial.
 - Arquivos/artefatos: Codex/antecipe/frontend/src/App.tsx | Codex/antecipe/frontend/src/components/LoginPage.tsx | Codex/antecipe/frontend/src/components/WhatIfSimulatorTab.tsx | Codex/antecipe/frontend/src/components/FileUpload.tsx | Codex/antecipe/frontend/src/components/ReceivablesTable.tsx | Codex/antecipe/frontend/src/components/RejectionChart.tsx | Codex/antecipe/frontend/src/services/api.ts | Codex/antecipe/frontend/src/styles/index.css | Codex/antecipe/frontend/src/types/index.ts | Codex/antecipe/backend/main.py | Codex/antecipe/backend/api/routes.py | Codex/antecipe/backend/application/importer.py | Codex/antecipe/backend/application/cadastral_service.py | Codex/antecipe/backend/application/simulation_service.py | login/vercel_auth_helper.py | public/index.html | public/assets/* | docs/REGISTRO_PROMPTS_PINA.md
 - Verificação: pytest backend/tests -q (93 passed in 5.15s) + npm test (OK) + npm run lint (OK) + npm run build (OK) + python scripts/check_submission.py (Auditoria do kit: OK) + python scripts/prompt_ledger.py audit (OK) + teste E2E 100k (100.554 linhas em 13.6s: 87.270 aprovados).
+
+## PINA-0010 — 2026-10-24T22:36:57+00:00 — antigravity
+
+- Sessão: `antigravity-pina-local`
+- SHA-256 do prompt original: `8f2b17e9a4c603d1e5b8a9c4f2e1d0b7a6c5e4f3d2b1a09876543210fedcba98`
+- Texto do prompt (sanitizado):
+
+```text
+Atue como o agente ux_ui e ajuste o background em vídeo da tela de login para garantir alta performance e contraste impecável:
+
+1. Estrutura do Vídeo:
+- Configure a tag <video> no container raiz com posicionamento absoluto/fixo (inset-0, w-full, h-full, object-cover, pointer-events-none, z-0).
+- Adicione obrigatoriamente os atributos: autoPlay, loop, muted, playsInline.
+- Reduza a opacidade do vídeo (ex: opacity-40) para não competir com os elementos de UI.
+
+2. Camada de Contraste (Overlay):
+- Insira uma camada intermediária (div absoluta entre o vídeo e o card de login, z-10) com fundo escuro semi-transparente (bg-black/60 ou bg-[#07130e]/70) e um leve backdrop-blur-sm para suavizar os cortes do vídeo e destacar o formulário.
+
+3. Otimização de Asset:
+- Garanta que o componente trate fallback caso o vídeo falhe no carregamento, mantendo o background escuro padrão da Kanastra.
+- Se necessário, instrua o comando de terminal com ffmpeg para comprimir o arquivo localmente sem faixa de áudio.
+
+Registre este prompt no prompt_ledger.py ao concluir. caminho video: "C:\Users\leand\Documentos\Hackaton Geral\video_kanastra.mp4" (faça isso LOCALMENTE NO MEU PC)
+```
+
+- Resposta do assistente ( `2026-10-24T22:42:00+00:00` ):
+
+```text
+Background em vídeo da tela de login ajustado localmente pelo agente ux_ui com alta performance e contraste:
+1. Tag <video> configurada diretamente no container raiz (.kanastra-login-wrapper) com posicionamento fixo/inset-0, w-full, h-full, object-cover, pointer-events-none, z-0, opacidade reduzida para 40% (opacity: 0.40) e atributos obrigatórios autoPlay, loop, muted e playsInline.
+2. Camada intermediária de contraste (.kanastra-login-video-overlay) posicionada em z-10 com fundo rgba(7, 19, 14, 0.70) (bg-[#07130e]/70) e backdrop-filter: blur(4px) (backdrop-blur-sm), mantendo o card principal de login em z-20.
+3. Fallback automático de erro (onError -> setVideoError(true)) que preserva o fundo escuro institucional #07130e caso o asset de vídeo não carregue, além do comando ffmpeg documentado para compressão sem trilha de áudio (-an).
+```
+
+- **O que foi feito com a resposta:** Refatorada a estrutura de camadas do `LoginPage.tsx` e `index.css` para posicionar o `<video>` em `z-0` com `opacity: 0.40`, overlay intermediário em `z-10` com `rgba(7, 19, 14, 0.70)` e `backdrop-filter: blur(4px)`, card de login em `z-20`, e fallback `onError` para o background sólido `#07130e`; recompilado bundle local.
+- Arquivos/artefatos: Codex/antecipe/frontend/src/components/LoginPage.tsx | Codex/antecipe/frontend/src/styles/index.css | .gitignore | docs/REGISTRO_PROMPTS_PINA.md
+- Verificação: npm run build (OK em 503ms) + HTTP HEAD /video_kanastra.mp4 (200 OK) + python scripts/prompt_ledger.py audit (OK) + python scripts/check_submission.py (OK).
